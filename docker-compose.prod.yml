@@ -1,0 +1,32 @@
+services:
+  frontend:
+    restart: unless-stopped
+    ports:
+      - "80:80"
+
+  api:
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+
+  postgres:
+    ports: []
+    command:
+      [
+        "postgres",
+        "-c",
+        "shared_buffers=256MB",
+        "-c",
+        "effective_cache_size=768MB",
+        "-c",
+        "work_mem=8MB",
+        "-c",
+        "maintenance_work_mem=128MB",
+        "-c",
+        "max_connections=100",
+        "-c",
+        "log_min_duration_statement=500"
+      ]
+
+  redis:
+    ports: []

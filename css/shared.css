@@ -1,0 +1,141 @@
+/* ==================================================
+   GLOBAL RESETS & TYPOGRAPHY
+   ================================================== */
+* { font-family: 'Inter', sans-serif; }
+body { background: #070b17; color: white; overflow-x: hidden; }
+aside * { max-width: 100%; }
+
+/* ==================================================
+   GLASSMORPHISM
+   ================================================== */
+.glass {
+    background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass:hover {
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.08); 
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+/* ==================================================
+   ANIMATIONS & TRANSITIONS
+   ================================================== */
+.reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+.content-fade {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.content-fade.show { opacity: 1; transform: none; }
+
+/* ==================================================
+   SKELETON LOADERS
+   ================================================== */
+@keyframes shimmer { 0% { left: -250%; } 100% { left: 250%; } }
+
+.skeleton {
+    position: relative; 
+    overflow: hidden; 
+    background: rgba(255,255,255,0.04); 
+    border-radius: 12px;
+}
+.skeleton::before {
+    content: ""; position: absolute; top: 0; left: -250%; width: 250%; height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.10) 55%, transparent 100%);
+    animation: shimmer 2s linear infinite; 
+    animation-delay: var(--delay, 0s);
+}
+
+.loader {
+    width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.2); 
+    border-top: 3px solid #10b981; border-radius: 50%; 
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* ==================================================
+   UTILITY CLASSES
+   ================================================== */
+.scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+
+/* Enhanced Tooltip Support (Hover + Touch + Focus) */
+.has-tooltip .tooltip { 
+    visibility: hidden; 
+    opacity: 0; 
+    transition: opacity 0.3s, visibility 0.3s; 
+    pointer-events: none; /* Prevents cursor interference */
+}
+.has-tooltip:hover .tooltip,
+.has-tooltip:focus-within .tooltip { 
+    visibility: visible; 
+    opacity: 1; 
+}
+.has-tooltip:hover .info-icon,
+.has-tooltip:focus-within .info-icon {
+    color: #34d399; /* Emerald 400 */
+}
+
+/* Fix for Tooltip Clipping on Glassmorphism Cards */
+.tooltip-container {
+    overflow: visible !important;
+}
+
+/* Ensure Tooltips stack above all other elements */
+.has-tooltip {
+    position: relative;
+    z-index: 10;
+}
+
+.tooltip {
+    position: absolute;
+    z-index: 9999;
+}
+
+/* ==================================================
+   MOBILE SIDEBAR & BACKDROP
+   ================================================== */
+#mobileBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 65;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+#mobileBackdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#appSidebar {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 1023px) {
+    #appSidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 70;
+        transform: translateX(-100%);
+    }
+    
+    #appSidebar.open {
+        transform: translateX(0);
+    }
+}

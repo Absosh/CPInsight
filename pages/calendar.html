@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendar | CPInsight</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../Assets/favicon_32.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  
+  <link rel="stylesheet" href="../css/shared.css" />
+  <script src="../script/shared.js"></script>
+</head>
+
+<body>
+
+  <canvas id="particleCanvas" class="fixed inset-0 w-full h-full z-[-1] pointer-events-none"></canvas>
+
+  <div id="welcomeModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-[#070b17]/60 transition-opacity duration-500 backdrop-blur-sm">
+    <div class="glass p-10 rounded-3xl max-w-md w-full mx-4 flex flex-col items-center text-center shadow-2xl transform transition-transform duration-500 scale-100" id="modalCard">
+        <h1 class="text-4xl font-black mb-3 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-indigo-400 tracking-tight">CPInsight</h1>
+        <p class="text-gray-400 mb-6">Enter a Codeforces handle to view analytics.</p>
+        
+        <p id="modalError" class="text-rose-400 text-sm font-bold h-5 mb-2 opacity-0 transition-opacity duration-300"></p>
+        
+        <input type="text" id="modalInput" placeholder="e.g. tourist" class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none text-center text-lg mb-4 focus:border-emerald-500 transition shadow-inner" />
+        
+        <button id="launchBtn" onclick="initApp()" class="w-full bg-emerald-600 py-4 rounded-2xl font-semibold text-lg hover:bg-emerald-500 transition shadow-[0_0_15px_rgba(16,185,129,0.4)] text-gray-900">
+            Launch Calendar
+        </button>
+    </div>
+  </div>
+
+  <div id="dayModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-[#070b17]/70 transition-opacity duration-300 opacity-0 pointer-events-none backdrop-blur-sm">
+    <div class="glass p-6 md:p-8 rounded-3xl max-w-lg w-full mx-4 flex flex-col shadow-2xl transform transition-transform duration-300 scale-95 border-emerald-500/30" id="dayModalCard">
+        <div class="flex justify-between items-center mb-6">
+            <h2 id="dayModalTitle" class="text-2xl font-black text-white tracking-tight"></h2>
+            <button onclick="closeDayModal()" class="text-gray-400 hover:text-white transition text-2xl leading-none">&times;</button>
+        </div>
+        <div id="dayModalContent" class="space-y-3 overflow-y-auto max-h-[60vh] scrollbar pr-2">
+            </div>
+    </div>
+  </div>
+
+  <div id="mainApp" class="flex min-h-screen overflow-x-hidden blur-md pointer-events-none transition-[filter] duration-700 ease-in-out">
+    <div id="mobileBackdrop" aria-hidden="true"></div>
+   <aside id="appSidebar" class="w-[320px] min-w-[320px] glass border-r border-white/10 p-6 overflow-hidden !rounded-none flex flex-col">
+        <div class="flex items-center gap-1 mb-10">
+            <img src="../Assets/logo.png" alt="CPInsight Logo" class="w-10 h-10 object-contain mt-0.5" onerror="this.style.display='none'">
+            <h1 class="text-3xl font-black tracking-tight leading-none text-white">CPInsight</h1>
+        </div>
+
+      <div class="glass rounded-3xl p-5 mb-10 flex items-center gap-4">
+        <div id="profileLoader" class="w-12 h-12 rounded-full skeleton flex items-center justify-center"><div class="loader !w-5 !h-5 border-2"></div></div>
+        <img id="profileImage" src="" class="hidden w-12 h-12 rounded-full object-cover border-2 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+        <div>
+            <h2 id="username" class="text-lg font-bold tracking-tight">--</h2>
+            <p id="rank" class="text-emerald-400 text-xs uppercase tracking-widest font-semibold">--</p>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+          <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 hover:text-white" onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
+          <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 hover:text-white" onclick="window.location.href='analytics.html'">🧠 Analytics</button>
+          <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 hover:text-white pointer-events-none">🏆 Contests</button>
+          <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 hover:text-white pointer-events-none">👥 Compare</button>
+          <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 hover:text-white pointer-events-none">💡 Insights</button>
+          <button class="w-full min-w-0 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl p-4 text-left font-semibold truncate shadow-[0_0_10px_rgba(16,185,129,0.1)] transition" onclick="window.location.href='calendar.html'">📅 Calendar</button>
+      </div>
+
+      <button onclick="reopenModal()" class="w-full min-w-0 hover:bg-white/5 border border-transparent border-t-white/10 rounded-none p-4 text-left transition truncate text-gray-400 hover:text-white mt-4 flex items-center gap-3">
+          <span>⚙</span> Change Handle
+      </button>
+    </aside>
+
+    <main class="flex-1 min-w-0 p-6 md:p-10 z-10 relative">
+        <button id="mobileMenuBtn" aria-label="Open navigation menu" aria-expanded="false" class="lg:hidden text-gray-400 hover:text-white mb-6 focus:outline-none transition-colors">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+      <div id="calendarView" class="w-full flex flex-col h-full">
+          <div class="mb-6 reveal visible shrink-0">
+              <h1 class="text-4xl font-black tracking-tight">Calendar</h1>
+              <p class="text-gray-400 mt-2">Past and Upcoming Competitive Programming Contests</p>
+          </div>
+
+          <div class="glass rounded-3xl p-4 sm:p-6 flex flex-col reveal visible" style="height: calc(100vh - 160px); min-height: 500px;">
+              <div class="flex justify-between items-center mb-4 shrink-0">
+                  <button onclick="changeMonth(-1)" class="px-3 sm:px-5 py-2 hover:bg-white/10 border border-transparent hover:border-white/10 rounded-xl text-emerald-400 transition font-bold tracking-wide text-sm sm:text-base">
+                      &larr; Prev
+                  </button>
+                  <div class="flex items-center gap-3">
+                      <h2 id="calendarMonthYear" class="text-xl sm:text-3xl font-bold tracking-tight text-white">--</h2>
+                      <button onclick="goToToday()" class="px-3 py-1 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-lg hover:bg-emerald-600/40 transition text-xs sm:text-sm font-semibold shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                          Today
+                      </button>
+                  </div>
+                  <button onclick="changeMonth(1)" class="px-3 sm:px-5 py-2 hover:bg-white/10 border border-transparent hover:border-white/10 rounded-xl text-emerald-400 transition font-bold tracking-wide text-sm sm:text-base">
+                      Next &rarr;
+                  </button>
+              </div>
+              
+              <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center text-gray-500 text-xs sm:text-sm font-bold uppercase tracking-wider mb-2 shrink-0">
+                  <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+              </div>
+              
+              <div id="calendarLoader" class="flex-1 flex items-center justify-center hidden">
+                  <div class="loader"></div>
+              </div>
+              
+              <div id="calendarGrid" class="grid grid-cols-7 gap-1 sm:gap-2 flex-1 min-h-0">
+                  </div>
+          </div>
+      </div> 
+
+    </main>
+  </div>
+
+  <script src="../script/calendar.js"></script>
+</body>
+</html>

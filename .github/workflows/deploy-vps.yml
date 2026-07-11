@@ -1,0 +1,29 @@
+name: Deploy VPS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy over SSH
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script_stop: true
+          script: |
+            cd /opt/cpinsight
+            git fetch origin main
+            git reset --hard origin/main
+            docker compose --env-file .env.deploy -f docker-compose.yml -f docker-compose.prod.yml build
+            docker compose --env-file .env.deploy -f docker-compose.yml -f docker-compose.prod.yml --profile tools run --rm migrate
+            docker compose --env-file .env.deploy -f docker-compose.yml -f docker-compose.prod.yml up -d frontend api postgres redis
+            docker image prune -f

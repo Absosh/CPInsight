@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CPInsight | Auth</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../Assets/favicon_32.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/shared.css" />
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen flex items-center justify-center p-4">
+  
+  <div class="w-full max-w-md">
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-indigo-400">CPInsight</h1>
+      <p class="text-gray-400 mt-2">Competitive Programming Analytics</p>
+    </div>
+
+    <!-- Auth Card -->
+    <div class="glass rounded-3xl p-8 shadow-2xl border border-white/10">
+      
+      <!-- Tab Switch -->
+      <div class="flex gap-2 mb-8">
+        <button id="loginTab" class="flex-1 py-3 rounded-xl font-semibold bg-emerald-600 text-white transition" onclick="switchTab('login')">
+          Login
+        </button>
+        <button id="registerTab" class="flex-1 py-3 rounded-xl font-semibold bg-white/5 text-gray-400 transition hover:bg-white/10" onclick="switchTab('register')">
+          Register
+        </button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginForm" class="space-y-4">
+        <input type="email" id="loginEmail" placeholder="Email" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 transition" />
+        <input type="password" id="loginPassword" placeholder="Password" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 transition" />
+        <div id="loginError" class="text-rose-400 text-sm font-semibold h-5 opacity-0 transition-opacity duration-300"></div>
+        <button id="loginBtn" class="w-full bg-emerald-600 py-3 rounded-xl font-semibold hover:bg-emerald-500 transition shadow-[0_0_15px_rgba(16,185,129,0.4)] text-gray-900" onclick="handleLogin()">
+          Sign In
+        </button>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerForm" class="hidden space-y-4">
+        <input type="text" id="registerUsername" placeholder="Username" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 transition" />
+        <input type="email" id="registerEmail" placeholder="Email" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 transition" />
+        <input type="password" id="registerPassword" placeholder="Password (min 8 chars)" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 transition" />
+        <input type="password" id="registerConfirm" placeholder="Confirm Password" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 transition" />
+        <div id="registerError" class="text-rose-400 text-sm font-semibold h-5 opacity-0 transition-opacity duration-300"></div>
+        <button id="registerBtn" class="w-full bg-emerald-600 py-3 rounded-xl font-semibold hover:bg-emerald-500 transition shadow-[0_0_15px_rgba(16,185,129,0.4)] text-gray-900" onclick="handleRegister()">
+          Create Account
+        </button>
+      </div>
+
+      <!-- Demo Note -->
+      <div class="mt-6 pt-6 border-t border-white/10 text-center text-gray-400 text-sm">
+        <p>Demo Account:</p>
+        <p class="font-mono text-emerald-400 mt-1">user@test.com / password123</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:4000';
+
+    function switchTab(tab) {
+      if (tab === 'login') {
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('registerForm').classList.add('hidden');
+        document.getElementById('loginTab').classList.add('bg-emerald-600', 'text-white');
+        document.getElementById('loginTab').classList.remove('bg-white/5', 'text-gray-400');
+        document.getElementById('registerTab').classList.remove('bg-emerald-600', 'text-white');
+        document.getElementById('registerTab').classList.add('bg-white/5', 'text-gray-400');
+      } else {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('registerForm').classList.remove('hidden');
+        document.getElementById('loginTab').classList.remove('bg-emerald-600', 'text-white');
+        document.getElementById('loginTab').classList.add('bg-white/5', 'text-gray-400');
+        document.getElementById('registerTab').classList.add('bg-emerald-600', 'text-white');
+        document.getElementById('registerTab').classList.remove('bg-white/5', 'text-gray-400');
+      }
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      const errorDiv = document.getElementById('loginError');
+      const btn = document.getElementById('loginBtn');
+
+      if (!email || !password) {
+        showError(errorDiv, 'Please fill in all fields');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+
+      try {
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showError(errorDiv, data.error?.message || 'Login failed');
+          return;
+        }
+
+        localStorage.setItem('accessToken', data.accessToken);
+        localStorage.setItem('refreshToken', data.refreshToken);
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        showError(errorDiv, 'Network error. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    }
+
+    async function handleRegister() {
+      const username = document.getElementById('registerUsername').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      const password = document.getElementById('registerPassword').value.trim();
+      const confirm = document.getElementById('registerConfirm').value.trim();
+      const errorDiv = document.getElementById('registerError');
+      const btn = document.getElementById('registerBtn');
+
+      if (!username || !email || !password || !confirm) {
+        showError(errorDiv, 'Please fill in all fields');
+        return;
+      }
+
+      if (password.length < 8) {
+        showError(errorDiv, 'Password must be at least 8 characters');
+        return;
+      }
+
+      if (password !== confirm) {
+        showError(errorDiv, 'Passwords do not match');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
+
+      try {
+        const response = await fetch(`${API_BASE}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showError(errorDiv, data.error?.message || 'Registration failed');
+          return;
+        }
+
+        localStorage.setItem('accessToken', data.accessToken);
+        localStorage.setItem('refreshToken', data.refreshToken);
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        showError(errorDiv, 'Network error. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+      }
+    }
+
+    function showError(element, message) {
+      element.textContent = message;
+      element.style.opacity = '1';
+      setTimeout(() => {
+        element.style.opacity = '0';
+      }, 5000);
+    }
+  </script>
+</body>
+</html>

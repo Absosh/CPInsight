@@ -1,0 +1,8 @@
+.git
+.agents
+backend/node_modules
+backend/.env
+node_modules
+*.log
+coverage
+.DS_Store

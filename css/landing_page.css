@@ -1,0 +1,162 @@
+
+
+*{
+  font-family:'Inter',sans-serif;
+  scroll-behavior:smooth;
+}
+
+body{
+  background:#050816;
+  overflow-x:hidden;
+  color:white;
+}
+
+/* GRID BACKGROUND */
+
+.grid-bg{
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+
+  background-size:40px 40px;
+}
+
+/* GLASS EFFECT */
+
+.glass{
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  backdrop-filter:blur(12px);
+}
+
+/* FLOATING */
+
+@keyframes float{
+  0%{
+    transform:translateY(0px);
+  }
+
+  50%{
+    transform:translateY(-15px);
+  }
+
+  100%{
+    transform:translateY(0px);
+  }
+}
+
+.float-animation{
+  animation:float 5s ease-in-out infinite;
+}
+
+/* FADE UP */
+
+@keyframes fadeUp{
+  from{
+    opacity:0;
+    transform:translateY(40px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0px);
+  }
+}
+
+.fade-up{
+  animation:fadeUp 1s ease forwards;
+}
+
+/* GLOW PULSE */
+
+@keyframes glowPulse{
+  0%{
+    box-shadow:0 0 20px rgba(99,102,241,0.2);
+  }
+
+  50%{
+    box-shadow:0 0 50px rgba(99,102,241,0.6);
+  }
+
+  100%{
+    box-shadow:0 0 20px rgba(99,102,241,0.2);
+  }
+}
+
+.glow-pulse{
+  animation:glowPulse 3s infinite;
+}
+
+/* ANIMATED GRADIENT */
+
+@keyframes gradientMove{
+  0%{
+    background-position:0% 50%;
+  }
+
+  50%{
+    background-position:100% 50%;
+  }
+
+  100%{
+    background-position:0% 50%;
+  }
+}
+
+.animated-gradient{
+  background:linear-gradient(
+    -45deg,
+    #4f46e5,
+    #7c3aed,
+    #2563eb,
+    #4338ca
+  );
+
+  background-size:400% 400%;
+
+  animation:gradientMove 8s ease infinite;
+}
+
+/* HOVER SCALE */
+
+.hover-scale{
+  transition:0.4s;
+}
+
+.hover-scale:hover{
+  transform:scale(1.05);
+}
+
+/* GLOW */
+
+.glow{
+  box-shadow:0 0 40px rgba(99,102,241,0.3);
+}
+
+/* PARTICLES */
+
+.particle{
+  position:absolute;
+  width:6px;
+  height:6px;
+  background:#6366f1;
+  border-radius:50%;
+  opacity:0.5;
+  animation:floatParticle 15s linear infinite;
+}
+
+@keyframes floatParticle{
+  0%{
+    transform:translateY(0px);
+    opacity:0;
+  }
+
+  10%{
+    opacity:0.5;
+  }
+
+  100%{
+    transform:translateY(-100vh);
+    opacity:0;
+  }
+}

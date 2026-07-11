@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roadmap | CPInsight</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../Assets/favicon_32.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="../css/shared.css" />
+  <script src="../script/shared.js"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+
+<body>
+
+  <canvas id="particleCanvas" class="fixed inset-0 w-full h-full z-[-1] pointer-events-none"></canvas>
+
+  <div id="mainApp" class="flex min-h-screen overflow-x-hidden blur-md pointer-events-none transition-[filter] duration-700 ease-in-out">
+    
+    <div id="mobileBackdrop" aria-hidden="true"></div>
+
+    <aside id="appSidebar" class="w-[320px] min-w-[320px] glass border-r border-white/10 p-6 overflow-hidden !rounded-none flex flex-col">
+      <div class="flex items-center gap-1 mb-10 shrink-0">
+          <img src="../Assets/logo.png" alt="CPInsight Logo" class="w-10 h-10 object-contain mt-0.5" onerror="this.style.display='none'">
+          <h1 class="text-3xl font-black tracking-tight leading-none text-white">CPInsight</h1>
+      </div>
+
+      <div class="glass rounded-3xl p-5 mb-10 flex items-center gap-4 shrink-0">
+        <div id="profileLoader" class="w-12 h-12 rounded-full skeleton flex items-center justify-center"><div class="loader !w-5 !h-5 border-2"></div></div>
+        <img id="profileImage" src="" class="hidden w-12 h-12 rounded-full object-cover border-2 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+        <div class="min-w-0 flex-1">
+            <h2 id="username" class="text-lg font-bold tracking-tight truncate">Guest</h2>
+            <p id="rank" class="text-emerald-400 text-xs uppercase tracking-widest font-semibold truncate">--</p>
+        </div>
+      </div>
+
+      <div class="space-y-3 flex-1">
+        <a href="dashboard.html" class="block w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 hover:text-white">📊 Dashboard</a>
+        <a href="analytics.html" class="block w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 hover:text-white">🧠 Analytics</a>
+        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 hover:text-white pointer-events-none">🏆 Contests</button>
+        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 hover:text-white pointer-events-none">👥 Compare</button>
+        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 hover:text-white pointer-events-none">💡 Insights</button>
+        <a href="calendar.html" class="block w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 hover:text-white">📅 Calendar</a>
+        <button class="w-full min-w-0 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl p-4 text-left font-semibold truncate shadow-[0_0_10px_rgba(16,185,129,0.1)] transition" onclick="window.location.href='roadmap.html'">🚀 Roadmap</button>
+      </div>
+
+      <button onclick="window.location.href='dashboard.html'" class="w-full min-w-0 hover:bg-white/5 border border-transparent border-t-white/10 rounded-none p-4 text-left transition truncate text-gray-400 hover:text-white mt-4 flex items-center gap-3 shrink-0">
+          <span>⚙</span> Change Handle
+      </button>
+    </aside>
+
+    <main class="flex-1 min-w-0 p-6 md:p-10 z-10 relative overflow-y-auto">
+        <button id="mobileMenuBtn" aria-label="Open navigation menu" aria-expanded="false" class="lg:hidden text-gray-400 hover:text-white mb-6 focus:outline-none transition-colors">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+
+      <div class="mb-12 reveal visible">
+        <h1 class="text-5xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-indigo-400 pb-2">CPInsight Roadmap</h1>
+        <p class="text-gray-400 mt-2 text-lg">Building the Ultimate Competitive Programming Intelligence Platform.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 reveal">
+        <div class="glass rounded-3xl p-6 flex flex-col justify-center relative overflow-hidden md:col-span-2 hover:-translate-y-1 transition">
+            <div class="absolute -right-10 -top-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="flex justify-between items-end mb-4">
+                <div>
+                    <h2 class="text-xl font-bold tracking-tight text-white">Project Progress</h2>
+                    <p class="text-emerald-400 text-sm font-semibold tracking-wide uppercase mt-1">Phase 1 Complete</p>
+                </div>
+                <div class="text-right">
+                    <h3 class="text-3xl font-black text-white"><span id="progPercent">0</span></h3>
+                </div>
+            </div>
+            <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden shadow-inner mt-2">
+              <div id="progressBar" class="bg-gradient-to-r from-emerald-500 to-indigo-500 h-3 rounded-full transition-all duration-[2000ms] ease-out w-0"></div>
+            </div>
+            <p class="text-gray-500 text-xs font-semibold mt-3 text-right">1 / 9 Phases Completed</p>
+        </div>
+
+        <div class="glass rounded-3xl p-6 flex flex-col justify-center hover:-translate-y-1 transition">
+            <p class="text-gray-400 text-sm uppercase font-semibold">Remaining Phases</p>
+            <h2 class="text-4xl font-black mt-2 text-indigo-400">8</h2>
+            <p class="text-xs text-gray-500 mt-2">Major architectural milestones</p>
+        </div>
+      </div>
+
+      <div class="glass rounded-3xl p-8 mb-20 reveal relative overflow-hidden shadow-xl">
+       <div class="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+       <h2 class="text-2xl font-bold tracking-tight text-white mb-10 text-center">System Architecture</h2>
+
+       <div class="flex flex-col items-center w-full max-w-4xl mx-auto">
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-6 w-full text-center hover:border-emerald-500/30 transition shadow-lg backdrop-blur-sm">
+             <h3 class="text-emerald-400 font-bold uppercase tracking-widest text-sm mb-5 flex items-center justify-center gap-2">
+                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                 Frontend Application
+             </h3>
+             <div class="flex flex-wrap justify-center gap-3">
+                <span class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-4 py-2 rounded-xl text-sm font-medium">Dashboard</span>
+                <span class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-4 py-2 rounded-xl text-sm font-medium">Analytics</span>
+                <span class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-4 py-2 rounded-xl text-sm font-medium">Calendar</span>
+                <span class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-4 py-2 rounded-xl text-sm font-medium">Roadmap</span>
+                <span class="bg-white/5 text-gray-400 border border-white/5 px-4 py-2 rounded-xl text-sm font-medium border-dashed">Compare</span>
+                <span class="bg-white/5 text-gray-400 border border-white/5 px-4 py-2 rounded-xl text-sm font-medium border-dashed">Insights</span>
+             </div>
+          </div>
+
+          <div class="w-0.5 h-10 bg-gradient-to-b from-emerald-500/30 to-blue-500/30 relative">
+             <div class="absolute bottom-0 left-1/2 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-blue-500/30"></div>
+          </div>
+
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-6 w-full text-center hover:border-blue-500/30 transition shadow-lg backdrop-blur-sm">
+             <h3 class="text-blue-400 font-bold uppercase tracking-widest text-sm mb-5 flex items-center justify-center gap-2">
+                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                 Backend Services
+             </h3>
+             <div class="flex flex-wrap justify-center gap-3">
+                <span class="bg-white/5 text-gray-300 border border-white/10 px-4 py-2 rounded-xl text-sm font-medium">Auth Service</span>
+                <span class="bg-white/5 text-gray-300 border border-white/10 px-4 py-2 rounded-xl text-sm font-medium">Analytics Engine</span>
+                <span class="bg-white/5 text-gray-300 border border-white/10 px-4 py-2 rounded-xl text-sm font-medium">Compare Service</span>
+                <span class="bg-white/5 text-gray-300 border border-white/10 px-4 py-2 rounded-xl text-sm font-medium">AI Service</span>
+             </div>
+          </div>
+
+          <div class="w-0.5 h-10 bg-gradient-to-b from-blue-500/30 to-purple-500/30 relative">
+             <div class="absolute bottom-0 left-1/2 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-purple-500/30"></div>
+          </div>
+
+          <div class="flex flex-col md:flex-row w-full gap-4">
+             <div class="bg-white/5 border border-white/10 rounded-2xl p-6 flex-1 text-center hover:border-purple-500/30 transition shadow-lg backdrop-blur-sm">
+                <h3 class="text-purple-400 font-bold uppercase tracking-widest text-xs mb-4">Database</h3>
+                <span class="bg-white/10 border border-white/10 px-5 py-2.5 rounded-xl text-sm font-bold text-gray-200 shadow-inner block w-fit mx-auto">PostgreSQL</span>
+             </div>
+             <div class="bg-white/5 border border-white/10 rounded-2xl p-6 flex-1 text-center hover:border-rose-500/30 transition shadow-lg backdrop-blur-sm">
+                <h3 class="text-rose-400 font-bold uppercase tracking-widest text-xs mb-4">Cache</h3>
+                <span class="bg-white/10 border border-white/10 px-5 py-2.5 rounded-xl text-sm font-bold text-gray-200 shadow-inner block w-fit mx-auto">Redis</span>
+             </div>
+          </div>
+
+          <div class="w-0.5 h-10 bg-gradient-to-b from-purple-500/30 to-amber-500/30 relative">
+             <div class="absolute bottom-0 left-1/2 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-amber-500/30"></div>
+          </div>
+
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-6 w-full text-center hover:border-amber-500/30 transition shadow-lg backdrop-blur-sm">
+             <h3 class="text-amber-400 font-bold uppercase tracking-widest text-sm mb-5 flex items-center justify-center gap-2">
+                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                 External Platforms
+             </h3>
+             <div class="flex flex-wrap justify-center gap-3">
+                <span class="bg-amber-500/10 text-amber-300 border border-amber-500/20 px-4 py-2 rounded-xl text-sm font-medium shadow-sm">Codeforces</span>
+                <span class="bg-amber-500/10 text-amber-300 border border-amber-500/20 px-4 py-2 rounded-xl text-sm font-medium shadow-sm">LeetCode</span>
+                <span class="bg-amber-500/10 text-amber-300 border border-amber-500/20 px-4 py-2 rounded-xl text-sm font-medium shadow-sm">CodeChef</span>
+                <span class="bg-amber-500/10 text-amber-300 border border-amber-500/20 px-4 py-2 rounded-xl text-sm font-medium shadow-sm">AtCoder</span>
+             </div>
+          </div>
+
+       </div>
+      </div>
+
+      <h2 class="text-3xl font-black mb-10 tracking-tight text-white reveal">Development Timeline</h2>
+      
+      <div class="relative wrap overflow-hidden p-0 md:p-4 h-full mb-20">
+         <div class="absolute border-opacity-20 border-white h-full border-l-2 left-[24px] md:left-1/2 md:-translate-x-1/2 top-0 bg-gradient-to-b from-emerald-500/30 via-indigo-500/30 to-transparent w-0"></div>
+
+         <div class="mb-12 flex justify-between items-center w-full flex-row-reverse md:flex-row reveal">
+            <div class="order-1 hidden md:block md:w-5/12"></div>
+            <div class="z-20 flex items-center order-1 bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.8)] w-5 h-5 rounded-full absolute left-[15px] md:left-1/2 transform md:-translate-x-1/2"></div>
+            <div class="order-1 glass rounded-3xl p-6 md:p-8 w-[calc(100%-48px)] md:w-5/12 ml-auto md:ml-0 md:mr-auto hover:-translate-y-2 transition duration-300">
+               <div class="flex items-center gap-3 mb-4">
+                   <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">Complete</span>
+                   <h3 class="text-xl font-bold text-white tracking-tight">Frontend Core</h3>
+               </div>
+               <div class="flex flex-wrap gap-2">
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Dashboard</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Analytics</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Calendar</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Heatmap</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Contest History</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Topic Intelligence</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Skill Radar</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Difficulty Analysis</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Activity Analytics</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Growth Analytics</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Tooltips</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Skeleton Loading</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Error Recovery</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Mobile Navigation</span>
+                   <span class="bg-white/10 text-white border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Responsive Layout</span>
+               </div>
+            </div>
+         </div>
+
+         <div class="mb-12 flex justify-between items-center w-full reveal">
+            <div class="order-1 hidden md:block md:w-5/12"></div>
+            <div class="z-20 flex items-center order-1 bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.8)] w-5 h-5 rounded-full absolute left-[15px] md:left-1/2 transform md:-translate-x-1/2">
+                <div class="w-2 h-2 bg-white rounded-full mx-auto animate-pulse"></div>
+            </div>
+            <div class="order-1 glass border-blue-500/20 rounded-3xl p-6 md:p-8 w-[calc(100%-48px)] md:w-5/12 ml-auto hover:-translate-y-2 transition duration-300">
+               <div class="flex items-center gap-3 mb-4">
+                   <span class="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">Next Phase</span>
+                   <h3 class="text-xl font-bold text-white tracking-tight">Backend Foundation</h3>
+               </div>
+               <p class="text-gray-400 text-sm mb-4 leading-relaxed">Establishing the core server infrastructure to support multi-platform accounts and persistent data storage.</p>
+               <div class="flex flex-wrap gap-2">
+                   <span class="bg-blue-500/10 text-blue-300 border border-blue-500/20 px-3 py-1.5 rounded-lg text-xs font-medium">Node.js</span>
+                   <span class="bg-blue-500/10 text-blue-300 border border-blue-500/20 px-3 py-1.5 rounded-lg text-xs font-medium">Express</span>
+                   <span class="bg-blue-500/10 text-blue-300 border border-blue-500/20 px-3 py-1.5 rounded-lg text-xs font-medium">PostgreSQL</span>
+                   <span class="bg-blue-500/10 text-blue-300 border border-blue-500/20 px-3 py-1.5 rounded-lg text-xs font-medium">Redis</span>
+                   <span class="bg-blue-500/10 text-blue-300 border border-blue-500/20 px-3 py-1.5 rounded-lg text-xs font-medium">Authentication</span>
+                   <span class="bg-blue-500/10 text-blue-300 border border-blue-500/20 px-3 py-1.5 rounded-lg text-xs font-medium">Saved Profiles</span>
+                   <span class="bg-blue-500/10 text-blue-300 border border-blue-500/20 px-3 py-1.5 rounded-lg text-xs font-medium">API Layer</span>
+               </div>
+            </div>
+         </div>
+
+         <div class="mb-12 flex justify-between items-center w-full flex-row-reverse md:flex-row reveal">
+            <div class="order-1 hidden md:block md:w-5/12"></div>
+            <div class="z-20 flex items-center order-1 bg-purple-500 border-4 border-[#070b17] w-5 h-5 rounded-full absolute left-[15px] md:left-1/2 transform md:-translate-x-1/2"></div>
+            <div class="order-1 glass rounded-3xl p-6 md:p-8 w-[calc(100%-48px)] md:w-5/12 ml-auto md:ml-0 md:mr-auto hover:-translate-y-2 transition duration-300">
+               <div class="flex items-center gap-3 mb-4">
+                   <span class="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">Planned</span>
+                   <h3 class="text-xl font-bold text-white tracking-tight">Multi Platform Support</h3>
+               </div>
+               <div class="flex flex-wrap gap-2">
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Codeforces</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">LeetCode</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">CodeChef</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">AtCoder</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Unified CPInsight Rating</span>
+               </div>
+            </div>
+         </div>
+
+         <div class="mb-12 flex justify-between items-center w-full reveal">
+            <div class="order-1 hidden md:block md:w-5/12"></div>
+            <div class="z-20 flex items-center order-1 bg-yellow-500 border-4 border-[#070b17] w-5 h-5 rounded-full absolute left-[15px] md:left-1/2 transform md:-translate-x-1/2"></div>
+            <div class="order-1 glass rounded-3xl p-6 md:p-8 w-[calc(100%-48px)] md:w-5/12 ml-auto hover:-translate-y-2 transition duration-300">
+               <div class="flex items-center gap-3 mb-4">
+                   <span class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">Planned</span>
+                   <h3 class="text-xl font-bold text-white tracking-tight">Compare System</h3>
+               </div>
+               <div class="flex flex-wrap gap-2">
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">User Comparison</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Friend Comparison</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Topic Comparison</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">College Leaderboards</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Contest Comparison</span>
+               </div>
+            </div>
+         </div>
+
+         <div class="mb-12 flex justify-between items-center w-full flex-row-reverse md:flex-row reveal">
+            <div class="order-1 hidden md:block md:w-5/12"></div>
+            <div class="z-20 flex items-center order-1 bg-pink-500 border-4 border-[#070b17] w-5 h-5 rounded-full absolute left-[15px] md:left-1/2 transform md:-translate-x-1/2"></div>
+            <div class="order-1 glass rounded-3xl p-6 md:p-8 w-[calc(100%-48px)] md:w-5/12 ml-auto md:ml-0 md:mr-auto hover:-translate-y-2 transition duration-300">
+               <div class="flex items-center gap-3 mb-4">
+                   <span class="bg-pink-500/20 text-pink-400 border border-pink-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">Planned</span>
+                   <h3 class="text-xl font-bold text-white tracking-tight">AI Intelligence Layer</h3>
+               </div>
+               <div class="flex flex-wrap gap-2">
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Weakness Detection</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Training Plans</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Contest Reviews</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Learning Recommendations</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Plateau Detection</span>
+               </div>
+            </div>
+         </div>
+
+         <div class="mb-12 flex justify-between items-center w-full reveal">
+            <div class="order-1 hidden md:block md:w-5/12"></div>
+            <div class="z-20 flex items-center order-1 bg-orange-500 border-4 border-[#070b17] w-5 h-5 rounded-full absolute left-[15px] md:left-1/2 transform md:-translate-x-1/2"></div>
+            <div class="order-1 glass rounded-3xl p-6 md:p-8 w-[calc(100%-48px)] md:w-5/12 ml-auto hover:-translate-y-2 transition duration-300">
+               <div class="flex items-center gap-3 mb-4">
+                   <span class="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">Planned</span>
+                   <h3 class="text-xl font-bold text-white tracking-tight">Prediction Engine</h3>
+               </div>
+               <div class="flex flex-wrap gap-2">
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Rating Prediction</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Growth Forecasting</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Burnout Detection</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Performance Forecasting</span>
+               </div>
+            </div>
+         </div>
+
+         <div class="mb-12 flex justify-between items-center w-full flex-row-reverse md:flex-row reveal">
+            <div class="order-1 hidden md:block md:w-5/12"></div>
+            <div class="z-20 flex items-center order-1 bg-rose-500 border-4 border-[#070b17] w-5 h-5 rounded-full absolute left-[15px] md:left-1/2 transform md:-translate-x-1/2"></div>
+            <div class="order-1 glass rounded-3xl p-6 md:p-8 w-[calc(100%-48px)] md:w-5/12 ml-auto md:ml-0 md:mr-auto hover:-translate-y-2 transition duration-300">
+               <div class="flex items-center gap-3 mb-4">
+                   <span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">Planned</span>
+                   <h3 class="text-xl font-bold text-white tracking-tight">Real-Time Features</h3>
+               </div>
+               <div class="flex flex-wrap gap-2">
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">WebSockets</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Live Contest Tracking</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Projected Rank</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Friend Activity Tracking</span>
+               </div>
+            </div>
+         </div>
+
+         <div class="mb-12 flex justify-between items-center w-full reveal">
+            <div class="order-1 hidden md:block md:w-5/12"></div>
+            <div class="z-20 flex items-center order-1 bg-indigo-500 border-4 border-[#070b17] w-5 h-5 rounded-full absolute left-[15px] md:left-1/2 transform md:-translate-x-1/2"></div>
+            <div class="order-1 glass rounded-3xl p-6 md:p-8 w-[calc(100%-48px)] md:w-5/12 ml-auto hover:-translate-y-2 transition duration-300">
+               <div class="flex items-center gap-3 mb-4">
+                   <span class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">Planned</span>
+                   <h3 class="text-xl font-bold text-white tracking-tight">Community Platform</h3>
+               </div>
+               <div class="flex flex-wrap gap-2">
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Public Profiles</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Shareable Analytics Cards</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Communities</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Friend Networks</span>
+               </div>
+            </div>
+         </div>
+
+         <div class="mb-12 flex justify-between items-center w-full flex-row-reverse md:flex-row reveal">
+            <div class="order-1 hidden md:block md:w-5/12"></div>
+            <div class="z-20 flex items-center order-1 bg-teal-500 border-4 border-[#070b17] w-5 h-5 rounded-full absolute left-[15px] md:left-1/2 transform md:-translate-x-1/2"></div>
+            <div class="order-1 glass rounded-3xl p-6 md:p-8 w-[calc(100%-48px)] md:w-5/12 ml-auto md:ml-0 md:mr-auto hover:-translate-y-2 transition duration-300">
+               <div class="flex items-center gap-3 mb-4">
+                   <span class="bg-teal-500/20 text-teal-400 border border-teal-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">Planned</span>
+                   <h3 class="text-xl font-bold text-white tracking-tight">Production Engineering</h3>
+               </div>
+               <div class="flex flex-wrap gap-2">
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Monitoring</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Background Jobs</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Rate Limiting</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Caching</span>
+                   <span class="bg-white/5 text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium">Production Deployment</span>
+               </div>
+            </div>
+         </div>
+
+      </div>
+
+      <h2 class="text-3xl font-black mb-8 tracking-tight text-white reveal">Project Overview</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 reveal mb-10">
+          <div class="glass rounded-3xl p-6 text-center hover:-translate-y-1 transition">
+              <p class="text-gray-400 text-xs uppercase font-semibold tracking-wider mb-2">Current Features</p>
+              <h3 class="text-4xl font-black text-emerald-400" id="statCurrent">0</h3>
+          </div>
+          <div class="glass rounded-3xl p-6 text-center hover:-translate-y-1 transition">
+              <p class="text-gray-400 text-xs uppercase font-semibold tracking-wider mb-2">Planned Features</p>
+              <h3 class="text-4xl font-black text-indigo-400" id="statPlanned">0</h3>
+          </div>
+          <div class="glass rounded-3xl p-6 text-center hover:-translate-y-1 transition">
+              <p class="text-gray-400 text-xs uppercase font-semibold tracking-wider mb-2">Target Platforms</p>
+              <h3 class="text-4xl font-black text-purple-400" id="statPlatforms">0</h3>
+          </div>
+          <div class="glass rounded-3xl p-6 text-center hover:-translate-y-1 transition">
+              <p class="text-gray-400 text-xs uppercase font-semibold tracking-wider mb-2">AI Modules</p>
+              <h3 class="text-4xl font-black text-rose-400" id="statAI">0</h3>
+          </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    async function initRoadmap() {
+        // Remove blur to reveal page instantly since there is no data to fetch for roadmap viewing
+        document.getElementById("mainApp").classList.remove("blur-md", "pointer-events-none");
+        
+        // Initialize standard animations
+        if (typeof initRevealAnimations === 'function') initRevealAnimations();
+
+        // Animate the main progress bar
+        setTimeout(() => {
+            const bar = document.getElementById("progressBar");
+            if(bar) bar.style.width = "11%";
+        }, 400);
+
+        // Animate the KPI counters using shared.js utility
+        if (typeof triggerOnScroll === 'function') {
+            triggerOnScroll("progPercent", 0, 11, 2000, "%");
+            triggerOnScroll("statCurrent", 0, 15, 2000);
+            triggerOnScroll("statPlanned", 0, 35, 2000);
+            triggerOnScroll("statPlatforms", 0, 4, 2000);
+            triggerOnScroll("statAI", 0, 5, 2000);
+        }
+
+        // Initialize mobile sidebar logic if it exists in shared.js
+        if (typeof initializeMobileSidebar === 'function') initializeMobileSidebar();
+
+        // Auto-load profile if handle exists in localStorage
+        const handle = localStorage.getItem('cf_handle');
+        if (handle) {
+            try {
+                const res = await fetch(`https://codeforces.com/api/user.info?handles=${handle}`);
+                if (!res.ok) throw new Error("Network response was not ok");
+                const data = await res.json();
+                if (data.status === 'OK' && typeof renderSidebarProfile === 'function') {
+                    renderSidebarProfile(data.result[0]);
+                }
+            } catch (e) {
+                console.error("Could not load sidebar profile for Roadmap view", e);
+            }
+        } else {
+            // Hide loaders if no handle
+            const profileLoader = document.getElementById('profileLoader');
+            const profileImage = document.getElementById('profileImage');
+            if(profileLoader) profileLoader.classList.add('hidden');
+            if(profileImage) {
+                profileImage.src = '../Assets/favicon_32.png';
+                profileImage.classList.remove('hidden');
+            }
+        }
+    }
+
+    // Launch Roadmap initialization on load
+    window.addEventListener('DOMContentLoaded', initRoadmap);
+  </script>
+</body>
+</html>
