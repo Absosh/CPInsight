@@ -123,32 +123,28 @@ async function syncPlatformAccount(userId, account) {
         }
       }
     } else if (platform === 'codechef' && client.getPublicProfile) {
-      const codechefData = await client.getPublicProfile(handle).catch(e => {
-            console.error(
-                `Failed to fetch ${platform} profile for ${handle}:`,
-                e.message
-            );
-            return null;
-        });
+      const codechefData = await client.getPublicProfile(handle);
 
-      if (codechefData) {
-        userInfo = codechefData.profile || null;
-        submissions = Array.isArray(codechefData.submissions) ? codechefData.submissions : [];
-        contests = Array.isArray(codechefData.contests) ? codechefData.contests : [];
-        metadataPatch = {
-          ...(metadataPatch || {}),
-          codechefStats: codechefData.stats || {},
-          codechefHeatmap: codechefData.heatmap || {},
-          codechefProfile: {
-            stars: codechefData.profile?.stars || null,
-            globalRank: codechefData.profile?.globalRank || null,
-            countryRank: codechefData.profile?.countryRank || null,
-            institution: codechefData.profile?.institution || null,
-            country: codechefData.profile?.country || null,
-            totalProblemsSolved: codechefData.profile?.totalProblemsSolved || 0
-          }
-        };
+      if (!codechefData?.profile) {
+        throw new Error(`CodeChef sync returned no profile for ${handle}`);
       }
+
+      userInfo = codechefData.profile;
+      submissions = Array.isArray(codechefData.submissions) ? codechefData.submissions : [];
+      contests = Array.isArray(codechefData.contests) ? codechefData.contests : [];
+      metadataPatch = {
+        ...(metadataPatch || {}),
+        codechefStats: codechefData.stats || {},
+        codechefHeatmap: codechefData.heatmap || {},
+        codechefProfile: {
+          stars: codechefData.profile?.stars || null,
+          globalRank: codechefData.profile?.globalRank || null,
+          countryRank: codechefData.profile?.countryRank || null,
+          institution: codechefData.profile?.institution || null,
+          country: codechefData.profile?.country || null,
+          totalProblemsSolved: codechefData.profile?.totalProblemsSolved || 0
+        }
+      };
     }
 
     if (userInfo) {
@@ -246,10 +242,13 @@ async function syncPlatformAccount(userId, account) {
               platform,
               externalId,
               contest.contestName || 'Unknown Contest',
-              contest.oldRating || null,
-              contest.newRating || null,
-              contest.newRating != null &&
-              contest.oldRating != null? contest.newRating - contest.oldRating: null,
+              contest.oldRating ?? null,
+              contest.newRating ?? null,
+              contest.ratingDelta ?? (
+                contest.newRating != null && contest.oldRating != null
+                  ? contest.newRating - contest.oldRating
+                  : null
+              ),
               new Date(contest.ratingUpdateTimeSeconds * 1000),
               contest.rank || null
             ]
@@ -260,12 +259,11 @@ async function syncPlatformAccount(userId, account) {
       }
     }
 
-    // Invalidate persisted analytics cache for this user/platform and combined payload.
+    // Invalidate persisted analytics cache for this user so resyncs never serve stale derived data.
     await pool.query(
       `DELETE FROM analytics_cache
-       WHERE user_id = $1
-         AND (platform = $2::cp_platform OR platform IS NULL)`,
-      [userId, platform]
+       WHERE user_id = $1`,
+      [userId]
     );
     await delByPattern(`analytics:${userId}:*`).catch(() => {});
 

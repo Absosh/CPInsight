@@ -350,13 +350,15 @@
                     <thead class="sticky top-0 bg-[#070b17]/95 backdrop-blur-md shadow-md z-10">
                         <tr class="border-b border-white/10 text-gray-400 text-left">
                             <th class="py-4 font-semibold uppercase tracking-wider text-xs">Contest</th>
-                            <th class="py-4 font-semibold uppercase tracking-wider text-xs cursor-pointer hover:text-white transition select-none group" onclick="sortTable('platform')">
-                                <span id="secondaryColumnLabel">Platform</span> <span id="rankSortIcon" class="inline-block w-3 text-emerald-400 ml-1 group-hover:text-emerald-300"></span>
+                            <th class="py-4 font-semibold uppercase tracking-wider text-xs">
+                                <span id="secondaryColumnLabel">Platform</span>
                             </th>
                             <th id="previousRatingLabel" class="py-4 font-semibold uppercase tracking-wider text-xs">Previous</th>
-                            <th id="newRatingLabel" class="py-4 font-semibold uppercase tracking-wider text-xs">New</th>
+                            <th class="py-4 font-semibold uppercase tracking-wider text-xs cursor-pointer hover:text-white transition select-none group" onclick="sortTable('newRating')">
+                                <span id="newRatingLabel">New</span> <span id="newRatingSortIcon" class="inline-block w-8 text-emerald-400 ml-1 group-hover:text-emerald-300">▲▼</span>
+                            </th>
                             <th class="py-4 font-semibold uppercase tracking-wider text-xs cursor-pointer hover:text-white transition select-none group" onclick="sortTable('change')">
-                                Change <span id="changeSortIcon" class="inline-block w-3 text-emerald-400 ml-1 group-hover:text-emerald-300"></span>
+                                Change <span id="changeSortIcon" class="inline-block w-8 text-emerald-400 ml-1 group-hover:text-emerald-300">▲▼</span>
                             </th>
                         </tr>
                     </thead>
@@ -369,7 +371,7 @@
 
   </div>
 
- <script src="../script/dashboard.js?v=14"></script>
+ <script src="../script/dashboard.js?v=15"></script>
     <div id="notificationContainer"></div>
 
 

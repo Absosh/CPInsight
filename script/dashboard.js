@@ -136,8 +136,8 @@ function showMetricValue(id, value) {
 }
 
 function updateSortIcons() {
-    setText('rankSortIcon', currentSort.column === 'platform' ? (currentSort.asc ? '↑' : '↓') : '');
-    setText('changeSortIcon', currentSort.column === 'change' ? (currentSort.asc ? '↑' : '↓') : '');
+    setText('newRatingSortIcon', currentSort.column === 'newRating' ? (currentSort.asc ? '▲' : '▼') : '▲▼');
+    setText('changeSortIcon', currentSort.column === 'change' ? (currentSort.asc ? '▲' : '▼') : '▲▼');
 }
 
 function destroyCharts() {
@@ -656,6 +656,13 @@ function renderContestTable() {
 }
 
 function sortTable(column) {
+    if (!['change', 'newRating'].includes(column)) {
+        return;
+    }
+
+    const scrollContainer = document.getElementById('contestTable')?.closest('.overflow-y-auto');
+    const scrollTop = scrollContainer?.scrollTop || 0;
+
     if (currentSort.column === column) {
         currentSort.asc = !currentSort.asc;
     } else {
@@ -663,22 +670,16 @@ function sortTable(column) {
     }
 
     currentRows.sort((a, b) => {
-        let valueA;
-        let valueB;
-
-        if (column === 'platform') {
-            valueA = a.platform || '';
-            valueB = b.platform || '';
-            return currentSort.asc ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
-        }
-
-        valueA = a.change || 0;
-        valueB = b.change || 0;
+        const valueA = Number(a[column] || 0);
+        const valueB = Number(b[column] || 0);
         return currentSort.asc ? valueA - valueB : valueB - valueA;
     });
 
     updateSortIcons();
     renderContestTable();
+    if (scrollContainer) {
+        scrollContainer.scrollTop = scrollTop;
+    }
 }
 
 function renderSummaryStats(analytics, activePlatforms, layout) {

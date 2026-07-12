@@ -69,6 +69,19 @@ function currentStreak(submissions) {
   return streak;
 }
 
+function solvedProblemKey(submission) {
+  const key = submission.problem_key;
+  if (!key) return null;
+  if (submission.platform === 'leetcode' && key.startsWith('leetcode-calendar-')) return null;
+  return key;
+}
+
+function allCalendarActivityWithin(dayCounts, cutoffTime) {
+  const days = Object.keys(normalizeDayCountMap(dayCounts));
+  if (days.length === 0) return false;
+  return days.every((day) => new Date(`${day}T00:00:00.000Z`).getTime() >= cutoffTime);
+}
+
 function platformAnalytics(platform, facts) {
   if (!facts.account) throw new HttpError(404, `No ${platform} account connected`);
 
@@ -76,25 +89,27 @@ function platformAnalytics(platform, facts) {
   const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
   const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
 
-  const solvedLastYear = new Set(
+  let solvedLastYear = new Set(
       accepted
           .filter(
               submission =>
                   new Date(submission.submitted_at).getTime() >= oneYearAgo
           )
-          .map(submission => submission.problem_key)
+          .map(solvedProblemKey)
+          .filter(Boolean)
   ).size;
 
-  const solvedLastMonth = new Set(
+  let solvedLastMonth = new Set(
       accepted
           .filter(
               submission =>
                   new Date(submission.submitted_at).getTime() >= oneMonthAgo
           )
-          .map(submission => submission.problem_key)
+          .map(solvedProblemKey)
+          .filter(Boolean)
   ).size;
 
-  const solved = new Set(accepted.map((submission) => submission.problem_key));
+  const solved = new Set(accepted.map(solvedProblemKey).filter(Boolean));
   const ratingProgression = facts.contests.map((contest) => ({
     contestName: contest.contest_name,
     rating: contest.rating_after,
@@ -118,15 +133,11 @@ function platformAnalytics(platform, facts) {
       submittedAt: submission.submitted_at
     }));
 
-  // LeetCode public profile exposes aggregate accepted stats by difficulty.
-  // Prefer these aggregates to avoid undercounting from synthetic submission rows.
-  if (platform === 'leetcode' && facts.account?.metadata?.leetcodeStats) {
+  if (platform === 'leetcode' && facts.account?.metadata?.leetcodeStats?.all) {
     const allStats = facts.account.metadata.leetcodeStats.all;
-    if (allStats) {
-      solvedProblems = Number(allStats.count || solvedProblems);
-      acceptedSubmissions = Number(allStats.submissions || acceptedSubmissions);
-      // Until full attempt history is available, treat LeetCode total submissions as accepted submissions aggregate.
-      totalSubmissions = acceptedSubmissions;
+    const aggregateSolved = Number(allStats.count || 0);
+    if (aggregateSolved > 0) {
+      solvedProblems = aggregateSolved;
     }
   }
 
@@ -135,40 +146,27 @@ function platformAnalytics(platform, facts) {
     if (Object.keys(calendarHeatmap).length > 0) {
       activityHeatmap = calendarHeatmap;
     }
-  }
-  if (platform === 'codechef' && facts.account?.metadata?.codechefStats) {
-    solvedProblems = Number(facts.account.metadata.codechefStats.totalProblemsSolved || solvedProblems);
-  }
 
+    if (solvedProblems > solvedLastYear && allCalendarActivityWithin(calendarHeatmap, oneYearAgo)) {
+      solvedLastYear = solvedProblems;
+    }
+
+    if (solvedProblems > solvedLastMonth && allCalendarActivityWithin(calendarHeatmap, oneMonthAgo)) {
+      solvedLastMonth = solvedProblems;
+    }
+  }
   if (platform === 'codechef' && facts.account?.metadata?.codechefHeatmap) {
     const codechefHeatmap = normalizeDayCountMap(facts.account.metadata.codechefHeatmap);
     if (Object.keys(codechefHeatmap).length > 0) {
       activityHeatmap = codechefHeatmap;
     }
   }
-  // 1. LeetCode Proxy Approximation
-  let proxyLastYear = solvedLastYear;
-  let proxyLastMonth = solvedLastMonth;
-
-  if (platform === 'leetcode' && Object.keys(activityHeatmap).length > 0) {
-      proxyLastYear = Object.entries(activityHeatmap)
-          .filter(([day]) => new Date(day).getTime() >= oneYearAgo)
-          .reduce((sum, [, count]) => sum + count, 0);
-          
-      proxyLastMonth = Object.entries(activityHeatmap)
-          .filter(([day]) => new Date(day).getTime() >= oneMonthAgo)
-          .reduce((sum, [, count]) => sum + count, 0);
-  }
-
-  // 2. Enforce Strict Mathematical Invariants
-  const safeSolvedLastYear = Math.min(Math.max(solvedLastYear, proxyLastYear), solvedProblems);
-  const safeSolvedLastMonth = Math.min(Math.max(solvedLastMonth, proxyLastMonth), safeSolvedLastYear);
   return {
     platform,
     handle: facts.account.handle,
     solvedProblems,
-    solvedLastYear: safeSolvedLastYear, // Updated
-    solvedLastMonth: safeSolvedLastMonth, // Updated
+    solvedLastYear,
+    solvedLastMonth,
     totalSubmissions,
     acceptedSubmissions,
     contestCount: facts.contests.length,

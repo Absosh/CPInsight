@@ -47,6 +47,26 @@ function epochSeconds(value) {
   return Number.isFinite(parsed) ? Math.floor(parsed / 1000) : null;
 }
 
+function codeChefTimestampSeconds(value) {
+  const text = cleanText(value);
+  const match = text.match(/^(\d{1,2}):(\d{2})\s*([AP]M)\s+(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/i);
+  if (!match) return epochSeconds(text);
+
+  let [, hourText, minuteText, meridiem, monthText, dayText, yearText] = match;
+  let hour = Number(hourText);
+  const minute = Number(minuteText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  let year = Number(yearText);
+
+  if (year < 100) year += 2000;
+  if (/pm/i.test(meridiem) && hour !== 12) hour += 12;
+  if (/am/i.test(meridiem) && hour === 12) hour = 0;
+
+  const millis = Date.UTC(year, month - 1, day, hour, minute, 0);
+  return Number.isFinite(millis) ? Math.floor(millis / 1000) : null;
+}
+
 function dateKeyFromValue(value) {
   const dateParts = String(value || '').trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
   if (dateParts) {
@@ -183,7 +203,6 @@ function normalizeContest(item, index) {
     item.contest_name || item.name || item.contestName || item.title || item[1] || contestCode || 'CodeChef Contest'
   );
   const rating = toNumber(item.rating || item.new_rating || item.newRating || item[2] || item.y);
-  const oldRating = toNumber(item.old_rating || item.oldRating || item.previous_rating || item[3]);
   const rank = toNumber(item.rank || item.global_rank || item.globalRank);
   const dateValue = item.end_date || item.date || item.time || item.ratingUpdateTimeSeconds || item.x || item[4];
   const seconds = epochSeconds(dateValue);
@@ -193,7 +212,7 @@ function normalizeContest(item, index) {
   return {
     contestId: contestCode || `codechef-contest-${index + 1}`,
     contestName,
-    oldRating,
+    oldRating: null,
     newRating: rating,
     ratingUpdateTimeSeconds: seconds || Math.floor(Date.now() / 1000),
     rank,
@@ -228,18 +247,16 @@ function parseContestHistory(html) {
       );
 
   for (let i = 0; i < parsed.length; i++) {
-
-      if (
-          parsed[i].oldRating == null &&
-          i > 0 &&
-          parsed[i - 1].newRating != null
-      ) {
-          parsed[i].oldRating =
-              parsed[i - 1].newRating;
+      if (parsed[i].oldRating == null) {
+          parsed[i].oldRating = i > 0 && parsed[i - 1].newRating != null
+              ? parsed[i - 1].newRating
+              : 0;
       }
-
+      parsed[i].ratingDelta = parsed[i].newRating != null
+          ? parsed[i].newRating - parsed[i].oldRating
+          : null;
   }
-
+  
   return parsed;
 }
 
@@ -348,8 +365,8 @@ function parseRecentSubmissions(html) {
     const statusTitle = statusCell.find('span[title]').first().attr('title');
     const verdict = normalizeVerdict(statusTitle || statusCell.attr('title') || statusCell.text());
     const language = cells.find((cell) => /(C\+\+|JAVA|PYTHON|PYPY|C#|RUBY|GO|RUST|KOTLIN|JAVASCRIPT|NODE|PHP|C$)/i.test(cell)) || null;
-    const timeCell = cells.find((cell) => epochSeconds(cell)) || null;
-    const submittedAt = epochSeconds(timeCell);
+    const timeCell = row.find('td').first().attr('title') || cells.find((cell) => codeChefTimestampSeconds(cell)) || null;
+    const submittedAt = codeChefTimestampSeconds(timeCell);
 
     if (!problemCode || !submittedAt) return;
 
@@ -391,18 +408,63 @@ async function cachedHtml(cacheKey, path, params) {
   }
 }
 
+async function cachedRecentPage(handle, page) {
+  const normalizedHandle = handle.toLowerCase();
+  const cached = await getJson(`upstream:codechef:recent-page:${normalizedHandle}:${page}`).catch(() => null);
+  if (cached?.html) return cached;
+
+  try {
+    const response = await client.get('/recent/user', {
+      params: { user_handle: handle, page }
+    });
+    const html = typeof response.data === 'string' ? response.data : response.data?.content;
+    if (response.status < 200 || response.status >= 300 || typeof html !== 'string') {
+      throw new CodeChefError(`CodeChef returned an unexpected response for recent page ${page}`);
+    }
+
+    const payload = {
+      html,
+      maxPage: Math.max(1, Number(response.data?.max_page || page || 1))
+    };
+    await setJson(`upstream:codechef:recent-page:${normalizedHandle}:${page}`, payload, CACHE_TTL_SECONDS).catch(() => {});
+    return payload;
+  } catch (error) {
+    if (error instanceof CodeChefError) throw error;
+    const status = error.response?.status;
+    const suffix = status ? ` (HTTP ${status})` : '';
+    throw new CodeChefError(`CodeChef recent activity is unavailable${suffix}`, error);
+  }
+}
+
+async function getAllRecentSubmissions(handle) {
+  const firstPage = await cachedRecentPage(handle, 1);
+  const pages = [firstPage.html];
+  const maxPage = Math.max(1, Math.min(firstPage.maxPage || 1, 100));
+
+  for (let page = 2; page <= maxPage; page += 1) {
+    const pageData = await cachedRecentPage(handle, page);
+    pages.push(pageData.html);
+  }
+
+  const seen = new Set();
+  return pages
+    .flatMap(parseRecentSubmissions)
+    .filter((submission) => {
+      if (!submission.id || seen.has(submission.id)) return false;
+      seen.add(submission.id);
+      return true;
+    });
+}
+
 async function getPublicProfile(handle) {
   const normalizedHandle = handle.toLowerCase();
-  const [profileHtml, recentHtml] = await Promise.all([
-    cachedHtml(`upstream:codechef:profile-html:${normalizedHandle}`, `/users/${encodeURIComponent(handle)}`),
-    cachedHtml(`upstream:codechef:recent-html:${normalizedHandle}`, '/recent/user', { user_handle: handle })
-  ]);
+  const profileHtml = await cachedHtml(`upstream:codechef:profile-html:${normalizedHandle}`, `/users/${encodeURIComponent(handle)}`);
 
   const settings = findDrupalSettings(profileHtml);
   const profile = parseProfile(profileHtml, handle, settings);
   const heatmap = parseHeatmap(profileHtml);
   const contests = parseContestHistory(profileHtml);
-  const submissions = parseRecentSubmissions(recentHtml);
+  const submissions = await getAllRecentSubmissions(handle);
 
   return {
     profile,
