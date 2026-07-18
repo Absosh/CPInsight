@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compare | CPInsight</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../Assets/favicon_32.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="../css/shared.css?v=2" />
+  <script src="../script/auth.js?v=2"></script>
+  <script src="../script/shared.js?v=2"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    .compare-card { border-radius: 8px; }
+    .winner-current { background: linear-gradient(90deg, rgba(16,185,129,0.16), rgba(16,185,129,0.03)); box-shadow: inset 3px 0 0 rgba(52,211,153,0.9), 0 0 22px rgba(16,185,129,0.08); }
+    .winner-compared { background: linear-gradient(90deg, rgba(244,63,94,0.16), rgba(244,63,94,0.03)); box-shadow: inset 3px 0 0 rgba(251,113,133,0.9), 0 0 22px rgba(244,63,94,0.08); }
+    .winner-tie { background: linear-gradient(90deg, rgba(148,163,184,0.12), rgba(148,163,184,0.03)); box-shadow: inset 3px 0 0 rgba(148,163,184,0.65); }
+    .chart-box { min-height: 340px; }
+    .compare-heat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(12px, 1fr)); gap: 4px; }
+    .compare-heat-cell { aspect-ratio: 1; border-radius: 3px; border: 1px solid rgba(255,255,255,0.05); }
+    .metric-pill { border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.22); border-radius: 999px; }
+    .section-shell { overflow: visible; }
+  </style>
+</head>
+
+<body>
+  <script src="../script/services/httpClient.js?v=5"></script>
+  <script src="../script/services/authService.js?v=5"></script>
+  <script src="../script/services/userService.js?v=5"></script>
+  <script src="../script/services/platformService.js?v=5"></script>
+  <script src="../script/services/analyticsService.js?v=6"></script>
+  <script src="../script/services/stateManager.js?v=5"></script>
+  <script src="../script/components/notification.js?v=5"></script>
+  <script src="../script/components/userMenu.js?v=5"></script>
+  <script src="../script/utils/routeProtection.js?v=5"></script>
+  <script>RouteProtection.protectPage();</script>
+
+  <canvas id="particleCanvas" class="fixed inset-0 w-full h-full z-[-1] pointer-events-none"></canvas>
+
+  <div id="mainApp" class="flex min-h-screen overflow-x-hidden">
+    <div id="mobileBackdrop" aria-hidden="true"></div>
+    <aside id="appSidebar" class="w-[320px] min-w-[320px] glass border-r border-white/10 p-6 overflow-hidden !rounded-none flex flex-col">
+      <div class="flex items-center gap-1 mb-10">
+        <img src="../Assets/logo.png" alt="CPInsight Logo" class="w-10 h-10 object-contain mt-0.5" onerror="this.style.display='none'">
+        <h1 class="text-3xl font-black tracking-tight leading-none">CPInsight</h1>
+      </div>
+
+      <div class="glass rounded-3xl p-5 mb-10">
+        <div class="flex flex-col items-center gap-5">
+          <div id="profileLoader" class="w-20 h-20 rounded-full skeleton flex items-center justify-center"><div class="loader"></div></div>
+          <img id="profileImage" src="" class="hidden w-20 h-20 rounded-full object-cover border-2 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]" />
+          <div id="userDisplay" class="hidden text-center">
+            <h2 id="username" class="text-2xl font-bold tracking-tight">--</h2>
+            <p id="rank" class="text-emerald-400 text-sm mt-1 uppercase tracking-widest font-semibold">--</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='dashboard.html'">Dashboard</button>
+        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='analytics.html'">Analytics</button>
+        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 pointer-events-none">Contests</button>
+        <button class="w-full min-w-0 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl p-4 text-left font-semibold truncate shadow-[0_0_10px_rgba(16,185,129,0.1)] transition">Compare</button>
+        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='calendar.html'">Calendar</button>
+      </div>
+
+      <button onclick="window.location.href='platforms.html'" class="w-full min-w-0 hover:bg-white/5 border border-transparent border-t-white/10 rounded-none p-4 text-left transition truncate text-gray-400 hover:text-white mt-4 flex items-center gap-3">
+        Manage Platforms
+      </button>
+    </aside>
+
+    <main class="flex-1 min-w-0 p-6 md:p-10 z-10 relative">
+      <button id="mobileMenuBtn" aria-label="Open navigation menu" aria-expanded="false" class="lg:hidden text-gray-400 hover:text-white mb-6 focus:outline-none transition-colors">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      </button>
+
+      <div class="mb-8 reveal visible relative z-50">
+        <div class="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-6">
+          <div>
+            <p class="text-emerald-400 text-xs uppercase tracking-[0.25em] font-black mb-3">Two-user comparison</p>
+            <h1 class="text-4xl md:text-5xl font-black tracking-tight">Compare</h1>
+            <p id="compareStatus" class="text-gray-400 mt-2">Select a registered CPInsight username to compare synced performance.</p>
+          </div>
+          <form id="compareForm" class="glass compare-card p-3 flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+            <input id="compareUsername" type="text" autocomplete="off" placeholder="CPInsight username" class="bg-black/40 border border-white/10 rounded-lg px-4 py-3 outline-none min-w-0 sm:w-72 focus:border-emerald-500 transition" />
+            <button class="bg-emerald-500 hover:bg-emerald-400 text-gray-950 rounded-lg px-5 py-3 font-black transition" type="submit">Compare</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="emptyState" class="glass compare-card p-10 text-center text-gray-300">
+        <h2 class="text-2xl font-black text-white mb-2">Ready when you are.</h2>
+        <p>Comparison uses only synced database records for two registered CPInsight users.</p>
+      </div>
+
+      <div id="loadingState" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+        <div class="skeleton h-32 rounded-lg"></div>
+        <div class="skeleton h-32 rounded-lg"></div>
+        <div class="skeleton h-32 rounded-lg"></div>
+        <div class="skeleton h-32 rounded-lg"></div>
+      </div>
+
+      <div id="compareContent" class="hidden space-y-8">
+        <section class="glass compare-card section-shell p-6 reveal visible">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-6">
+            <div>
+              <p class="text-gray-400 text-sm uppercase font-bold tracking-wider">Overview</p>
+              <h2 id="matchupTitle" class="text-3xl font-black mt-1">Current User VS Compared User</h2>
+            </div>
+            <div id="overallWinner" class="metric-pill px-5 py-3 text-sm font-bold text-gray-200"></div>
+          </div>
+          <div id="kpiGrid" class="grid md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6"></div>
+          <div class="overflow-x-auto scrollbar">
+            <table class="w-full min-w-[760px]">
+              <thead>
+                <tr class="text-left text-xs uppercase tracking-wider text-gray-400 border-b border-white/10">
+                  <th class="py-3 px-3">Metric</th>
+                  <th class="py-3 px-3" id="currentHeader">Current User</th>
+                  <th class="py-3 px-3" id="comparedHeader">Compared User</th>
+                  <th class="py-3 px-3">Winner</th>
+                </tr>
+              </thead>
+              <tbody id="overviewTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="space-y-4 reveal visible">
+          <div class="flex items-center justify-between">
+            <h2 class="text-2xl font-black">Rating Comparison</h2>
+          </div>
+          <div id="ratingCharts" class="grid grid-cols-1 xl:grid-cols-3 gap-4"></div>
+        </section>
+
+        <section class="glass compare-card section-shell p-6 reveal visible">
+          <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-2xl font-black">Submission Heatmap Comparison</h2>
+              <p class="text-gray-400 text-sm mt-1">Green favors current user, red favors compared user, gray is equal.</p>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-gray-400">
+              <span>Small</span><span class="w-4 h-4 rounded-sm bg-emerald-900"></span><span class="w-4 h-4 rounded-sm bg-emerald-500"></span><span>Large</span>
+            </div>
+          </div>
+          <div id="compareHeatmap" class="compare-heat-grid mb-6"></div>
+          <div id="heatmapStats" class="grid md:grid-cols-4 gap-3"></div>
+        </section>
+
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 reveal visible">
+          <div class="glass compare-card section-shell p-6">
+            <h2 class="text-2xl font-black mb-4">Skill Comparison</h2>
+            <div class="chart-box relative"><canvas id="skillRadar" class="absolute inset-0"></canvas></div>
+          </div>
+          <div class="glass compare-card section-shell p-6">
+            <h2 class="text-2xl font-black mb-4">Problem Solving</h2>
+            <div class="chart-box relative"><canvas id="problemBars" class="absolute inset-0"></canvas></div>
+            <div id="problemStats" class="grid sm:grid-cols-2 gap-3 mt-4"></div>
+          </div>
+        </section>
+
+        <section class="glass compare-card section-shell p-6 reveal visible">
+          <h2 class="text-2xl font-black mb-4">Contest Intelligence</h2>
+          <div id="contestCards" class="grid md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6"></div>
+          <div id="contestRows" class="grid lg:grid-cols-2 gap-3"></div>
+        </section>
+
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 reveal visible">
+          <div class="glass compare-card section-shell p-6">
+            <h2 id="currentPieTitle" class="text-2xl font-black mb-4">Current User Distribution</h2>
+            <div class="chart-box relative"><canvas id="currentPie" class="absolute inset-0"></canvas></div>
+            <div id="currentPieTable" class="mt-4 space-y-2"></div>
+          </div>
+          <div class="glass compare-card section-shell p-6">
+            <h2 id="comparedPieTitle" class="text-2xl font-black mb-4">Compared User Distribution</h2>
+            <div class="chart-box relative"><canvas id="comparedPie" class="absolute inset-0"></canvas></div>
+            <div id="comparedPieTable" class="mt-4 space-y-2"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="notificationContainer"></div>
+  <script src="../script/compare.js?v=1"></script>
+</body>
+
+</html>

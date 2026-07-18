@@ -1,0 +1,451 @@
+let compareData = null;
+const compareCharts = {};
+const lazyChartKeys = new Set();
+
+const COLORS = {
+  current: '#10b981',
+  compared: '#f43f5e',
+  neutral: '#94a3b8',
+  codeforces: '#10b981',
+  codechef: '#f59e0b',
+  leetcode: '#6366f1'
+};
+
+function setText(id, value) {
+  const element = document.getElementById(id);
+  if (element) element.textContent = value;
+}
+
+function fmt(value, suffix = '') {
+  if (value === null || value === undefined || Number.isNaN(value)) return '--';
+  if (typeof value === 'number') return `${Math.round(value)}${suffix}`;
+  return `${value}${suffix}`;
+}
+
+function titleCase(value) {
+  return (value || '').replace(/(^|\s)\S/g, (text) => text.toUpperCase());
+}
+
+function showShell() {
+  const modal = document.getElementById('welcomeModal');
+  if (modal) modal.classList.add('hidden');
+  const main = document.getElementById('mainApp');
+  if (main) main.classList.remove('blur-md', 'pointer-events-none');
+}
+
+function renderSidebar(state) {
+  const profile = state.profile.data;
+  if (!profile) return;
+  const displayName = profile.user_profile?.display_name || profile.username || 'User';
+  setText('username', displayName);
+  setText('rank', 'Compare Mode');
+  const loader = document.getElementById('profileLoader');
+  const userDisplay = document.getElementById('userDisplay');
+  const image = document.getElementById('profileImage');
+  if (profile.user_profile?.avatar_url) {
+    image.src = profile.user_profile.avatar_url;
+    image.classList.remove('hidden');
+  }
+  loader?.classList.add('hidden');
+  userDisplay?.classList.remove('hidden');
+}
+
+async function loadComparison(username) {
+  const cleaned = username.trim();
+  if (!cleaned) {
+    setText('compareStatus', 'Enter a CPInsight username first.');
+    return;
+  }
+
+  document.getElementById('emptyState')?.classList.add('hidden');
+  document.getElementById('compareContent')?.classList.add('hidden');
+  document.getElementById('loadingState')?.classList.remove('hidden');
+  setText('compareStatus', `Loading synced records for ${cleaned}...`);
+
+  try {
+    compareData = await httpClient.get(`/analytics/compare/${encodeURIComponent(cleaned)}`);
+    document.getElementById('loadingState')?.classList.add('hidden');
+
+    if (compareData.noComparedPlatformData) {
+      setText('compareStatus', compareData.message || 'No platform data available.');
+      document.getElementById('emptyState')?.classList.remove('hidden');
+      document.getElementById('emptyState').innerHTML = '<h2 class="text-2xl font-black text-white mb-2">No platform data available.</h2><p>The compared user exists but has not synced connected platforms yet.</p>';
+      return;
+    }
+
+    renderComparison(compareData);
+    setText('compareStatus', 'Comparison loaded from synced database records.');
+  } catch (error) {
+    document.getElementById('loadingState')?.classList.add('hidden');
+    document.getElementById('emptyState')?.classList.remove('hidden');
+    document.getElementById('emptyState').innerHTML = `<h2 class="text-2xl font-black text-white mb-2">${error.message === 'Compared username not found' ? 'Compared username not found.' : 'Unable to load comparison.'}</h2><p class="text-gray-400">${error.message}</p>`;
+    setText('compareStatus', error.message);
+  }
+}
+
+function winnerLabel(winner, data = compareData) {
+  if (winner === 'current') return data.users.current.displayName || data.users.current.username;
+  if (winner === 'compared') return data.users.compared.displayName || data.users.compared.username;
+  return 'Tie';
+}
+
+function renderOverview(data) {
+  const current = data.users.current;
+  const compared = data.users.compared;
+  setText('matchupTitle', `${current.displayName} VS ${compared.displayName}`);
+  setText('currentHeader', current.displayName);
+  setText('comparedHeader', compared.displayName);
+
+  const kpis = [
+    ['CP Insight Score', data.overview.kpis.cpInsightScore],
+    ['Combined Max Rating', data.overview.kpis.combinedMaxRating],
+    ['Combined Contest Count', data.overview.kpis.combinedContestCount],
+    ['Combined Problems Solved', data.overview.kpis.combinedProblemsSolved]
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpis.map(([label, value]) => `
+    <div class="glass compare-card p-5">
+      <p class="text-gray-400 text-xs uppercase font-bold tracking-wider">${label}</p>
+      <h3 class="text-3xl font-black mt-2 text-white">${fmt(value)}</h3>
+    </div>
+  `).join('');
+
+  document.getElementById('overviewTable').innerHTML = data.overview.rows.map((row) => `
+    <tr class="winner-${row.winner} border-b border-white/5">
+      <td class="py-4 px-3 font-bold">${row.metric}</td>
+      <td class="py-4 px-3">${fmt(row.current)}</td>
+      <td class="py-4 px-3">${fmt(row.compared)}</td>
+      <td class="py-4 px-3 font-black">${winnerLabel(row.winner, data)}</td>
+    </tr>
+  `).join('');
+
+  const wins = data.overview.overallWinner;
+  setText('overallWinner', `${current.displayName} wins ${wins.current || 0} metrics | ${compared.displayName} wins ${wins.compared || 0} metrics | ${wins.tie || 0} ties`);
+}
+
+function createLazyChart(key, element, draw) {
+  lazyChartKeys.add(key);
+  const observer = new IntersectionObserver((entries, obs) => {
+    if (!entries[0].isIntersecting || !lazyChartKeys.has(key)) return;
+    draw();
+    lazyChartKeys.delete(key);
+    obs.disconnect();
+  }, { threshold: 0.15 });
+  observer.observe(element);
+}
+
+function renderRatingCharts(data) {
+  const container = document.getElementById('ratingCharts');
+  if (!data.ratingComparison.length) {
+    container.innerHTML = '<div class="glass compare-card p-6 text-gray-400">No contest rating history available for common platforms.</div>';
+    return;
+  }
+
+  container.innerHTML = data.ratingComparison.map((chart, index) => `
+    <div class="glass compare-card section-shell p-5">
+      <div class="flex items-start justify-between mb-4 gap-4">
+        <div>
+          <h3 class="font-black text-xl">${chart.title}</h3>
+          <p class="text-gray-400 text-sm">Zoom, pan, and hover for contest detail.</p>
+        </div>
+        <button class="metric-pill px-3 py-2 text-xs font-bold text-emerald-300" onclick="resetCompareChart('rating${index}')">Reset</button>
+      </div>
+      <div class="chart-box relative"><canvas id="ratingChart${index}" class="absolute inset-0"></canvas></div>
+    </div>
+  `).join('');
+
+  data.ratingComparison.forEach((chart, index) => {
+    const canvas = document.getElementById(`ratingChart${index}`);
+    createLazyChart(`rating${index}`, canvas.parentElement, () => drawRatingChart(`rating${index}`, canvas, chart, data));
+  });
+}
+
+function normalizeChartPoints(points) {
+  return (points || [])
+    .filter((point) => typeof point.rating === 'number' && point.participatedAt)
+    .map((point) => ({ ...point, timestamp: new Date(point.participatedAt).getTime() }))
+    .sort((a, b) => a.timestamp - b.timestamp);
+}
+
+function drawRatingChart(key, canvas, chart, data) {
+  const current = normalizeChartPoints(chart.current);
+  const compared = normalizeChartPoints(chart.compared);
+  const labels = Array.from(new Set([...current, ...compared].map((point) => new Date(point.timestamp).toLocaleDateString())));
+
+  function dataset(label, points, color) {
+    const byLabel = points.reduce((map, point) => {
+      map[new Date(point.timestamp).toLocaleDateString()] = point;
+      return map;
+    }, {});
+    return {
+      label,
+      data: labels.map((labelText) => byLabel[labelText]?.rating ?? null),
+      borderColor: color,
+      backgroundColor: `${color}20`,
+      tension: 0.35,
+      spanGaps: true,
+      borderWidth: 3,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      metaPoints: labels.map((labelText) => byLabel[labelText] || null)
+    };
+  }
+
+  compareCharts[key] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        dataset(data.users.current.displayName, current, COLORS.current),
+        dataset(data.users.compared.displayName, compared, COLORS.compared)
+      ].filter((item) => item.data.some((value) => value !== null))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      animation: { duration: 1200, easing: 'easeOutQuart' },
+      plugins: {
+        legend: { labels: { color: '#d1d5db', usePointStyle: true } },
+        zoom: { zoom: { wheel: { enabled: true, speed: 0.05 }, pinch: { enabled: true }, mode: 'x' }, pan: { enabled: true, mode: 'x' } },
+        tooltip: {
+          backgroundColor: 'rgba(17,24,39,0.96)',
+          callbacks: {
+            afterLabel(context) {
+              const point = context.dataset.metaPoints?.[context.dataIndex];
+              return point ? [`${point.contestName || 'Contest'}`, `Delta: ${fmt(point.delta)}`, `Rank: ${fmt(point.rank)}`] : '';
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { display: false }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+}
+
+function heatColor(item, maxDiff) {
+  if (!item.current && !item.compared) return '#111827';
+  if (item.difference === 0) return '#64748b';
+  const ratio = Math.min(1, Math.abs(item.difference) / Math.max(1, maxDiff));
+  const alpha = 0.2 + ratio * 0.75;
+  return item.difference > 0 ? `rgba(16,185,129,${alpha})` : `rgba(244,63,94,${alpha})`;
+}
+
+function renderHeatmap(data) {
+  const heatmap = document.getElementById('compareHeatmap');
+  const payload = data.heatmapComparison;
+  const days = payload.days.slice(-370);
+  heatmap.innerHTML = days.map((item) => `
+    <div class="compare-heat-cell" style="background:${heatColor(item, payload.maxDiff)}" title="${item.date}
+${data.users.current.displayName}: ${item.current} submissions
+${data.users.compared.displayName}: ${item.compared} submissions
+Difference: ${Math.abs(item.difference)}
+Winner: ${winnerLabel(item.winner, data)}"></div>
+  `).join('');
+
+  const stats = [
+    [`${data.users.current.displayName} Active Days`, payload.stats.currentActiveDays],
+    [`${data.users.compared.displayName} Active Days`, payload.stats.comparedActiveDays],
+    ['Longest Streak', `${payload.stats.longestStreak} days`],
+    ['Most Active Month', payload.stats.mostActiveMonth || '--']
+  ];
+  document.getElementById('heatmapStats').innerHTML = stats.map(([label, value]) => `
+    <div class="bg-black/25 border border-white/5 rounded-lg p-4">
+      <p class="text-gray-400 text-xs uppercase font-bold tracking-wider">${label}</p>
+      <p class="text-2xl font-black mt-1">${value}</p>
+    </div>
+  `).join('');
+}
+
+function drawSkillChart(data) {
+  const canvas = document.getElementById('skillRadar');
+  compareCharts.skill = new Chart(canvas, {
+    type: 'radar',
+    data: {
+      labels: data.skillComparison.axes,
+      datasets: [
+        {
+          label: data.users.current.displayName,
+          data: data.skillComparison.current.map((item) => item.score),
+          backgroundColor: 'rgba(16,185,129,0.18)',
+          borderColor: COLORS.current,
+          pointBackgroundColor: COLORS.current
+        },
+        {
+          label: data.users.compared.displayName,
+          data: data.skillComparison.compared.map((item) => item.score),
+          backgroundColor: 'rgba(244,63,94,0.16)',
+          borderColor: COLORS.compared,
+          pointBackgroundColor: COLORS.compared
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 1200 },
+      scales: { r: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.08)' }, angleLines: { color: 'rgba(255,255,255,0.08)' }, ticks: { display: false }, pointLabels: { color: '#d1d5db' } } },
+      plugins: {
+        legend: { labels: { color: '#d1d5db' } },
+        tooltip: {
+          callbacks: {
+            afterLabel(context) {
+              const source = context.datasetIndex === 0 ? data.skillComparison.current : data.skillComparison.compared;
+              const item = source[context.dataIndex];
+              return [`Solved: ${item.solved}`, `Success Rate: ${item.successRate}%`];
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function drawProblemChart(data) {
+  const canvas = document.getElementById('problemBars');
+  compareCharts.problem = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: data.problemSolving.buckets,
+      datasets: [
+        { label: data.users.current.displayName, data: data.problemSolving.current.buckets.map((item) => item.count), backgroundColor: COLORS.current, borderRadius: 5 },
+        { label: data.users.compared.displayName, data: data.problemSolving.compared.buckets.map((item) => item.count), backgroundColor: COLORS.compared, borderRadius: 5 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 1200 },
+      plugins: { legend: { labels: { color: '#d1d5db' } }, tooltip: { backgroundColor: 'rgba(17,24,39,0.96)' } },
+      scales: {
+        x: { ticks: { color: '#d1d5db' }, grid: { display: false } },
+        y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+}
+
+function renderProblemStats(data) {
+  const metrics = [
+    ['Highest Solved Rating', 'highestSolvedRating'],
+    ['Average Solved Rating', 'averageSolvedRating'],
+    ['Median Solved Rating', 'medianSolvedRating'],
+    ['Average Hardest 10', 'averageHardest10SolvedRatings']
+  ];
+  document.getElementById('problemStats').innerHTML = metrics.map(([label, key]) => `
+    <div class="bg-black/25 border border-white/5 rounded-lg p-4">
+      <p class="text-gray-400 text-xs uppercase font-bold">${label}</p>
+      <div class="mt-2 flex items-center justify-between gap-3">
+        <span class="text-emerald-400 font-black">${fmt(data.problemSolving.current[key])}</span>
+        <span class="text-gray-500">vs</span>
+        <span class="text-rose-400 font-black">${fmt(data.problemSolving.compared[key])}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function contestValue(value) {
+  if (!value || typeof value !== 'object') return fmt(value);
+  if (value.contestName) {
+    const detail = value.ratingGain ?? value.ratingLoss ?? value.score;
+    return `${value.contestName} (${fmt(detail)})`;
+  }
+  return '--';
+}
+
+function renderContest(data) {
+  const current = data.contestIntelligence.current;
+  const compared = data.contestIntelligence.compared;
+  const cards = [
+    ['Best Contest', current.bestContest, compared.bestContest],
+    ['Worst Contest', current.worstContest, compared.worstContest],
+    ['Average Rank', current.averageRank, compared.averageRank],
+    ['Rating Volatility', current.ratingVolatility, compared.ratingVolatility]
+  ];
+  document.getElementById('contestCards').innerHTML = cards.map(([label, left, right]) => `
+    <div class="bg-black/25 border border-white/5 rounded-lg p-4">
+      <p class="text-gray-400 text-xs uppercase font-bold tracking-wider">${label}</p>
+      <p class="text-emerald-300 text-sm mt-3">${contestValue(left)}</p>
+      <p class="text-rose-300 text-sm mt-2">${contestValue(right)}</p>
+    </div>
+  `).join('');
+
+  document.getElementById('contestRows').innerHTML = data.contestIntelligence.rows.map((row) => `
+    <div class="winner-${row.winner} rounded-lg p-4 border border-white/5">
+      <div class="flex items-center justify-between gap-4">
+        <p class="font-black">${row.metric}</p>
+        <p class="text-sm text-gray-300">${row.label}: <span class="font-black text-white">${winnerLabel(row.winner, data)}</span></p>
+      </div>
+    </div>
+  `).join('');
+}
+
+function drawPie(key, canvas, rows) {
+  compareCharts[key] = new Chart(canvas, {
+    type: 'pie',
+    data: {
+      labels: rows.map((item) => titleCase(item.platform)),
+      datasets: [{ data: rows.map((item) => item.count), backgroundColor: rows.map((item) => COLORS[item.platform] || COLORS.neutral), borderColor: '#070b17', borderWidth: 2 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#d1d5db' } }, tooltip: { backgroundColor: 'rgba(17,24,39,0.96)' } }
+    }
+  });
+}
+
+function renderPieTable(id, rows) {
+  document.getElementById(id).innerHTML = rows.map((item) => `
+    <div class="flex items-center justify-between gap-3 bg-black/20 border border-white/5 rounded-lg px-4 py-3">
+      <span class="font-bold">${titleCase(item.platform)}</span>
+      <span class="text-gray-300">${item.count} submissions | ${item.percentage}%</span>
+    </div>
+  `).join('');
+}
+
+function renderDistribution(data) {
+  setText('currentPieTitle', `${data.users.current.displayName} Distribution`);
+  setText('comparedPieTitle', `${data.users.compared.displayName} Distribution`);
+  renderPieTable('currentPieTable', data.platformDistribution.current);
+  renderPieTable('comparedPieTable', data.platformDistribution.compared);
+  createLazyChart('currentPie', document.getElementById('currentPie').parentElement, () => drawPie('currentPie', document.getElementById('currentPie'), data.platformDistribution.current));
+  createLazyChart('comparedPie', document.getElementById('comparedPie').parentElement, () => drawPie('comparedPie', document.getElementById('comparedPie'), data.platformDistribution.compared));
+}
+
+function renderComparison(data) {
+  Object.values(compareCharts).forEach((chart) => chart.destroy());
+  Object.keys(compareCharts).forEach((key) => delete compareCharts[key]);
+  lazyChartKeys.clear();
+
+  document.getElementById('compareContent')?.classList.remove('hidden');
+  renderOverview(data);
+  renderRatingCharts(data);
+  renderHeatmap(data);
+  renderProblemStats(data);
+  renderContest(data);
+  renderDistribution(data);
+
+  createLazyChart('skill', document.getElementById('skillRadar').parentElement, () => drawSkillChart(data));
+  createLazyChart('problem', document.getElementById('problemBars').parentElement, () => drawProblemChart(data));
+}
+
+function resetCompareChart(key) {
+  compareCharts[key]?.resetZoom?.();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  showShell();
+  initRevealAnimations();
+  renderSidebar(stateManager.getState());
+  stateManager.subscribe(renderSidebar);
+
+  document.getElementById('compareForm')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    loadComparison(document.getElementById('compareUsername')?.value || '');
+  });
+});
+
+window.resetCompareChart = resetCompareChart;
