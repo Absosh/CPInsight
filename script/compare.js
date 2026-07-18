@@ -22,6 +22,11 @@ function fmt(value, suffix = '') {
   return `${value}${suffix}`;
 }
 
+function formatSignedNumber(value) {
+  if (!value) return '0';
+  return value > 0 ? `+${fmt(value)}` : fmt(value);
+}
+
 function titleCase(value) {
   return (value || '').replace(/(^|\s)\S/g, (text) => text.toUpperCase());
 }
@@ -89,6 +94,62 @@ function winnerLabel(winner, data = compareData) {
   return 'Tie';
 }
 
+function numericRows(rows) {
+  return (rows || []).filter((row) =>
+    typeof row.current === 'number' &&
+    typeof row.compared === 'number' &&
+    Number.isFinite(row.current) &&
+    Number.isFinite(row.compared)
+  );
+}
+
+function normalizedDifference(row) {
+  const scale = Math.max(Math.abs(row.current), Math.abs(row.compared), 1);
+  return Math.abs(row.current - row.compared) / scale;
+}
+
+function buildSummaryInsights(data) {
+  const rows = numericRows(data.overview.rows);
+  const wins = data.overview.overallWinner || {};
+  const currentWins = wins.current || 0;
+  const comparedWins = wins.compared || 0;
+  const totalDecided = currentWins + comparedWins;
+  const overallKey = currentWins === comparedWins ? 'tie' : (currentWins > comparedWins ? 'current' : 'compared');
+  const overallName = winnerLabel(overallKey, data);
+  const biggest = rows
+    .filter((row) => row.winner !== 'tie')
+    .sort((a, b) => normalizedDifference(b) - normalizedDifference(a))[0];
+  const closest = rows
+    .filter((row) => row.current !== row.compared)
+    .sort((a, b) => Math.abs(a.current - a.compared) - Math.abs(b.current - b.compared))[0];
+  const similarity = rows.length
+    ? Math.round((rows.reduce((sum, row) => sum + (1 - Math.min(1, normalizedDifference(row))), 0) / rows.length) * 100)
+    : 0;
+
+  return [
+    {
+      label: 'Overall Winner',
+      value: overallName,
+      detail: overallKey === 'tie' ? `${currentWins} / ${totalDecided || rows.length} metrics each` : `Wins ${Math.max(currentWins, comparedWins)} / ${totalDecided || rows.length} metrics`
+    },
+    {
+      label: 'Biggest Advantage',
+      value: biggest?.metric || '--',
+      detail: biggest ? `${winnerLabel(biggest.winner, data)} (${formatSignedNumber(biggest.winner === 'current' ? biggest.current - biggest.compared : biggest.compared - biggest.current)})` : 'No difference'
+    },
+    {
+      label: 'Closest Metric',
+      value: closest?.metric || '--',
+      detail: closest ? `Difference: ${fmt(Math.abs(closest.current - closest.compared))}` : 'No difference'
+    },
+    {
+      label: 'Similarity',
+      value: `${similarity}%`,
+      detail: 'Across compared metrics'
+    }
+  ];
+}
+
 function renderOverview(data) {
   const current = data.users.current;
   const compared = data.users.compared;
@@ -96,16 +157,12 @@ function renderOverview(data) {
   setText('currentHeader', current.displayName);
   setText('comparedHeader', compared.displayName);
 
-  const kpis = [
-    ['CP Insight Score', data.overview.kpis.cpInsightScore],
-    ['Combined Max Rating', data.overview.kpis.combinedMaxRating],
-    ['Combined Contest Count', data.overview.kpis.combinedContestCount],
-    ['Combined Problems Solved', data.overview.kpis.combinedProblemsSolved]
-  ];
-  document.getElementById('kpiGrid').innerHTML = kpis.map(([label, value]) => `
+  const kpis = buildSummaryInsights(data);
+  document.getElementById('kpiGrid').innerHTML = kpis.map((card) => `
     <div class="glass compare-card p-5">
-      <p class="text-gray-400 text-xs uppercase font-bold tracking-wider">${label}</p>
-      <h3 class="text-3xl font-black mt-2 text-white">${fmt(value)}</h3>
+      <p class="text-gray-400 text-xs uppercase font-bold tracking-wider">${card.label}</p>
+      <h3 class="text-3xl font-black mt-2 text-white">${card.value}</h3>
+      <p class="text-gray-400 text-sm mt-2">${card.detail}</p>
     </div>
   `).join('');
 
