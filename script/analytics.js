@@ -4,19 +4,31 @@
     initParticles();
    
   async function initAnalytics() {
-        const modalInput = document.getElementById("modalInput").value.trim();
-        if (!modalInput) {
-            triggerRecovery("EMPTY_HANDLE");
-            return; 
-        }
-        
-        // 1. Read handle but DO NOT save or hide modal yet
-        handle = modalInput;
-        
-        const launchBtn = document.getElementById("launchBtn");
-        if(launchBtn) launchBtn.innerText = "Validating...";
+        showMainApp();
+        initRevealAnimations();
 
-        // 2. Reset Skeletons for retry/reload scenarios
+        let accounts = [];
+        try {
+            const data = await httpClient.get('/platforms/accounts');
+            accounts = platformService.normalizeAccounts(data);
+        } catch (e) {
+            console.error("Failed to load connected platforms:", e);
+        }
+
+        const codeforcesAccount = accounts.find(account => account.platform === 'codeforces' && account.handle);
+        if (!codeforcesAccount) {
+            renderCodeforcesNotConnected();
+            return;
+        }
+
+        handle = codeforcesAccount.handle;
+        renderSidebarProfile({
+            handle: codeforcesAccount.handle,
+            rank: codeforcesAccount.rating ? `Rating ${codeforcesAccount.rating}` : "Codeforces connected",
+            titlePhoto: codeforcesAccount.avatar_url || ""
+        });
+
+        // Reset Skeletons for retry/reload scenarios
         document.querySelectorAll('.content-fade.show').forEach(el => el.classList.remove('show'));
         const radarLoader = document.getElementById('radarLoader');
         if(radarLoader) {
@@ -29,42 +41,52 @@
             document.getElementById('diffWrapper').classList.add('hidden');
         }
         
-        initRevealAnimations();
-        
-        // ==========================================
-        // STAGE 1: LIGHTWEIGHT VALIDATION
-        // ==========================================
-        try {
-            const infoRes = await fetch(`https://codeforces.com/api/user.info?handles=${handle}`);
-            if (infoRes.status === 400) throw new Error("INVALID_HANDLE");
-            if (infoRes.status === 429) throw new Error("RATE_LIMIT");
-            if (!infoRes.ok) throw new Error("NETWORK_ERROR");
-            
-            const infoData = await infoRes.json();
-            if (infoData.status !== 'OK') throw new Error("INVALID_HANDLE");
+        loadAnalyticsData();
+    }
 
-            // --- VALIDATION SUCCESS FLOW ---
-            localStorage.setItem('cf_handle', handle);
-            
-            // Unblur and reveal skeletons IMMEDIATELY
-            showMainApp(); 
+    function renderCodeforcesNotConnected() {
+        const loaderIds = ["radarLoader", "diffLoader"];
+        loaderIds.forEach(id => document.getElementById(id)?.classList.add("hidden"));
+        document.getElementById("radarWrapper")?.classList.add("hidden");
+        document.getElementById("diffWrapper")?.classList.add("hidden");
 
-            // Delegate sidebar DOM updates to shared.js
-            if (typeof renderSidebarProfile === 'function') {
-                renderSidebarProfile(infoData.result[0]);
-            }
+        const emptyHTML = `
+            <div class="glass rounded-3xl p-8 flex flex-col items-center justify-center text-center min-h-[220px] w-full">
+                <div class="text-4xl opacity-70 mb-3">ðŸ”Œ</div>
+                <h3 class="text-xl font-bold text-white mb-2">Codeforces account not connected.</h3>
+                <p class="text-gray-400 text-sm max-w-md mb-5">Connect your Codeforces account to unlock analytics.</p>
+                <button onclick="window.location.href='platforms.html'" class="bg-emerald-600 py-3 px-5 rounded-2xl font-semibold hover:bg-emerald-500 transition text-gray-900">
+                    Connect Platform
+                </button>
+            </div>
+        `;
 
-            // ==========================================
-            // STAGE 2: HEAVY BACKGROUND LOADING
-            // ==========================================
-            loadAnalyticsData();
-
-        } catch (e) {
-            console.error("Validation Failed:", e);
-            triggerRecovery(e.message);
-        } finally {
-            if(launchBtn) launchBtn.innerText = "Compute Analytics";
+        const topicContainer = document.getElementById("topicIntelContainer");
+        if (topicContainer) {
+            topicContainer.innerHTML = `<div class="md:col-span-2 xl:col-span-4">${emptyHTML}</div>`;
         }
+
+        ["bestContestCard", "worstContestCard", "consistencyCard", "volatilityCard", "mostActDayCard", "mostActMonthCard", "streakCard", "activeDaysCard", "change30Card", "change90Card"]
+            .forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = emptyHTML;
+            });
+
+        ["avgDiffCard", "medianDiffCard", "highDiffCard"].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = `<span class="text-2xl font-black text-gray-400">--</span>`;
+        });
+
+        const badge = document.getElementById("plateauBadge");
+        if (badge) {
+            badge.innerHTML = `<div class="w-2 h-2 bg-gray-400 rounded-full"></div> Not connected`;
+        }
+
+        renderSidebarProfile({
+            handle: "Codeforces",
+            rank: "Not connected",
+            titlePhoto: ""
+        });
     }
 
   async function loadAnalyticsData() {
@@ -133,11 +155,28 @@
             e
         );
 
-        triggerRecovery(
-            e.message || "Unknown Error"
-        );
+        renderAnalyticsLoadFailed(e.message || "Unable to load analytics.");
     }
 }
+
+    function renderAnalyticsLoadFailed(message) {
+        const detail = message && message.includes("fetch")
+            ? "Network error. Codeforces might be down."
+            : message;
+
+        renderEmptyState(
+            "topicIntelContainer",
+            "Unable to load analytics.",
+            detail,
+            "âš "
+        );
+
+        ["radarLoader", "diffLoader"].forEach(id => document.getElementById(id)?.classList.add("hidden"));
+        renderEmptyState("radarWrapper", "No analytics available", "Try again after the current data request recovers.", "âš ");
+        renderEmptyState("diffWrapper", "No analytics available", "Try again after the current data request recovers.", "âš ");
+        document.getElementById("radarWrapper")?.classList.remove("hidden");
+        document.getElementById("diffWrapper")?.classList.remove("hidden");
+    }
     
 
     // --- RENDER LOGIC ---
@@ -940,4 +979,4 @@ const activityData = computeActivityAnalytics(submissions);
     }
 
 
-    setupWelcomeModal(initAnalytics);
+    document.addEventListener('DOMContentLoaded', initAnalytics);

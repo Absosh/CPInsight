@@ -90,12 +90,7 @@ function animateSkeletons() {
 }
 
 function showDashboardApp() {
-    const modal = document.getElementById('welcomeModal');
     const mainApp = document.getElementById('mainApp');
-
-    if (modal) {
-        modal.classList.add('hidden');
-    }
 
     if (mainApp) {
         mainApp.classList.remove('blur-md', 'pointer-events-none');

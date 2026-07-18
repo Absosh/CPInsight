@@ -30,54 +30,24 @@ const platformTheme = {
 
 // --- INIT LOGIC ---
 function initApp() {
-    const modalInput = document.getElementById("modalInput").value.trim();
-    if (!modalInput) {
-        triggerRecovery("EMPTY_HANDLE");
-        return; 
-    }
-    
-    // 1. Read handle but DO NOT save to localStorage or hide modal yet
-    handle = modalInput;
-    
-    const launchBtn = document.getElementById("launchBtn");
-    if(launchBtn) launchBtn.innerText = "Validating...";
-
+    showMainApp();
+    renderCalendarSidebar();
     initRevealAnimations();
     loadCalendarPageData();
 }
 
 async function loadCalendarPageData() {
-    try {
-        // 1. Pre-emptive Validation Check via user.info
-        const infoRes = await fetch(`https://codeforces.com/api/user.info?handles=${handle}`);
-        if (infoRes.status === 400) throw new Error("INVALID_HANDLE");
-        if (infoRes.status === 429) throw new Error("RATE_LIMIT");
-        if (!infoRes.ok) throw new Error("NETWORK_ERROR");
-        
-        const infoData = await infoRes.json();
-        if (infoData.status !== 'OK') throw new Error("INVALID_HANDLE");
+    await loadCalendar();
+}
 
-        // ==========================================
-        // 2. VALIDATION SUCCESS FLOW
-        // ==========================================
-        localStorage.setItem('cf_handle', handle);
-        showMainApp();
+function renderCalendarSidebar() {
+    const username = document.getElementById('username');
+    const rank = document.getElementById('rank');
+    const loader = document.getElementById('profileLoader');
 
-        // 3. Delegate sidebar DOM updates to shared.js
-        if (typeof renderSidebarProfile === 'function') {
-            renderSidebarProfile(infoData.result[0]);
-        }
-
-        // Proceed to load calendar data
-        await loadCalendar();
-
-    } catch (e) {
-        console.error("Calendar Load Failed:", e);
-        triggerRecovery(e.message);
-    } finally {
-        const launchBtn = document.getElementById("launchBtn");
-        if(launchBtn) launchBtn.innerText = "Launch Calendar";
-    }
+    if (username) username.innerText = 'Contest Calendar';
+    if (rank) rank.innerText = 'Public schedule';
+    if (loader) loader.classList.add('hidden');
 }
 
 // --- CALENDAR LOGIC ---
@@ -227,4 +197,4 @@ function closeDayModal() {
     card.classList.add('scale-95');
 }
 
-setupWelcomeModal(initApp);
+document.addEventListener('DOMContentLoaded', initApp);

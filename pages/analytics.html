@@ -19,23 +19,13 @@
 </head>
 
 <body>
+  <script src="../script/services/httpClient.js"></script>
+  <script src="../script/services/authService.js"></script>
+  <script src="../script/services/platformService.js"></script>
+  <script src="../script/utils/routeProtection.js"></script>
+  <script>RouteProtection.protectPage();</script>
 
   <canvas id="particleCanvas" class="fixed inset-0 w-full h-full z-[-1] pointer-events-none"></canvas>
-
-  <div id="welcomeModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-[#070b17]/60 transition-opacity duration-500 backdrop-blur-sm">
-    <div class="glass p-10 rounded-3xl max-w-md w-full mx-4 flex flex-col items-center text-center shadow-2xl transform transition-transform duration-500 scale-100" id="modalCard">
-        <h1 class="text-4xl font-black mb-3 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-indigo-400 tracking-tight">CPInsight</h1>
-        <p class="text-gray-400 mb-6">Enter a Codeforces handle to view actual analytics.</p>
-        
-        <p id="modalError" class="text-rose-400 text-sm font-bold h-5 mb-2 opacity-0 transition-opacity duration-300"></p>
-        
-        <input type="text" id="modalInput" placeholder="e.g. tourist" class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none text-center text-lg mb-4 focus:border-emerald-500 transition shadow-inner" />
-        
-        <button id="launchBtn" onclick="initAnalytics()" class="w-full bg-emerald-600 py-4 rounded-2xl font-semibold text-lg hover:bg-emerald-500 transition shadow-[0_0_15px_rgba(16,185,129,0.4)] text-gray-900">
-            Compute Analytics
-        </button>
-    </div>
-  </div>
 
   <div id="mainApp" class="flex min-h-screen overflow-x-hidden blur-md pointer-events-none transition-[filter] duration-700 ease-in-out">
     <div id="mobileBackdrop" aria-hidden="true"></div>
@@ -63,8 +53,8 @@
         <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='calendar.html'">📅 Calendar</button>
       </div>
 
-      <button onclick="reopenModal()" class="w-full min-w-0 hover:bg-white/5 border border-transparent border-t-white/10 rounded-none p-4 text-left transition truncate text-gray-400 hover:text-white mt-4 flex items-center gap-3">
-            <span>⚙</span> Change Handle
+      <button onclick="window.location.href='platforms.html'" class="w-full min-w-0 hover:bg-white/5 border border-transparent border-t-white/10 rounded-none p-4 text-left transition truncate text-gray-400 hover:text-white mt-4 flex items-center gap-3">
+            <span>⚙</span> Manage Platforms
         </button>
     </aside>
 
