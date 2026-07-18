@@ -3,6 +3,7 @@ const { delByPattern } = require('../redis/client');
 const codeforcesClient = require('./platforms/codeforcesClient');
 const codechefClient = require('./platforms/codechefClient');
 const leetcodeClient = require('./platforms/leetcodeClient');
+const HttpError = require('../utils/httpError');
 
 const platformClients = {
   codeforces: codeforcesClient,
@@ -10,7 +11,9 @@ const platformClients = {
   leetcode: leetcodeClient
 };
 
-async function syncPlatformAccount(userId, account) {
+async function syncPlatformAccount(userId, account, options = {}) {
+  const db = options.db || pool;
+  const throwOnError = Boolean(options.throwOnError);
   const { id: accountId, platform, handle } = account;
   const client = platformClients[platform];
   if (!client) {
@@ -31,22 +34,26 @@ async function syncPlatformAccount(userId, account) {
       [submissions, contests] = await Promise.all([
         client.getUserSubmissions(handle).catch(e => {
           console.error(`Failed to fetch ${platform} submissions for ${handle}:`, e.message);
+          if (throwOnError) throw e;
           return [];
         }),
         client.getUserRating(handle).catch(e => {
           console.error(`Failed to fetch ${platform} contests for ${handle}:`, e.message);
+          if (throwOnError) throw e;
           return [];
         })
       ]);
 
       userInfo = await client.getUserInfo(handle).catch(e => {
         console.error(`Failed to fetch ${platform} user info for ${handle}:`, e.message);
+        if (throwOnError) throw e;
         return null;
       });
     } else if (platform === 'leetcode' && client.getPublicProfile) {
       // LeetCode has limited API (GraphQL)
       userInfo = await client.getPublicProfile(handle).catch(e => {
         console.error(`Failed to fetch ${platform} profile for ${handle}:`, e.message);
+        if (throwOnError) throw e;
         return null;
       });
 
@@ -57,10 +64,21 @@ async function syncPlatformAccount(userId, account) {
         })
         : null;
 
-      const recentAcSubmissions = client.getRecentAcSubmissions
-        ? await client.getRecentAcSubmissions(handle, 100).catch(e => {
-          console.error(`Failed to fetch ${platform} recent submissions for ${handle}:`, e.message);
-          return [];
+      const acceptedSubmissionStats = (userInfo?.submitStatsGlobal?.acSubmissionNum || [])
+        .find((stat) => (stat.difficulty || '').toString().toLowerCase() === 'all');
+      const expectedAcceptedSubmissions = Number(acceptedSubmissionStats?.submissions);
+      const expectedAcceptedCount = Number.isInteger(expectedAcceptedSubmissions) && expectedAcceptedSubmissions > 0
+        ? expectedAcceptedSubmissions
+        : null;
+
+      if (!expectedAcceptedCount) {
+        throw new Error(`LeetCode accepted submission count unavailable for ${handle}`);
+      }
+
+      const acceptedSubmissions = client.getAllAcceptedSubmissions
+        ? await client.getAllAcceptedSubmissions(handle, expectedAcceptedCount).catch(e => {
+          console.error(`Failed to fetch complete ${platform} accepted submissions for ${handle}:`, e.message);
+          throw e;
         })
         : [];
       
@@ -79,8 +97,8 @@ async function syncPlatformAccount(userId, account) {
         metadataPatch = { ...(metadataPatch || {}), leetcodeStats: statsByDifficulty };
       }
 
-      if (Array.isArray(recentAcSubmissions) && recentAcSubmissions.length > 0) {
-        submissions = recentAcSubmissions.map((item) => ({
+      if (Array.isArray(acceptedSubmissions) && acceptedSubmissions.length > 0) {
+        submissions = acceptedSubmissions.map((item) => ({
           id: item.id || `leetcode-${handle}-${item.titleSlug || item.title || item.timestamp}`,
           problem: {
             name: item.title || item.titleSlug || 'LeetCode Problem',
@@ -103,30 +121,12 @@ async function syncPlatformAccount(userId, account) {
           }
         };
 
-        if (submissions.length === 0) {
-          submissions = Object.entries(calendar.dayCounts).flatMap(([dateKey, rawCount]) => {
-            const count = Math.max(0, Math.floor(Number(rawCount || 0)));
-            const dayStartSeconds = Math.floor(new Date(`${dateKey}T12:00:00.000Z`).getTime() / 1000);
-            if (!Number.isFinite(dayStartSeconds) || count === 0) return [];
-
-            return Array.from({ length: count }, (_, index) => ({
-              id: `leetcode-calendar-${handle}-${dateKey}-${index + 1}`,
-              problem: {
-                name: 'LeetCode accepted submission',
-                slug: `leetcode-calendar-${dateKey}-${index + 1}`,
-                rating: null
-              },
-              verdict: 'AC',
-              creationTimeSeconds: dayStartSeconds + index
-            }));
-          });
-        }
       }
     } else if (platform === 'codechef' && client.getPublicProfile) {
       const codechefData = await client.getPublicProfile(handle);
 
       if (!codechefData?.profile) {
-        throw new Error(`CodeChef sync returned no profile for ${handle}`);
+        throw new HttpError(400, `CodeChef handle not found: ${handle}`, null, 'INVALID_HANDLE');
       }
 
       userInfo = codechefData.profile;
@@ -147,6 +147,10 @@ async function syncPlatformAccount(userId, account) {
       };
     }
 
+    if (!userInfo) {
+      throw new HttpError(400, `${platform} handle not found: ${handle}`, null, 'INVALID_HANDLE');
+    }
+
     if (userInfo) {
       // Update platform account with rating
       let rating = null;
@@ -162,7 +166,7 @@ async function syncPlatformAccount(userId, account) {
         maxRating = userInfo.maximumRating || null;
       }
 
-      await pool.query(
+      await db.query(
         `UPDATE platform_accounts
          SET rating = $1,
              max_rating = $2,
@@ -175,8 +179,8 @@ async function syncPlatformAccount(userId, account) {
     }
 
     // Clear existing data for this account
-    await pool.query('DELETE FROM submission_history WHERE platform_account_id = $1', [accountId]);
-    await pool.query('DELETE FROM contest_history WHERE platform_account_id = $1', [accountId]);
+    await db.query('DELETE FROM submission_history WHERE platform_account_id = $1', [accountId]);
+    await db.query('DELETE FROM contest_history WHERE platform_account_id = $1', [accountId]);
 
     // Insert submissions
     console.log('Platform:', platform);
@@ -199,7 +203,7 @@ async function syncPlatformAccount(userId, account) {
           const externalId = submission.id || `${platform}-${handle}-${submission.creationTimeSeconds}`;
           const tags = submission.problem?.tags || [];
           
-          await pool.query(
+          await db.query(
             `INSERT INTO submission_history 
              (platform_account_id, platform, external_submission_id, problem_key, problem_name, 
               verdict, submitted_at, tags, difficulty, language, contest_key)
@@ -221,6 +225,7 @@ async function syncPlatformAccount(userId, account) {
           );
         } catch (e) {
           console.error(`Failed to insert submission for ${platform}:`, e.message);
+          if (throwOnError) throw e;
         }
       }
     }
@@ -231,7 +236,7 @@ async function syncPlatformAccount(userId, account) {
         try {
           const externalId = contest.contestId || `${platform}-${handle}-${contest.ratingUpdateTimeSeconds}`;
           
-          await pool.query(
+          await db.query(
             `INSERT INTO contest_history 
              (platform_account_id, platform, external_contest_id, contest_name, 
               rating_before, rating_after, rating_delta, participated_at, rank)
@@ -255,12 +260,13 @@ async function syncPlatformAccount(userId, account) {
           );
         } catch (e) {
           console.error(`Failed to insert contest for ${platform}:`, e.message);
+          if (throwOnError) throw e;
         }
       }
     }
 
     // Invalidate persisted analytics cache for this user so resyncs never serve stale derived data.
-    await pool.query(
+    await db.query(
       `DELETE FROM analytics_cache
        WHERE user_id = $1`,
       [userId]
@@ -271,8 +277,11 @@ async function syncPlatformAccount(userId, account) {
     return { platform, handle, submissionsCount: submissions?.length || 0, contestsCount: contests?.length || 0 };
   } catch (error) {
     console.error(`Error syncing ${platform} account ${handle}:`, error);
+    if (throwOnError) {
+      throw error;
+    }
     // Mark as failed but don't throw
-    await pool.query(
+    await db.query(
       `UPDATE platform_accounts SET sync_status = 'failed', last_synced_at = NOW() WHERE id = $1`,
       [accountId]
     );

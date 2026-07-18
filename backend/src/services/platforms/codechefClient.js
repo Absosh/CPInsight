@@ -224,6 +224,7 @@ function normalizeContest(item, index) {
 }
 
 function parseContestHistory(html) {
+  const rankLookup = parseContestRankCards(html);
   const settings = findDrupalSettings(html);
   const rawSource = settings?.date_versus_rating
     || settings?.dateVersusRating
@@ -239,6 +240,15 @@ function parseContestHistory(html) {
 
   const parsed = contests
       .map(normalizeContest)
+      .map((contest) => {
+        if (!contest) return contest;
+        const contestIdKey = cleanText(contest.contestId).toLowerCase();
+        const contestNameKey = cleanText(contest.contestName).toLowerCase();
+        return {
+          ...contest,
+          rank: contest.rank || rankLookup[contestIdKey] || rankLookup[contestNameKey] || null
+        };
+      })
       .filter(Boolean)
       .sort(
           (a, b) =>
@@ -258,6 +268,35 @@ function parseContestHistory(html) {
   }
   
   return parsed;
+}
+
+function parseContestRankCards(html) {
+  const $ = cheerio.load(html);
+  const ranks = {};
+
+  $('a[href*="/rankings/"], a[href*="/ratings/"], tr, .contest-name, .rating-table__contest').each((_, element) => {
+    const node = $(element);
+    const text = cleanText(node.text());
+    if (!/global\s+rank|rank\s*:/i.test(text)) return;
+
+    const rank = toNumber(
+      text.match(/global\s+rank\s*:?\s*([\d,]+)/i)?.[1]
+      || text.match(/rank\s*:?\s*([\d,]+)/i)?.[1]
+    );
+    if (!rank) return;
+
+    const href = node.attr('href') || node.find('a[href*="/rankings/"], a[href*="/ratings/"]').first().attr('href') || '';
+    const contestCode = cleanText(href.match(/(?:rankings|ratings)\/([A-Z0-9_]+)/i)?.[1]).toLowerCase();
+    const contestName = cleanText(
+      node.find('a').first().text()
+      || text.replace(/global\s+rank\s*:?\s*[\d,]+/ig, '').replace(/rank\s*:?\s*[\d,]+/ig, '')
+    ).toLowerCase();
+
+    if (contestCode) ranks[contestCode] = rank;
+    if (contestName) ranks[contestName] = rank;
+  });
+
+  return ranks;
 }
 
 function textAfterLabel($, labels) {

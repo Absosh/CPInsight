@@ -136,6 +136,7 @@ function showMetricValue(id, value) {
 }
 
 function updateSortIcons() {
+    setText('rankSortIcon', currentSort.column === 'rank' ? (currentSort.asc ? '▲' : '▼') : '▲▼');
     setText('newRatingSortIcon', currentSort.column === 'newRating' ? (currentSort.asc ? '▲' : '▼') : '▲▼');
     setText('changeSortIcon', currentSort.column === 'change' ? (currentSort.asc ? '▲' : '▼') : '▲▼');
 }
@@ -638,7 +639,7 @@ function renderContestTable() {
     table.innerHTML = '';
 
     if (!currentRows.length) {
-        table.innerHTML = '<tr><td colspan="5" class="py-6 text-gray-400">No rating progression available yet.</td></tr>';
+        table.innerHTML = '<tr><td colspan="6" class="py-6 text-gray-400">No rating progression available yet.</td></tr>';
         return;
     }
 
@@ -647,6 +648,7 @@ function renderContestTable() {
             <tr class="border-b border-white/5 hover:bg-white/5 transition table-row-animate" style="animation-delay: ${index * 0.02}s">
                 <td class="py-4 pr-4 font-medium">${row.contestName}</td>
                 <td class="py-4 pr-4">${capitalize(row.platform || 'combined')}</td>
+                <td class="py-4 pr-4">${row.rank ?? '--'}</td>
                 <td class="py-4 pr-4">${row.oldRating ?? '--'}</td>
                 <td class="py-4 pr-4">${row.newRating ?? '--'}</td>
                 <td class="py-4 ${row.change >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${formatSignedNumber(row.change)}</td>
@@ -656,7 +658,7 @@ function renderContestTable() {
 }
 
 function sortTable(column) {
-    if (!['change', 'newRating'].includes(column)) {
+    if (!['change', 'newRating', 'rank'].includes(column)) {
         return;
     }
 
@@ -815,6 +817,7 @@ function renderDeepStats(analytics, layout) {
         .map((point) => ({
             contestName: point.contestName || 'Contest',
             platform: point.platform || analytics.platform,
+            rank: point.rank ?? null,
             oldRating: typeof point.rating === 'number' && typeof point.delta === 'number' ? point.rating - point.delta : null,
             newRating: point.rating ?? null,
             change: point.delta || 0,

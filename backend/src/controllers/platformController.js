@@ -4,10 +4,6 @@ const syncService = require('../services/syncService');
 async function connect(req, res) {
   const account = await platformService.connect(req.user.id, req.body);
 
-  if (account.platform === 'leetcode') {
-    await syncService.syncPlatformAccount(req.user.id, account);
-  }
-
   res.status(201).json(account);
 }
 

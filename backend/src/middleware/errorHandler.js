@@ -1,8 +1,10 @@
 function errorHandler(error, _req, res, _next) {
   const status = error.status || 500;
+  const code = error.code || (status === 500 ? 'INTERNAL_ERROR' : undefined);
   const payload = {
     error: {
-      message: status === 500 ? 'Internal server error' : error.message
+      message: status === 500 ? 'Internal server error' : error.message,
+      code
     }
   };
 

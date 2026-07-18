@@ -48,8 +48,8 @@
         <button class="w-full min-w-0 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl p-4 text-left font-semibold truncate shadow-[0_0_10px_rgba(16,185,129,0.1)] transition" onclick="window.location.href='roadmap.html'">🚀 Roadmap</button>
       </div>
 
-      <button onclick="window.location.href='dashboard.html'" class="w-full min-w-0 hover:bg-white/5 border border-transparent border-t-white/10 rounded-none p-4 text-left transition truncate text-gray-400 hover:text-white mt-4 flex items-center gap-3 shrink-0">
-          <span>⚙</span> Change Handle
+      <button onclick="window.location.href='platforms.html'" class="w-full min-w-0 hover:bg-white/5 border border-transparent border-t-white/10 rounded-none p-4 text-left transition truncate text-gray-400 hover:text-white mt-4 flex items-center gap-3 shrink-0">
+          <span>⚙</span> Manage Platforms
       </button>
     </aside>
 
@@ -393,28 +393,12 @@
         // Initialize mobile sidebar logic if it exists in shared.js
         if (typeof initializeMobileSidebar === 'function') initializeMobileSidebar();
 
-        // Auto-load profile if handle exists in localStorage
-        const handle = localStorage.getItem('cf_handle');
-        if (handle) {
-            try {
-                const res = await fetch(`https://codeforces.com/api/user.info?handles=${handle}`);
-                if (!res.ok) throw new Error("Network response was not ok");
-                const data = await res.json();
-                if (data.status === 'OK' && typeof renderSidebarProfile === 'function') {
-                    renderSidebarProfile(data.result[0]);
-                }
-            } catch (e) {
-                console.error("Could not load sidebar profile for Roadmap view", e);
-            }
-        } else {
-            // Hide loaders if no handle
-            const profileLoader = document.getElementById('profileLoader');
-            const profileImage = document.getElementById('profileImage');
-            if(profileLoader) profileLoader.classList.add('hidden');
-            if(profileImage) {
-                profileImage.src = '../Assets/favicon_32.png';
-                profileImage.classList.remove('hidden');
-            }
+        const profileLoader = document.getElementById('profileLoader');
+        const profileImage = document.getElementById('profileImage');
+        if(profileLoader) profileLoader.classList.add('hidden');
+        if(profileImage) {
+            profileImage.src = '../Assets/favicon_32.png';
+            profileImage.classList.remove('hidden');
         }
     }
 

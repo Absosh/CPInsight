@@ -110,7 +110,7 @@ async function getUserCalendar(username, year = null) {
 }
 
 async function getRecentAcSubmissions(username, limit = 50) {
-  const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 100) : 50;
+  const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 50;
   const cacheKey = `upstream:leetcode:recent-ac:${username.toLowerCase()}:${safeLimit}`;
   const cached = await getJson(cacheKey).catch(() => null);
   if (cached) return cached;
@@ -135,4 +135,24 @@ async function getRecentAcSubmissions(username, limit = 50) {
   return submissions;
 }
 
-module.exports = { getPublicProfile, getUserCalendar, getRecentAcSubmissions };
+async function getAllAcceptedSubmissions(username, expectedCount) {
+  if (!Number.isInteger(expectedCount) || expectedCount <= 0) {
+    const error = new Error('LeetCode accepted submission count is required to verify complete history');
+    error.code = 'LEETCODE_ACCEPTED_COUNT_REQUIRED';
+    throw error;
+  }
+
+  const submissions = await getRecentAcSubmissions(username, expectedCount);
+
+  if (submissions.length < expectedCount) {
+    const error = new Error(
+      `LeetCode accepted submission history incomplete: received ${submissions.length} of ${expectedCount}`
+    );
+    error.code = 'LEETCODE_INCOMPLETE_ACCEPTED_HISTORY';
+    throw error;
+  }
+
+  return submissions;
+}
+
+module.exports = { getPublicProfile, getUserCalendar, getRecentAcSubmissions, getAllAcceptedSubmissions };

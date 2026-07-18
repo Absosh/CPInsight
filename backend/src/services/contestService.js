@@ -1,3 +1,4 @@
+console.log("=== INSIDE CONTEST SERVICE: FILE IS LOADING ===");
 const axios = require("axios");
 const { getJson, setJson } = require("../redis/client");
 
@@ -24,9 +25,7 @@ query {
 // -----------------------------
 
 function sortByTime(events) {
-  return events.sort(
-    (a, b) => a.startTimeSeconds - b.startTimeSeconds
-  );
+  return events.sort((a, b) => a.startTimeSeconds - b.startTimeSeconds);
 }
 
 // -----------------------------
@@ -34,12 +33,9 @@ function sortByTime(events) {
 // -----------------------------
 
 async function getCodeforcesContests() {
-  const { data } = await axios.get(
-    "https://codeforces.com/api/contest.list",
-    {
-      timeout: 10000
-    }
-  );
+  const { data } = await axios.get("https://codeforces.com/api/contest.list", {
+    timeout: 10000
+  });
 
   if (data.status !== "OK") {
     throw new Error("Failed to fetch Codeforces contests.");
@@ -50,15 +46,10 @@ async function getCodeforcesContests() {
     .map(c => ({
       id: `cf-${c.id}`,
       platform: "codeforces",
-
       title: c.name,
-
       startTimeSeconds: c.startTimeSeconds,
-
       durationSeconds: c.durationSeconds,
-
       phase: c.phase,
-
       url: `https://codeforces.com/contest/${c.id}`
     }));
 }
@@ -81,27 +72,49 @@ async function getLeetCodeContests() {
     }
   );
 
-  const contests =
-    data?.data?.allContests || [];
+  const contests = data?.data?.allContests || [];
 
   return contests.map(c => ({
     id: `lc-${c.titleSlug}`,
-
     platform: "leetcode",
-
     title: c.title,
-
     startTimeSeconds: Number(c.startTime),
-
     durationSeconds: Number(c.duration),
-
-    phase:
-      Number(c.startTime) * 1000 > Date.now()
-        ? "BEFORE"
-        : "FINISHED",
-
+    phase: Number(c.startTime) * 1000 > Date.now() ? "BEFORE" : "FINISHED",
     url: `https://leetcode.com/contest/${c.titleSlug}/`
   }));
+}
+
+// -----------------------------
+// CodeChef
+// -----------------------------
+
+async function getCodeChefContests() {
+  const { data } = await axios.get(
+    "https://www.codechef.com/api/list/contests/all?sort_by=START&sorting_order=asc&offset=0&mode=all",
+    {
+      timeout: 10000
+    }
+  );
+
+  const { present_contests, future_contests } = data;
+
+  const formatContest = (contest, phase) => {
+    return {
+      id: `cc-${contest.contest_code}`,
+      platform: "codechef",
+      title: contest.contest_name,
+      startTimeSeconds: Math.floor(new Date(contest.contest_start_date_iso).getTime() / 1000),
+      durationSeconds: parseInt(contest.contest_duration) * 60,
+      phase: phase,
+      url: `https://www.codechef.com/${contest.contest_code}`
+    };
+  };
+
+  const active = (present_contests || []).map(c => formatContest(c, "CODING"));
+  const upcoming = (future_contests || []).map(c => formatContest(c, "BEFORE"));
+
+  return [...active, ...upcoming];
 }
 
 // -----------------------------
@@ -109,7 +122,6 @@ async function getLeetCodeContests() {
 // -----------------------------
 
 async function getCombinedContestCalendar() {
-
   const cached = await getJson(CACHE_KEY);
 
   if (cached) {
@@ -118,7 +130,8 @@ async function getCombinedContestCalendar() {
 
   const settled = await Promise.allSettled([
     getCodeforcesContests(),
-    getLeetCodeContests()
+    getLeetCodeContests(),
+    getCodeChefContests()
   ]);
 
   let contests = [];
@@ -127,20 +140,13 @@ async function getCombinedContestCalendar() {
     if (result.status === "fulfilled") {
       contests.push(...result.value);
     } else {
-      console.error(
-        "[ContestService]",
-        result.reason.message
-      );
+      console.error("[ContestService]", result.reason.message);
     }
   });
 
   contests = sortByTime(contests);
 
-  await setJson(
-    CACHE_KEY,
-    contests,
-    CACHE_TTL
-  );
+  await setJson(CACHE_KEY, contests, CACHE_TTL);
 
   return contests;
 }
@@ -148,5 +154,6 @@ async function getCombinedContestCalendar() {
 module.exports = {
   getCodeforcesContests,
   getLeetCodeContests,
+  getCodeChefContests,
   getCombinedContestCalendar
 };

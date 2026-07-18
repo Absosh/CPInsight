@@ -6,6 +6,7 @@ const HttpError = require('../utils/httpError');
 
 const PLATFORM_TTL_MINUTES = 30;
 const COMBINED_TTL_MINUTES = 15;
+const ANALYTICS_PAYLOAD_VERSION = 2;
 
 function acceptedVerdict(platform) {
   if (platform === 'leetcode') return 'AC';
@@ -76,48 +77,107 @@ function solvedProblemKey(submission) {
   return key;
 }
 
-function allCalendarActivityWithin(dayCounts, cutoffTime) {
-  const days = Object.keys(normalizeDayCountMap(dayCounts));
-  if (days.length === 0) return false;
-  return days.every((day) => new Date(`${day}T00:00:00.000Z`).getTime() >= cutoffTime);
+function computeLeetcodeSolvedMetrics(facts, now = Date.now()) {
+  const oneYearAgo = now - 365 * 24 * 60 * 60 * 1000;
+  const oneMonthAgo = now - 30 * 24 * 60 * 60 * 1000;
+  const accepted = facts.submissions.filter((submission) => {
+    if (submission.platform !== 'leetcode') return false;
+    if (submission.verdict !== 'AC') return false;
+    if (typeof submission.problem_key !== 'string') return false;
+    if (submission.problem_key.length === 0) return false;
+    if (submission.problem_key.startsWith('leetcode-calendar-')) return false;
+    return true;
+  });
+  let expectedAcceptedSubmissions = null;
+  const stats = facts.account.metadata && facts.account.metadata.leetcodeStats;
+  if (stats && stats.all) {
+    const parsed = Number(stats.all.submissions);
+    if (Number.isInteger(parsed) && parsed > 0) {
+      expectedAcceptedSubmissions = parsed;
+    }
+  }
+
+  if (!Number.isInteger(expectedAcceptedSubmissions)) {
+    throw new HttpError(
+      409,
+      'LeetCode accepted submission history is not verified. Run LeetCode sync before viewing solved metrics.',
+      null,
+      'SYNC_FAILED'
+    );
+  }
+
+  if (accepted.length < expectedAcceptedSubmissions) {
+    throw new HttpError(
+      409,
+      'LeetCode accepted submission history is incomplete. Run LeetCode sync before viewing solved metrics.',
+      {
+        expectedAcceptedSubmissions,
+        storedAcceptedSubmissions: accepted.length
+      },
+      'SYNC_FAILED'
+    );
+  }
+
+  const countDistinct = (items) => new Set(items.map((submission) => submission.problem_key)).size;
+
+  return {
+    solvedProblems: countDistinct(accepted),
+    solvedLastYear: countDistinct(
+      accepted.filter((submission) => new Date(submission.submitted_at).getTime() >= oneYearAgo)
+    ),
+    solvedLastMonth: countDistinct(
+      accepted.filter((submission) => new Date(submission.submitted_at).getTime() >= oneMonthAgo)
+    )
+  };
 }
 
 function platformAnalytics(platform, facts) {
   if (!facts.account) throw new HttpError(404, `No ${platform} account connected`);
 
   const accepted = facts.submissions.filter((submission) => submission.verdict === acceptedVerdict(platform));
-  const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
-  const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  let solvedProblems;
+  let solvedLastYear;
+  let solvedLastMonth;
 
-  let solvedLastYear = new Set(
-      accepted
-          .filter(
-              submission =>
-                  new Date(submission.submitted_at).getTime() >= oneYearAgo
-          )
-          .map(solvedProblemKey)
-          .filter(Boolean)
-  ).size;
+  if (platform === 'leetcode') {
+    const metrics = computeLeetcodeSolvedMetrics(facts);
+    solvedProblems = metrics.solvedProblems;
+    solvedLastYear = metrics.solvedLastYear;
+    solvedLastMonth = metrics.solvedLastMonth;
+  } else {
+    const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
+    const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const solved = new Set(accepted.map(solvedProblemKey).filter(Boolean));
 
-  let solvedLastMonth = new Set(
-      accepted
-          .filter(
-              submission =>
-                  new Date(submission.submitted_at).getTime() >= oneMonthAgo
-          )
-          .map(solvedProblemKey)
-          .filter(Boolean)
-  ).size;
+    solvedProblems = solved.size;
+    solvedLastYear = new Set(
+        accepted
+            .filter(
+                submission =>
+                    new Date(submission.submitted_at).getTime() >= oneYearAgo
+            )
+            .map(solvedProblemKey)
+            .filter(Boolean)
+    ).size;
+    solvedLastMonth = new Set(
+        accepted
+            .filter(
+                submission =>
+                    new Date(submission.submitted_at).getTime() >= oneMonthAgo
+            )
+            .map(solvedProblemKey)
+            .filter(Boolean)
+    ).size;
+  }
 
-  const solved = new Set(accepted.map(solvedProblemKey).filter(Boolean));
   const ratingProgression = facts.contests.map((contest) => ({
     contestName: contest.contest_name,
     rating: contest.rating_after,
     delta: contest.rating_delta,
+    rank: contest.rank,
     participatedAt: contest.participated_at
   }));
 
-  let solvedProblems = solved.size;
   let acceptedSubmissions = accepted.length;
   let totalSubmissions = facts.submissions.length;
   let activityHeatmap = buildActivityHeatmap(accepted);
@@ -133,26 +193,10 @@ function platformAnalytics(platform, facts) {
       submittedAt: submission.submitted_at
     }));
 
-  if (platform === 'leetcode' && facts.account?.metadata?.leetcodeStats?.all) {
-    const allStats = facts.account.metadata.leetcodeStats.all;
-    const aggregateSolved = Number(allStats.count || 0);
-    if (aggregateSolved > 0) {
-      solvedProblems = aggregateSolved;
-    }
-  }
-
   if (platform === 'leetcode' && facts.account?.metadata?.leetcodeCalendar?.dayCounts) {
     const calendarHeatmap = normalizeDayCountMap(facts.account.metadata.leetcodeCalendar.dayCounts);
     if (Object.keys(calendarHeatmap).length > 0) {
       activityHeatmap = calendarHeatmap;
-    }
-
-    if (solvedProblems > solvedLastYear && allCalendarActivityWithin(calendarHeatmap, oneYearAgo)) {
-      solvedLastYear = solvedProblems;
-    }
-
-    if (solvedProblems > solvedLastMonth && allCalendarActivityWithin(calendarHeatmap, oneMonthAgo)) {
-      solvedLastMonth = solvedProblems;
     }
   }
   if (platform === 'codechef' && facts.account?.metadata?.codechefHeatmap) {
@@ -177,6 +221,7 @@ function platformAnalytics(platform, facts) {
     ratingProgression,
     streak: currentStreak(facts.submissions),
     recentSubmissions,
+    analyticsVersion: ANALYTICS_PAYLOAD_VERSION,
   };
 }
 
@@ -197,26 +242,15 @@ function cpInsightScore({ solvedProblems, contestCount, streak, topicStrength, r
   );
 }
 
-function isIncompleteLeetcodePayload(payload) {
-  if (!payload) return true;
-
-  const heatmapDays = payload.activityHeatmap ? Object.keys(payload.activityHeatmap).length : 0;
-  const recentCount = Array.isArray(payload.recentSubmissions) ? payload.recentSubmissions.length : 0;
-  const accepted = Number(payload.acceptedSubmissions || 0);
-
-  if (heatmapDays === 0) return true;
-  if (accepted > 0 && recentCount === 0) return true;
-  return false;
-}
-
 async function getPlatformAnalytics(userId, platform, windowKey = 'all') {
   const redisKey = `analytics:${userId}:${platform}:${windowKey}`;
-  const cached = await getJson(redisKey).catch(() => null);
-  if (cached && !(platform === 'leetcode' && isIncompleteLeetcodePayload(cached))) return cached;
+  const canUseComputedCache = platform !== 'leetcode';
+  const cached = canUseComputedCache ? await getJson(redisKey).catch(() => null) : null;
+  if (cached) return cached;
 
   const cacheKey = `analytics:${platform}`;
-  const persisted = await analyticsRepository.getFreshCache(userId, cacheKey, windowKey);
-  if (persisted && !(platform === 'leetcode' && isIncompleteLeetcodePayload(persisted.payload))) {
+  const persisted = canUseComputedCache ? await analyticsRepository.getFreshCache(userId, cacheKey, windowKey) : null;
+  if (persisted) {
     await setJson(redisKey, persisted.payload, PLATFORM_TTL_MINUTES * 60).catch(() => {});
     return persisted.payload;
   }
@@ -257,25 +291,35 @@ async function getPlatformAnalytics(userId, platform, windowKey = 'all') {
   }
 
   const payload = platformAnalytics(platform, facts);
-  await analyticsRepository.upsertCache({
-    userId,
-    platform,
-    cacheKey,
-    windowKey,
-    payload,
-    ttlMinutes: PLATFORM_TTL_MINUTES
-  });
-  await setJson(redisKey, payload, PLATFORM_TTL_MINUTES * 60).catch(() => {});
+  if (canUseComputedCache) {
+    await analyticsRepository.upsertCache({
+      userId,
+      platform,
+      cacheKey,
+      windowKey,
+      payload,
+      ttlMinutes: PLATFORM_TTL_MINUTES
+    });
+    await setJson(redisKey, payload, PLATFORM_TTL_MINUTES * 60).catch(() => {});
+  }
   return payload;
 }
 
 async function getCombinedAnalytics(userId, windowKey = 'all') {
   const redisKey = `analytics:${userId}:combined:${windowKey}`;
-  const cached = await getJson(redisKey).catch(() => null);
-  if (cached) return cached;
+  const leetcodeAccount = await pool.query(
+    `SELECT 1
+     FROM platform_accounts
+     WHERE user_id = $1 AND platform = 'leetcode'
+     LIMIT 1`,
+    [userId]
+  );
+  const canUseCombinedCache = leetcodeAccount.rowCount === 0;
+  const cached = canUseCombinedCache ? await getJson(redisKey).catch(() => null) : null;
+  if (cached && cached.analyticsVersion === ANALYTICS_PAYLOAD_VERSION) return cached;
 
-  const persisted = await analyticsRepository.getFreshCache(userId, 'analytics:combined', windowKey);
-  if (persisted) {
+  const persisted = canUseCombinedCache ? await analyticsRepository.getFreshCache(userId, 'analytics:combined', windowKey) : null;
+  if (persisted && persisted.payload?.analyticsVersion === ANALYTICS_PAYLOAD_VERSION) {
     await setJson(redisKey, persisted.payload, COMBINED_TTL_MINUTES * 60).catch(() => {});
     return persisted.payload;
   }
@@ -334,18 +378,21 @@ async function getCombinedAnalytics(userId, windowKey = 'all') {
     streak,
     recentSubmissions,
     cpInsightScore: cpInsightScore({ solvedProblems, contestCount, streak, topicStrength, ratingProgression }),
+    analyticsVersion: ANALYTICS_PAYLOAD_VERSION,
     platforms: results
   };
 
-  await analyticsRepository.upsertCache({
-    userId,
-    platform: null,
-    cacheKey: 'analytics:combined',
-    windowKey,
-    payload,
-    ttlMinutes: COMBINED_TTL_MINUTES
-  });
-  await setJson(redisKey, payload, COMBINED_TTL_MINUTES * 60).catch(() => {});
+  if (canUseCombinedCache) {
+    await analyticsRepository.upsertCache({
+      userId,
+      platform: null,
+      cacheKey: 'analytics:combined',
+      windowKey,
+      payload,
+      ttlMinutes: COMBINED_TTL_MINUTES
+    });
+    await setJson(redisKey, payload, COMBINED_TTL_MINUTES * 60).catch(() => {});
+  }
   return payload;
 }
 
