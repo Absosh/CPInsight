@@ -464,95 +464,32 @@ function renderHeatmap(activityHeatmap) {
         return;
     }
 
-    heatmap.innerHTML = '';
-    if (monthLabels) monthLabels.innerHTML = '';
-
-    const yearlyEntries = Object.entries(activityHeatmap || {})
-        .filter(([day, count]) => {
-            if (!count || count <= 0) return false;
-            if (selectedHeatmapYear === 'all') return true;
-            return day.startsWith(`${selectedHeatmapYear}-`);
-        });
-
-    const filteredHeatmap = Object.fromEntries(yearlyEntries);
-
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-    const monthUnits = [];
-    if (selectedHeatmapYear === 'all') {
-        const now = new Date();
-        const base = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-        for (let i = 11; i >= 0; i -= 1) {
-            const d = new Date(base);
-            d.setUTCMonth(base.getUTCMonth() - i);
-            monthUnits.push({ year: d.getUTCFullYear(), month: d.getUTCMonth() });
-        }
-    } else {
-        const year = Number(selectedHeatmapYear);
-        if (!Number.isFinite(year)) {
-            selectedHeatmapYear = 'all';
-            return renderHeatmap(activityHeatmap);
-        }
-        for (let month = 0; month < 12; month += 1) {
-            monthUnits.push({ year, month });
-        }
+    if (selectedHeatmapYear !== 'all' && !Number.isFinite(Number(selectedHeatmapYear))) {
+        selectedHeatmapYear = 'all';
+        return renderHeatmap(activityHeatmap);
     }
 
-    const maxCount = Math.max(0, ...Object.values(filteredHeatmap || {}).map((n) => Number(n || 0)));
+    if (monthLabels) monthLabels.innerHTML = '';
+    const visibleKeys = HeatmapRenderer.visibleDateKeys(selectedHeatmapYear);
+    const maxCount = Math.max(0, ...visibleKeys.map((key) => Number(activityHeatmap?.[key] || 0)));
 
-    const getIntensity = (count) => {
-        if (!count || count <= 0) return '#2b2b2b';
-        if (maxCount <= 1) return '#0e4429';
+    HeatmapRenderer.renderMonthlyGrid({
+        container: heatmap,
+        selectedYear: selectedHeatmapYear,
+        dataByDate: activityHeatmap || {},
+        getColor(count) {
+            if (!count || count <= 0) return '#2b2b2b';
+            if (maxCount <= 1) return '#0e4429';
 
-        const ratio = count / maxCount;
-        if (ratio <= 0.25) return '#0e4429';
-        if (ratio <= 0.5) return '#006d32';
-        if (ratio <= 0.75) return '#26a641';
-        return '#39d353';
-    };
-
-    monthUnits.forEach(({ year, month }) => {
-        const start = new Date(Date.UTC(year, month, 1));
-        const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-        const mondayFirstOffset = (start.getUTCDay() + 6) % 7;
-        const columns = 6;
-        const totalCells = columns * 7;
-
-        const monthCard = document.createElement('div');
-        monthCard.className = 'heat-month-unit';
-
-        const title = document.createElement('div');
-        title.className = 'heat-month-title';
-        title.textContent = `${monthNames[month]}`;
-        monthCard.appendChild(title);
-
-        const monthGrid = document.createElement('div');
-        monthGrid.className = 'heat-month-grid';
-        monthGrid.style.gridTemplateColumns = `repeat(${columns}, var(--heat-size))`;
-        monthGrid.style.gridAutoRows = 'var(--heat-size)';
-
-        for (let idx = 0; idx < totalCells; idx += 1) {
-            const dayOfMonth = idx - mondayFirstOffset + 1;
-            const cell = document.createElement('div');
-            cell.className = 'heat';
-
-            if (dayOfMonth < 1 || dayOfMonth > daysInMonth) {
-                cell.classList.add('heat-empty');
-                cell.title = '';
-                monthGrid.appendChild(cell);
-                continue;
-            }
-
-            const date = new Date(Date.UTC(year, month, dayOfMonth));
-            const key = date.toISOString().slice(0, 10);
-            const count = filteredHeatmap[key] || 0;
-            cell.style.background = getIntensity(count);
-            cell.title = `${key} : ${count} accepted submissions`;
-            monthGrid.appendChild(cell);
+            const ratio = count / maxCount;
+            if (ratio <= 0.25) return '#0e4429';
+            if (ratio <= 0.5) return '#006d32';
+            if (ratio <= 0.75) return '#26a641';
+            return '#39d353';
+        },
+        getTitle(count, { key }) {
+            return `${key} : ${count || 0} accepted submissions`;
         }
-
-        monthCard.appendChild(monthGrid);
-        heatmap.appendChild(monthCard);
     });
 
     document.getElementById('heatmapLoader')?.classList.add('hidden');

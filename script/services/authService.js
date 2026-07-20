@@ -44,6 +44,7 @@ class AuthService {
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userProfile');
     localStorage.removeItem('platformAccounts');
+    localStorage.removeItem('cpinsight:lastCompareHandle');
   }
 
   getAccessToken() {

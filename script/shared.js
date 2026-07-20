@@ -103,6 +103,8 @@ function initRevealAnimations() {
 function initParticles() {
     const canvas = document.getElementById('particleCanvas');
     if(!canvas) return;
+    if(canvas.dataset.particlesInitialized === "true") return;
+    canvas.dataset.particlesInitialized = "true";
     const ctx = canvas.getContext('2d');
     let particles = [];
     const particleCount = window.innerWidth < 768 ? 20 : 40; 
@@ -144,6 +146,7 @@ function initParticles() {
 
 // Auto-initialize background particles on script load
 initParticles();
+document.addEventListener('DOMContentLoaded', initParticles);
 
 function renderEmptyState(containerId, title, subtitle, icon = "📊") {
 

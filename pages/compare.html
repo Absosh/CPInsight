@@ -11,19 +11,17 @@
   <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="../css/shared.css?v=2" />
+  <link rel="stylesheet" href="../css/shared.css?v=3" />
   <script src="../script/auth.js?v=2"></script>
   <script src="../script/shared.js?v=2"></script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
-    .compare-card { border-radius: 8px; }
+    .compare-card { border-radius: 1.5rem; }
     .winner-current { background: linear-gradient(90deg, rgba(16,185,129,0.16), rgba(16,185,129,0.03)); box-shadow: inset 3px 0 0 rgba(52,211,153,0.9), 0 0 22px rgba(16,185,129,0.08); }
     .winner-compared { background: linear-gradient(90deg, rgba(244,63,94,0.16), rgba(244,63,94,0.03)); box-shadow: inset 3px 0 0 rgba(251,113,133,0.9), 0 0 22px rgba(244,63,94,0.08); }
     .winner-tie { background: linear-gradient(90deg, rgba(148,163,184,0.12), rgba(148,163,184,0.03)); box-shadow: inset 3px 0 0 rgba(148,163,184,0.65); }
     .chart-box { min-height: 340px; }
-    .compare-heat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(12px, 1fr)); gap: 4px; }
-    .compare-heat-cell { aspect-ratio: 1; border-radius: 3px; border: 1px solid rgba(255,255,255,0.05); }
     .metric-pill { border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.22); border-radius: 999px; }
     .section-shell { overflow: visible; }
   </style>
@@ -43,7 +41,7 @@
 
   <canvas id="particleCanvas" class="fixed inset-0 w-full h-full z-[-1] pointer-events-none"></canvas>
 
-  <div id="mainApp" class="flex min-h-screen overflow-x-hidden">
+  <div id="mainApp" class="flex min-h-screen overflow-x-hidden transition-[filter] duration-700 ease-in-out">
     <div id="mobileBackdrop" aria-hidden="true"></div>
     <aside id="appSidebar" class="w-[320px] min-w-[320px] glass border-r border-white/10 p-6 overflow-hidden !rounded-none flex flex-col">
       <div class="flex items-center gap-1 mb-10">
@@ -89,25 +87,25 @@
             <p id="compareStatus" class="text-gray-400 mt-2">Select a registered CPInsight username to compare synced performance.</p>
           </div>
           <form id="compareForm" class="glass compare-card p-3 flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-            <input id="compareUsername" type="text" autocomplete="off" placeholder="CPInsight username" class="bg-black/40 border border-white/10 rounded-lg px-4 py-3 outline-none min-w-0 sm:w-72 focus:border-emerald-500 transition" />
-            <button class="bg-emerald-500 hover:bg-emerald-400 text-gray-950 rounded-lg px-5 py-3 font-black transition" type="submit">Compare</button>
+            <input id="compareUsername" type="text" autocomplete="off" placeholder="CPInsight username" class="bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none min-w-0 sm:w-72 focus:border-emerald-500 transition shadow-inner" />
+            <button class="bg-emerald-600 hover:bg-emerald-500 text-gray-900 rounded-2xl px-5 py-4 font-semibold transition shadow-[0_0_15px_rgba(16,185,129,0.4)]" type="submit">Compare</button>
           </form>
         </div>
       </div>
 
-      <div id="emptyState" class="glass compare-card p-10 text-center text-gray-300">
+      <div id="emptyState" class="glass compare-card p-10 text-center text-gray-300 reveal visible">
         <h2 class="text-2xl font-black text-white mb-2">Ready when you are.</h2>
         <p>Comparison uses only synced database records for two registered CPInsight users.</p>
       </div>
 
-      <div id="loadingState" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
-        <div class="skeleton h-32 rounded-lg"></div>
-        <div class="skeleton h-32 rounded-lg"></div>
-        <div class="skeleton h-32 rounded-lg"></div>
-        <div class="skeleton h-32 rounded-lg"></div>
+      <div id="loadingState" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6 mb-10">
+        <div class="skeleton h-32 rounded-3xl"></div>
+        <div class="skeleton h-32 rounded-3xl"></div>
+        <div class="skeleton h-32 rounded-3xl"></div>
+        <div class="skeleton h-32 rounded-3xl"></div>
       </div>
 
-      <div id="compareContent" class="hidden space-y-8">
+      <div id="compareContent" class="hidden space-y-10">
         <section class="glass compare-card section-shell p-6 reveal visible">
           <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-6">
             <div>
@@ -116,7 +114,7 @@
             </div>
             <div id="overallWinner" class="metric-pill px-5 py-3 text-sm font-bold text-gray-200"></div>
           </div>
-          <div id="kpiGrid" class="grid md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6"></div>
+          <div id="kpiGrid" class="grid md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6"></div>
           <div class="overflow-x-auto scrollbar">
             <table class="w-full min-w-[760px]">
               <thead>
@@ -136,24 +134,33 @@
           <div class="flex items-center justify-between">
             <h2 class="text-2xl font-black">Rating Comparison</h2>
           </div>
-          <div id="ratingCharts" class="grid grid-cols-1 xl:grid-cols-3 gap-4"></div>
+          <div id="ratingCharts" class="grid grid-cols-1 xl:grid-cols-3 gap-6"></div>
         </section>
 
         <section class="glass compare-card section-shell p-6 reveal visible">
           <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
             <div>
               <h2 class="text-2xl font-black">Submission Heatmap Comparison</h2>
-              <p class="text-gray-400 text-sm mt-1">Green favors current user, red favors compared user, gray is equal.</p>
-            </div>
-            <div class="flex items-center gap-2 text-xs text-gray-400">
-              <span>Small</span><span class="w-4 h-4 rounded-sm bg-emerald-900"></span><span class="w-4 h-4 rounded-sm bg-emerald-500"></span><span>Large</span>
+              <p class="text-gray-400 text-sm mt-1">Green favors current user, red favors compared user, blue is equal.</p>
             </div>
           </div>
-          <div id="compareHeatmap" class="compare-heat-grid mb-6"></div>
+          <div id="compareHeatmap" class="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 gap-3 mb-6"></div>
+          <div class="mt-4 mb-6 flex flex-wrap items-center justify-end gap-2 text-xs text-gray-400">
+            <span>Neutral</span>
+            <span class="w-3 h-3 rounded-sm" style="background:#2b2b2b;"></span>
+            <span>Current</span>
+            <span class="w-3 h-3 rounded-sm" style="background:rgba(16,185,129,0.2);"></span>
+            <span class="w-3 h-3 rounded-sm" style="background:rgba(16,185,129,0.95);"></span>
+            <span>Equal</span>
+            <span class="w-3 h-3 rounded-sm" style="background:#3b82f6;"></span>
+            <span>Compared</span>
+            <span class="w-3 h-3 rounded-sm" style="background:rgba(244,63,94,0.2);"></span>
+            <span class="w-3 h-3 rounded-sm" style="background:rgba(244,63,94,0.95);"></span>
+          </div>
           <div id="heatmapStats" class="grid md:grid-cols-4 gap-3"></div>
         </section>
 
-        <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 reveal visible">
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-6 reveal visible">
           <div class="glass compare-card section-shell p-6">
             <h2 class="text-2xl font-black mb-4">Skill Comparison</h2>
             <div class="chart-box relative"><canvas id="skillRadar" class="absolute inset-0"></canvas></div>
@@ -171,7 +178,7 @@
           <div id="contestRows" class="grid lg:grid-cols-2 gap-3"></div>
         </section>
 
-        <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 reveal visible">
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-6 reveal visible">
           <div class="glass compare-card section-shell p-6">
             <h2 id="currentPieTitle" class="text-2xl font-black mb-4">Current User Distribution</h2>
             <div class="chart-box relative"><canvas id="currentPie" class="absolute inset-0"></canvas></div>
@@ -188,7 +195,8 @@
   </div>
 
   <div id="notificationContainer"></div>
-  <script src="../script/compare.js?v=1"></script>
+  <script src="../script/components/heatmapRenderer.js?v=1"></script>
+  <script src="../script/compare.js?v=3"></script>
 </body>
 
 </html>

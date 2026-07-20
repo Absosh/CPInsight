@@ -1,6 +1,7 @@
 let compareData = null;
 const compareCharts = {};
 const lazyChartKeys = new Set();
+const LAST_COMPARE_HANDLE_KEY = 'cpinsight:lastCompareHandle';
 
 const COLORS = {
   current: '#10b981',
@@ -10,6 +11,12 @@ const COLORS = {
   codechef: '#f59e0b',
   leetcode: '#6366f1'
 };
+
+const DISTRIBUTION_COLORS = [
+  'rgba(16, 185, 129, 0.4)',
+  'rgba(99, 102, 241, 0.4)',
+  'rgba(168, 85, 247, 0.3)'
+];
 
 function setText(id, value) {
   const element = document.getElementById(id);
@@ -36,6 +43,18 @@ function showShell() {
   if (modal) modal.classList.add('hidden');
   const main = document.getElementById('mainApp');
   if (main) main.classList.remove('blur-md', 'pointer-events-none');
+}
+
+function getRememberedCompareHandle() {
+  return localStorage.getItem(LAST_COMPARE_HANDLE_KEY) || '';
+}
+
+function rememberCompareHandle(handle) {
+  localStorage.setItem(LAST_COMPARE_HANDLE_KEY, handle);
+}
+
+function clearRememberedCompareHandle() {
+  localStorage.removeItem(LAST_COMPARE_HANDLE_KEY);
 }
 
 function renderSidebar(state) {
@@ -65,11 +84,13 @@ async function loadComparison(username) {
   document.getElementById('emptyState')?.classList.add('hidden');
   document.getElementById('compareContent')?.classList.add('hidden');
   document.getElementById('loadingState')?.classList.remove('hidden');
+  document.querySelectorAll('#compareContent .content-fade.show').forEach((el) => el.classList.remove('show'));
   setText('compareStatus', `Loading synced records for ${cleaned}...`);
 
   try {
     compareData = await httpClient.get(`/analytics/compare/${encodeURIComponent(cleaned)}`);
     document.getElementById('loadingState')?.classList.add('hidden');
+    rememberCompareHandle(cleaned);
 
     if (compareData.noComparedPlatformData) {
       setText('compareStatus', compareData.message || 'No platform data available.');
@@ -159,7 +180,7 @@ function renderOverview(data) {
 
   const kpis = buildSummaryInsights(data);
   document.getElementById('kpiGrid').innerHTML = kpis.map((card) => `
-    <div class="glass compare-card p-5">
+    <div class="glass compare-card p-6 hover:-translate-y-1 transition content-fade">
       <p class="text-gray-400 text-xs uppercase font-bold tracking-wider">${card.label}</p>
       <h3 class="text-3xl font-black mt-2 text-white">${card.value}</h3>
       <p class="text-gray-400 text-sm mt-2">${card.detail}</p>
@@ -177,6 +198,9 @@ function renderOverview(data) {
 
   const wins = data.overview.overallWinner;
   setText('overallWinner', `${current.displayName} wins ${wins.current || 0} metrics | ${compared.displayName} wins ${wins.compared || 0} metrics | ${wins.tie || 0} ties`);
+  requestAnimationFrame(() => {
+    document.querySelectorAll('#kpiGrid .content-fade').forEach((el) => el.classList.add('show'));
+  });
 }
 
 function createLazyChart(key, element, draw) {
@@ -193,18 +217,18 @@ function createLazyChart(key, element, draw) {
 function renderRatingCharts(data) {
   const container = document.getElementById('ratingCharts');
   if (!data.ratingComparison.length) {
-    container.innerHTML = '<div class="glass compare-card p-6 text-gray-400">No contest rating history available for common platforms.</div>';
+    container.innerHTML = '<div class="glass compare-card p-8 text-center text-gray-400">No contest rating history available for common platforms.</div>';
     return;
   }
 
   container.innerHTML = data.ratingComparison.map((chart, index) => `
-    <div class="glass compare-card section-shell p-5">
+    <div class="glass compare-card section-shell p-6">
       <div class="flex items-start justify-between mb-4 gap-4">
         <div>
           <h3 class="font-black text-xl">${chart.title}</h3>
           <p class="text-gray-400 text-sm">Zoom, pan, and hover for contest detail.</p>
         </div>
-        <button class="metric-pill px-3 py-2 text-xs font-bold text-emerald-300" onclick="resetCompareChart('rating${index}')">Reset</button>
+        <button class="metric-pill px-4 py-2 text-xs font-bold text-emerald-300 hover:bg-white/10 transition" onclick="resetCompareChart('rating${index}')">Reset</button>
       </div>
       <div class="chart-box relative"><canvas id="ratingChart${index}" class="absolute inset-0"></canvas></div>
     </div>
@@ -282,10 +306,10 @@ function drawRatingChart(key, canvas, chart, data) {
   });
 }
 
-function heatColor(item, maxDiff) {
-  if (!item.current && !item.compared) return '#111827';
-  if (item.difference === 0) return '#64748b';
-  const ratio = Math.min(1, Math.abs(item.difference) / Math.max(1, maxDiff));
+function heatColor(item) {
+  if (!item.current && !item.compared) return '#2b2b2b';
+  if (item.difference === 0) return '#3b82f6';
+  const ratio = Math.min(1, Math.max(0, Math.abs(item.difference) - 1) / 14);
   const alpha = 0.2 + ratio * 0.75;
   return item.difference > 0 ? `rgba(16,185,129,${alpha})` : `rgba(244,63,94,${alpha})`;
 }
@@ -294,13 +318,27 @@ function renderHeatmap(data) {
   const heatmap = document.getElementById('compareHeatmap');
   const payload = data.heatmapComparison;
   const days = payload.days.slice(-370);
-  heatmap.innerHTML = days.map((item) => `
-    <div class="compare-heat-cell" style="background:${heatColor(item, payload.maxDiff)}" title="${item.date}
-${data.users.current.displayName}: ${item.current} submissions
-${data.users.compared.displayName}: ${item.compared} submissions
-Difference: ${Math.abs(item.difference)}
-Winner: ${winnerLabel(item.winner, data)}"></div>
-  `).join('');
+  const daysByDate = days.reduce((map, item) => {
+    map[item.date] = item;
+    return map;
+  }, {});
+
+  HeatmapRenderer.renderMonthlyGrid({
+    container: heatmap,
+    selectedYear: 'all',
+    dataByDate: daysByDate,
+    getColor(item) {
+      return heatColor(item || { current: 0, compared: 0, difference: 0, winner: 'tie' });
+    },
+    getTitle(item, { key }) {
+      const day = item || { date: key, current: 0, compared: 0, difference: 0, winner: 'tie' };
+      return `${key}
+${data.users.current.displayName}: ${day.current} submissions
+${data.users.compared.displayName}: ${day.compared} submissions
+Difference: ${Math.abs(day.difference)}
+Winner: ${winnerLabel(day.winner, data)}`;
+    }
+  });
 
   const stats = [
     [`${data.users.current.displayName} Active Days`, payload.stats.currentActiveDays],
@@ -309,7 +347,7 @@ Winner: ${winnerLabel(item.winner, data)}"></div>
     ['Most Active Month', payload.stats.mostActiveMonth || '--']
   ];
   document.getElementById('heatmapStats').innerHTML = stats.map(([label, value]) => `
-    <div class="bg-black/25 border border-white/5 rounded-lg p-4">
+    <div class="bg-black/20 border border-white/5 rounded-2xl p-4">
       <p class="text-gray-400 text-xs uppercase font-bold tracking-wider">${label}</p>
       <p class="text-2xl font-black mt-1">${value}</p>
     </div>
@@ -392,7 +430,7 @@ function renderProblemStats(data) {
     ['Average Hardest 10', 'averageHardest10SolvedRatings']
   ];
   document.getElementById('problemStats').innerHTML = metrics.map(([label, key]) => `
-    <div class="bg-black/25 border border-white/5 rounded-lg p-4">
+    <div class="bg-black/20 border border-white/5 rounded-2xl p-4">
       <p class="text-gray-400 text-xs uppercase font-bold">${label}</p>
       <div class="mt-2 flex items-center justify-between gap-3">
         <span class="text-emerald-400 font-black">${fmt(data.problemSolving.current[key])}</span>
@@ -430,7 +468,7 @@ function renderContest(data) {
   `).join('');
 
   document.getElementById('contestRows').innerHTML = data.contestIntelligence.rows.map((row) => `
-    <div class="winner-${row.winner} rounded-lg p-4 border border-white/5">
+    <div class="winner-${row.winner} rounded-2xl p-4 border border-white/5">
       <div class="flex items-center justify-between gap-4">
         <p class="font-black">${row.metric}</p>
         <p class="text-sm text-gray-300">${row.label}: <span class="font-black text-white">${winnerLabel(row.winner, data)}</span></p>
@@ -440,11 +478,23 @@ function renderContest(data) {
 }
 
 function drawPie(key, canvas, rows) {
+  const colorAt = (index) => DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length];
+  const borderAt = (index) => colorAt(index).replace(/,\s*[\d.]+\)$/, ', 0.9)');
+  const hoverAt = (index) => colorAt(index).replace(/,\s*[\d.]+\)$/, ', 0.58)');
+
   compareCharts[key] = new Chart(canvas, {
     type: 'pie',
     data: {
       labels: rows.map((item) => titleCase(item.platform)),
-      datasets: [{ data: rows.map((item) => item.count), backgroundColor: rows.map((item) => COLORS[item.platform] || COLORS.neutral), borderColor: '#070b17', borderWidth: 2 }]
+      datasets: [{
+        data: rows.map((item) => item.count),
+        backgroundColor: rows.map((_, index) => colorAt(index)),
+        hoverBackgroundColor: rows.map((_, index) => hoverAt(index)),
+        borderColor: rows.map((_, index) => borderAt(index)),
+        hoverBorderColor: rows.map((_, index) => borderAt(index)),
+        borderWidth: 2,
+        hoverOffset: 8
+      }]
     },
     options: {
       responsive: true,
@@ -456,7 +506,7 @@ function drawPie(key, canvas, rows) {
 
 function renderPieTable(id, rows) {
   document.getElementById(id).innerHTML = rows.map((item) => `
-    <div class="flex items-center justify-between gap-3 bg-black/20 border border-white/5 rounded-lg px-4 py-3">
+    <div class="flex items-center justify-between gap-3 bg-black/20 border border-white/5 rounded-2xl px-4 py-3">
       <span class="font-bold">${titleCase(item.platform)}</span>
       <span class="text-gray-300">${item.count} submissions | ${item.percentage}%</span>
     </div>
@@ -487,6 +537,7 @@ function renderComparison(data) {
 
   createLazyChart('skill', document.getElementById('skillRadar').parentElement, () => drawSkillChart(data));
   createLazyChart('problem', document.getElementById('problemBars').parentElement, () => drawProblemChart(data));
+  initRevealAnimations();
 }
 
 function resetCompareChart(key) {
@@ -499,10 +550,24 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSidebar(stateManager.getState());
   stateManager.subscribe(renderSidebar);
 
+  if (typeof authService !== 'undefined' && !authService.isLoggedIn()) {
+    clearRememberedCompareHandle();
+    return;
+  }
+
+  const rememberedHandle = getRememberedCompareHandle();
+  if (rememberedHandle) {
+    const input = document.getElementById('compareUsername');
+    if (input) input.value = rememberedHandle;
+    loadComparison(rememberedHandle);
+  }
+
   document.getElementById('compareForm')?.addEventListener('submit', (event) => {
     event.preventDefault();
     loadComparison(document.getElementById('compareUsername')?.value || '');
   });
 });
+
+window.addEventListener('auth:logout', clearRememberedCompareHandle);
 
 window.resetCompareChart = resetCompareChart;

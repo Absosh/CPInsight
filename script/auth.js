@@ -23,6 +23,7 @@ class AuthManager {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userProfile');
+    localStorage.removeItem('cpinsight:lastCompareHandle');
     window.location.href = 'auth.html';
   }
 

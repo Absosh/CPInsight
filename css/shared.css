@@ -64,6 +64,59 @@ aside * { max-width: 100%; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
 /* ==================================================
+   SHARED SUBMISSION HEATMAP
+   ================================================== */
+:root {
+    --heat-size: clamp(6px, 1.2vw, 10px);
+    --heat-gap: clamp(1px, 0.2vw, 2px);
+}
+
+.heat {
+    width: var(--heat-size);
+    height: var(--heat-size);
+    border-radius: 2px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+@media (hover: hover) {
+    .heat:hover {
+        transform: scale(1.3);
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        z-index: 10;
+    }
+}
+
+.heat-month-grid {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(7, 1fr);
+    gap: var(--heat-gap);
+}
+
+.heat-month-unit {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.heat-month-title {
+    font-size: 10px;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    color: #9ca3af;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.heat-empty {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 3px;
+    opacity: 0.35;
+}
+
+/* ==================================================
    UTILITY CLASSES
    ================================================== */
 .scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }

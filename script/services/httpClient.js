@@ -36,6 +36,7 @@ class HttpClient {
           return this.request(endpoint, options);
         } else {
           // Refresh failed, logout user
+          localStorage.removeItem('cpinsight:lastCompareHandle');
           window.dispatchEvent(new CustomEvent('auth:logout'));
           return null;
         }
