@@ -14,7 +14,11 @@ class UserService {
           display_name: data.profile.displayName,
           timezone: data.profile.timezone,
           country: data.profile.country,
+          college_id: data.profile.collegeId,
+          college: data.profile.college,
           avatar_url: data.profile.avatarUrl,
+          avatar_thumbnail: data.profile.avatarThumbnail,
+          avatar_updated_at: data.profile.avatarUpdatedAt,
           preferences: data.profile.preferences
         },
         platform_accounts: data.platformAccounts || []
@@ -27,7 +31,11 @@ class UserService {
         display_name: '',
         timezone: 'UTC',
         country: '',
+        college_id: null,
+        college: null,
         avatar_url: null,
+        avatar_thumbnail: null,
+        avatar_updated_at: null,
         preferences: {}
       },
       platform_accounts: data.platform_accounts || []
@@ -81,8 +89,23 @@ class UserService {
     }
   }
 
-  clearProfileCache() {
-    localStorage.removeItem('userProfile');
+  async searchColleges(search = '') {
+    const encoded = encodeURIComponent(search);
+    return httpClient.get(`/user/colleges?search=${encoded}`);
+  }
+
+  async uploadAvatar(imageData) {
+    const data = await httpClient.post('/user/profile/avatar', { imageData });
+    const profile = this.normalizeProfile(data);
+    localStorage.setItem('userProfile', JSON.stringify(profile));
+    return profile;
+  }
+
+  async deleteAvatar() {
+    const data = await httpClient.delete('/user/profile/avatar');
+    const profile = this.normalizeProfile(data);
+    localStorage.setItem('userProfile', JSON.stringify(profile));
+    return profile;
   }
 }
 

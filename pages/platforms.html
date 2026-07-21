@@ -38,32 +38,26 @@
       </div>
 
       <div class="glass rounded-3xl p-5 mb-10 flex items-center gap-4">
-        <div id="profileLoader" class="w-12 h-12 rounded-full skeleton flex items-center justify-center">
+        <div id="sidebarProfileLoader" class="w-12 h-12 rounded-full skeleton flex items-center justify-center">
           <div class="loader !w-5 !h-5 border-2"></div>
         </div>
-        <img id="profileImage" src="" class="hidden w-12 h-12 rounded-full object-cover border-2 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+        <img id="sidebarProfileImage" src="" alt="" class="hidden w-12 h-12 rounded-full object-cover border-2 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+        <div id="sidebarFallbackAvatar" class="hidden w-12 h-12 rounded-full bg-gradient-to-r from-emerald-400 to-indigo-400 items-center justify-center text-white font-bold"></div>
         <div class="min-w-0">
-          <h2 id="username" class="text-lg font-bold tracking-tight truncate">--</h2>
-          <p id="rank" class="text-emerald-400 text-xs uppercase tracking-widest font-semibold truncate">--</p>
+          <h2 id="sidebarUsername" class="text-lg font-bold tracking-tight truncate">--</h2>
+          <p class="text-emerald-400 text-xs uppercase tracking-widest font-semibold truncate">Account Settings</p>
         </div>
       </div>
 
-      <div class="space-y-3 flex-1">
-        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='dashboard.html'">Dashboard</button>
-        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='analytics.html'">Analytics</button>
-        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 hover:text-white pointer-events-none">Contests</button>
-        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='compare.html'">Compare</button>
-        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-gray-400 hover:text-white pointer-events-none">Insights</button>
-        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='calendar.html'">Calendar</button>
-      </div>
+      <nav id="accountSettingsNav" class="space-y-3 flex-1"></nav>
 
-      <button onclick="window.location.href='profile.html'" class="w-full min-w-0 hover:bg-white/5 border border-transparent border-t-white/10 rounded-none p-4 text-left transition truncate text-gray-400 hover:text-white mt-4 flex items-center gap-3">
-        <span>Settings</span>
+      <button class="w-full bg-red-600/20 text-red-400 border border-red-500/30 rounded-2xl p-4 font-semibold hover:bg-red-600/30 transition" id="logoutBtn">
+        Logout
       </button>
     </aside>
 
     <main class="flex-1 min-w-0 p-6 md:p-10 z-10 relative overflow-auto">
-      <button id="mobileMenuBtn" aria-label="Open navigation menu" aria-expanded="false" class="lg:hidden text-gray-400 hover:text-white mb-6 focus:outline-none transition-colors">
+      <button id="mobileMenuBtn" aria-label="Open account settings menu" aria-expanded="false" class="lg:hidden text-gray-400 hover:text-white mb-6 focus:outline-none transition-colors">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
         </svg>
@@ -72,15 +66,17 @@
       <div class="w-full">
         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-10 reveal visible relative z-50">
           <div>
-            <h1 class="text-4xl font-black tracking-tight">Connected Platforms</h1>
+            <h1 class="text-4xl font-black tracking-tight">Platforms</h1>
             <p class="text-gray-400 mt-2">Manage your competitive programming platform accounts.</p>
           </div>
           <div id="userMenuContainer" class="relative z-[80] flex lg:justify-end"></div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10 reveal visible">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 reveal visible">
           <div class="glass rounded-3xl p-6 border border-white/10 hover:-translate-y-1 transition">
-            <div class="text-4xl mb-3">CF</div>
+            <div class="mb-3 w-14 h-14 rounded-2xl bg-white/90 border border-white/10 flex items-center justify-center p-2 shadow-[0_0_18px_rgba(16,185,129,0.12)]">
+              <img src="../Assets/platforms/codeforces.png" alt="Codeforces" class="w-full h-full object-contain" />
+            </div>
             <h3 class="text-xl font-bold mb-2">Codeforces</h3>
             <p class="text-gray-400 text-sm mb-4">Competitive Programming Platform</p>
             <button onclick="window.connectModal.openForPlatform('codeforces')" class="w-full bg-emerald-600 py-3 rounded-2xl text-sm font-semibold hover:bg-emerald-500 transition shadow-[0_0_15px_rgba(16,185,129,0.25)] text-gray-900">
@@ -89,7 +85,9 @@
           </div>
 
           <div class="glass rounded-3xl p-6 border border-white/10 hover:-translate-y-1 transition">
-            <div class="text-4xl mb-3">CC</div>
+            <div class="mb-3 w-14 h-14 rounded-2xl bg-white/90 border border-white/10 flex items-center justify-center p-2 shadow-[0_0_18px_rgba(16,185,129,0.12)]">
+              <img src="../Assets/platforms/codechef.jpg" alt="CodeChef" class="w-full h-full object-contain rounded-xl" />
+            </div>
             <h3 class="text-xl font-bold mb-2">CodeChef</h3>
             <p class="text-gray-400 text-sm mb-4">Cooking with Code</p>
             <button onclick="window.connectModal.openForPlatform('codechef')" class="w-full bg-emerald-600 py-3 rounded-2xl text-sm font-semibold hover:bg-emerald-500 transition shadow-[0_0_15px_rgba(16,185,129,0.25)] text-gray-900">
@@ -98,7 +96,9 @@
           </div>
 
           <div class="glass rounded-3xl p-6 border border-white/10 hover:-translate-y-1 transition">
-            <div class="text-4xl mb-3">LC</div>
+            <div class="mb-3 w-14 h-14 rounded-2xl bg-white/90 border border-white/10 flex items-center justify-center p-2 shadow-[0_0_18px_rgba(16,185,129,0.12)]">
+              <img src="../Assets/platforms/leetcode.png" alt="LeetCode" class="w-full h-full object-contain" />
+            </div>
             <h3 class="text-xl font-bold mb-2">LeetCode</h3>
             <p class="text-gray-400 text-sm mb-4">Interview Preparation</p>
             <button onclick="window.connectModal.openForPlatform('leetcode')" class="w-full bg-emerald-600 py-3 rounded-2xl text-sm font-semibold hover:bg-emerald-500 transition shadow-[0_0_15px_rgba(16,185,129,0.25)] text-gray-900">
@@ -106,14 +106,6 @@
             </button>
           </div>
 
-          <div class="glass rounded-3xl p-6 border border-white/10 hover:-translate-y-1 transition">
-            <div class="text-4xl mb-3">AC</div>
-            <h3 class="text-xl font-bold mb-2">AtCoder</h3>
-            <p class="text-gray-400 text-sm mb-4">Japanese Programming Contests</p>
-            <button onclick="window.connectModal.openForPlatform('atcoder')" class="w-full bg-emerald-600 py-3 rounded-2xl text-sm font-semibold hover:bg-emerald-500 transition shadow-[0_0_15px_rgba(16,185,129,0.25)] text-gray-900">
-              Connect Account
-            </button>
-          </div>
         </div>
 
         <div class="glass rounded-3xl p-8 border border-white/10 reveal">
@@ -129,108 +121,6 @@
 
   <div id="notificationContainer"></div>
   <div id="connectModalContainer"></div>
-
-  <script>
-    function displaySidebar(state) {
-      const profile = state.profile.data;
-      const accounts = state.platforms.accounts || [];
-      const username = document.getElementById('username');
-      const rank = document.getElementById('rank');
-      const loader = document.getElementById('profileLoader');
-      const image = document.getElementById('profileImage');
-
-      if (!profile) return;
-
-      if (username) username.textContent = profile.user_profile?.display_name || profile.username || 'User';
-      if (rank) rank.textContent = accounts.length ? `Tracking ${accounts.length} platform${accounts.length === 1 ? '' : 's'}` : 'Connect a platform';
-      if (profile.user_profile?.avatar_url && image) {
-        image.src = profile.user_profile.avatar_url;
-        image.classList.remove('hidden');
-      }
-      loader?.classList.add('hidden');
-    }
-
-    async function displayAccounts() {
-      const { accounts, loading } = stateManager.getState().platforms;
-      const list = document.getElementById('accountsList');
-
-      if (loading) {
-        list.innerHTML = '<div class="skeleton h-32 rounded-3xl"></div><div class="skeleton h-32 rounded-3xl"></div>';
-        return;
-      }
-
-      if (!accounts || accounts.length === 0) {
-        list.innerHTML = `
-          <div class="md:col-span-2">
-            <div class="glass rounded-3xl p-8 flex flex-col items-center justify-center text-center min-h-[220px] w-full">
-              <div class="text-4xl opacity-70 mb-3">--</div>
-              <h3 class="text-xl font-bold text-white mb-2">No connected platforms yet.</h3>
-              <p class="text-gray-400 text-sm max-w-md">Connect a platform account to start syncing competitive programming data.</p>
-            </div>
-          </div>
-        `;
-        return;
-      }
-
-      list.innerHTML = `
-        <div class="md:col-span-2">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            ${accounts.map(acc => `
-              <div class="glass rounded-3xl p-5 border border-white/10 hover:-translate-y-1 transition content-fade">
-                <div class="flex items-center justify-between mb-3">
-                  <p class="font-semibold text-white">${getPlatformLabel(acc.platform)}</p>
-                  <span class="text-emerald-400 text-lg">Connected</span>
-                </div>
-                <p class="text-gray-400 text-sm">Handle: <span class="text-emerald-400 font-mono">${acc.handle}</span></p>
-                <p class="text-gray-500 text-xs">Rating: ${acc.rating || 'N/A'}</p>
-                <p class="text-gray-600 text-xs mt-2">Last synced: ${acc.last_synced_at ? new Date(acc.last_synced_at).toLocaleDateString() : 'Never'}</p>
-                <button onclick="disconnectAccount('${acc.platform}')" class="mt-4 w-full bg-red-600/20 text-red-400 border border-red-500/30 py-3 rounded-2xl text-xs font-semibold hover:bg-red-600/30 transition">
-                  Disconnect
-                </button>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-
-      requestAnimationFrame(() => {
-        list.querySelectorAll('.content-fade').forEach((el) => el.classList.add('show'));
-      });
-    }
-
-    function getPlatformLabel(platform) {
-      const labels = {
-        codeforces: 'Codeforces',
-        codechef: 'CodeChef',
-        leetcode: 'LeetCode',
-        atcoder: 'AtCoder'
-      };
-      return labels[platform] || platform;
-    }
-
-    async function disconnectAccount(platform) {
-      if (!confirm(`Disconnect ${platform}?`)) return;
-
-      try {
-        await platformService.disconnectPlatform(platform);
-        stateManager.showNotification(`${platform} disconnected`, 'success');
-        await stateManager.loadPlatforms();
-      } catch (err) {
-        stateManager.showNotification(`Failed to disconnect: ${err.message}`, 'error');
-      }
-    }
-
-    stateManager.subscribe((state) => {
-      displaySidebar(state);
-      displayAccounts();
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      initRevealAnimations();
-      displaySidebar(stateManager.getState());
-      displayAccounts();
-      stateManager.loadPlatforms();
-    });
-  </script>
+  <script src="../script/platforms.js"></script>
 </body>
 </html>

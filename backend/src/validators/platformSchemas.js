@@ -11,4 +11,8 @@ const disconnectSchema = Joi.object({
   platform: platformSchema
 });
 
-module.exports = { connectSchema, disconnectSchema };
+const platformParamSchema = Joi.object({
+  platform: platformSchema
+});
+
+module.exports = { connectSchema, disconnectSchema, platformParamSchema };

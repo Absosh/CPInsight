@@ -40,28 +40,23 @@
         <div id="sidebarProfileLoader" class="w-12 h-12 rounded-full skeleton flex items-center justify-center">
           <div class="loader !w-5 !h-5 border-2"></div>
         </div>
-        <img id="sidebarProfileImage" src="" class="hidden w-12 h-12 rounded-full object-cover border-2 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+        <img id="sidebarProfileImage" src="" alt="" class="hidden w-12 h-12 rounded-full object-cover border-2 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+        <div id="sidebarFallbackAvatar" class="hidden w-12 h-12 rounded-full bg-gradient-to-r from-emerald-400 to-indigo-400 items-center justify-center text-white font-bold"></div>
         <div class="min-w-0">
           <h2 id="sidebarUsername" class="text-lg font-bold tracking-tight truncate">--</h2>
-          <p id="sidebarRank" class="text-emerald-400 text-xs uppercase tracking-widest font-semibold truncate">Profile Settings</p>
+          <p class="text-emerald-400 text-xs uppercase tracking-widest font-semibold truncate">Account Settings</p>
         </div>
       </div>
 
-      <div class="space-y-3 flex-1">
-        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='dashboard.html'">Dashboard</button>
-        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='platforms.html'">Platforms</button>
-        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='analytics.html'">Analytics</button>
-        <button class="w-full min-w-0 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl p-4 text-left font-semibold truncate shadow-[0_0_10px_rgba(16,185,129,0.1)]">Profile</button>
-        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='calendar.html'">Calendar</button>
-      </div>
+      <nav id="accountSettingsNav" class="space-y-3 flex-1"></nav>
 
-      <button class="w-full bg-red-600/20 text-red-400 border border-red-500/30 rounded-2xl p-4 font-semibold hover:bg-red-600/30 transition" onclick="logout()">
+      <button class="w-full bg-red-600/20 text-red-400 border border-red-500/30 rounded-2xl p-4 font-semibold hover:bg-red-600/30 transition" id="logoutBtn">
         Logout
       </button>
     </aside>
 
     <main class="flex-1 min-w-0 p-6 md:p-10 z-10 relative overflow-auto">
-      <button id="mobileMenuBtn" aria-label="Open navigation menu" aria-expanded="false" class="lg:hidden text-gray-400 hover:text-white mb-6 focus:outline-none transition-colors">
+      <button id="mobileMenuBtn" aria-label="Open account settings menu" aria-expanded="false" class="lg:hidden text-gray-400 hover:text-white mb-6 focus:outline-none transition-colors">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
         </svg>
@@ -70,227 +65,146 @@
       <div class="w-full">
         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-10 reveal visible relative z-50">
           <div>
-            <h1 class="text-4xl font-black tracking-tight">Your Profile</h1>
-            <p class="text-gray-400 mt-2">Manage your account settings and connected platforms.</p>
+            <h1 class="text-4xl font-black tracking-tight">Profile</h1>
+            <p class="text-gray-400 mt-2">Manage your account identity, avatar, and campus information.</p>
           </div>
           <div id="userMenuContainer" class="relative z-[80] flex lg:justify-end"></div>
         </div>
 
-        <div class="glass rounded-3xl p-8 border border-white/10 mb-10 reveal visible">
-          <h2 class="text-2xl font-bold mb-6">Account Information</h2>
+        <div id="pageError" class="hidden glass rounded-3xl p-8 text-center border border-red-500/30 mb-10">
+          <h3 class="text-xl font-bold text-white mb-2">Failed to load profile.</h3>
+          <p id="pageErrorMessage" class="text-red-300 text-sm mb-5"></p>
+          <button id="retryBtn" class="px-5 py-3 bg-red-600 rounded-2xl text-white font-semibold hover:bg-red-500 transition">Retry</button>
+        </div>
+
+        <section class="glass rounded-3xl p-8 border border-white/10 mb-10 reveal visible">
+          <div class="flex items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-2xl font-bold">Profile Avatar</h2>
+              <p class="text-gray-400 text-sm mt-1">PNG, JPEG, or WEBP. Square images work best.</p>
+            </div>
+            <div id="avatarStatus" class="text-sm text-gray-400"></div>
+          </div>
+
+          <div id="avatarLoader" class="skeleton h-32 rounded-3xl"></div>
+          <div id="avatarContent" class="hidden flex flex-col md:flex-row md:items-center gap-6">
+            <div class="relative">
+              <img id="avatarPreview" src="" alt="" class="hidden w-28 h-28 rounded-full object-cover border-2 border-emerald-500 shadow-[0_0_18px_rgba(16,185,129,0.25)]" />
+              <div id="avatarFallback" class="hidden w-28 h-28 rounded-full bg-gradient-to-r from-emerald-400 to-indigo-400 items-center justify-center text-white text-4xl font-black"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp" class="hidden" />
+              <div class="flex flex-wrap gap-3">
+                <button id="chooseAvatarBtn" class="bg-white/5 border border-white/10 hover:bg-white/10 hover:border-emerald-500/50 px-5 py-3 rounded-2xl transition font-semibold text-emerald-400">Choose Image</button>
+                <button id="saveAvatarBtn" class="hidden bg-emerald-600 px-5 py-3 rounded-2xl font-semibold hover:bg-emerald-500 transition text-gray-900">Save Avatar</button>
+                <button id="deleteAvatarBtn" class="bg-red-600/20 text-red-400 border border-red-500/30 px-5 py-3 rounded-2xl font-semibold hover:bg-red-600/30 transition">Delete Avatar</button>
+              </div>
+              <p id="avatarHelp" class="text-gray-400 text-sm mt-3">Choose an image to preview it before saving.</p>
+              <p id="avatarError" class="hidden text-red-300 text-sm mt-3"></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="glass rounded-3xl p-8 border border-white/10 mb-10 reveal visible">
+          <div class="flex items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-2xl font-bold">Account Information</h2>
+              <p id="formStatus" class="text-gray-400 text-sm mt-1">Loading your profile...</p>
+            </div>
+            <span id="unsavedBadge" class="hidden text-xs uppercase tracking-widest text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-full px-3 py-1">Unsaved</span>
+          </div>
 
           <div id="profileLoader" class="space-y-4">
             <div class="skeleton h-12 rounded-2xl"></div>
             <div class="skeleton h-12 rounded-2xl"></div>
             <div class="skeleton h-12 rounded-2xl"></div>
+            <div class="skeleton h-12 rounded-2xl"></div>
           </div>
 
-          <div id="profileContent" class="hidden space-y-6 content-fade">
-            <div>
-              <label class="block text-sm font-semibold text-gray-400 mb-2">Username</label>
-              <input type="text" id="username" disabled class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none text-white shadow-inner" />
+          <form id="profileForm" class="hidden space-y-6 content-fade">
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-semibold text-gray-400 mb-2" for="username">Username</label>
+                <input type="text" id="username" disabled class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none text-white shadow-inner" />
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-400 mb-2" for="email">Email</label>
+                <input type="email" id="email" disabled class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none text-white shadow-inner" />
+              </div>
             </div>
 
-            <div>
-              <label class="block text-sm font-semibold text-gray-400 mb-2">Email</label>
-              <input type="email" id="email" disabled class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none text-white shadow-inner" />
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-semibold text-gray-400 mb-2" for="displayName">Display Name</label>
+                <input type="text" id="displayName" maxlength="80" class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-emerald-500 transition text-white shadow-inner" placeholder="Your display name" />
+                <p id="displayNameError" class="hidden text-red-300 text-sm mt-2"></p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-400 mb-2" for="country">Country</label>
+                <input type="text" id="country" maxlength="80" class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-emerald-500 transition text-white shadow-inner" placeholder="Your country" />
+              </div>
             </div>
 
-            <div>
-              <label class="block text-sm font-semibold text-gray-400 mb-2">Display Name</label>
-              <input type="text" id="displayName" class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-emerald-500 transition text-white shadow-inner" placeholder="Your display name" />
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-semibold text-gray-400 mb-2" for="timezone">Timezone</label>
+                <select id="timezone" class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-emerald-500 transition text-white shadow-inner">
+                  <option value="UTC">UTC</option>
+                  <option value="America/New_York">America/New_York</option>
+                  <option value="America/Los_Angeles">America/Los_Angeles</option>
+                  <option value="Europe/London">Europe/London</option>
+                  <option value="Europe/Paris">Europe/Paris</option>
+                  <option value="Asia/Kolkata">Asia/Kolkata</option>
+                  <option value="Asia/Tokyo">Asia/Tokyo</option>
+                  <option value="Asia/Shanghai">Asia/Shanghai</option>
+                  <option value="Asia/Dubai">Asia/Dubai</option>
+                  <option value="Australia/Sydney">Australia/Sydney</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-400 mb-2" for="createdAt">Joined</label>
+                <input type="text" id="createdAt" disabled class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none text-gray-500 shadow-inner" />
+              </div>
             </div>
 
-            <div>
-              <label class="block text-sm font-semibold text-gray-400 mb-2">Country</label>
-              <input type="text" id="country" class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-emerald-500 transition text-white shadow-inner" placeholder="Your country" />
+            <div class="relative">
+              <label class="block text-sm font-semibold text-gray-400 mb-2" for="collegeSearch">College</label>
+              <input type="text" id="collegeSearch" autocomplete="off" class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-emerald-500 transition text-white shadow-inner" placeholder="Search IITs and NITs" />
+              <input type="hidden" id="collegeId" />
+              <div id="collegeResults" class="hidden absolute z-[90] left-0 right-0 mt-2 glass rounded-2xl border border-white/10 overflow-hidden shadow-2xl max-h-72 overflow-y-auto"></div>
+              <p id="collegeHint" class="text-gray-400 text-sm mt-2">Select a college from the directory. Leave empty if not applicable.</p>
             </div>
 
-            <div>
-              <label class="block text-sm font-semibold text-gray-400 mb-2">Timezone</label>
-              <select id="timezone" class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-emerald-500 transition text-white shadow-inner">
-                <option value="UTC">UTC</option>
-                <option value="America/New_York">America/New_York</option>
-                <option value="America/Los_Angeles">America/Los_Angeles</option>
-                <option value="Europe/London">Europe/London</option>
-                <option value="Europe/Paris">Europe/Paris</option>
-                <option value="Asia/Tokyo">Asia/Tokyo</option>
-                <option value="Asia/Shanghai">Asia/Shanghai</option>
-                <option value="Asia/Dubai">Asia/Dubai</option>
-                <option value="Australia/Sydney">Australia/Sydney</option>
-              </select>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <button id="saveBtn" type="submit" class="bg-emerald-600 px-6 py-4 rounded-2xl font-semibold hover:bg-emerald-500 transition shadow-[0_0_15px_rgba(16,185,129,0.4)] text-gray-900 disabled:opacity-60 disabled:cursor-not-allowed">
+                Save Changes
+              </button>
+              <button id="resetBtn" type="button" class="bg-white/5 border border-white/10 hover:bg-white/10 px-6 py-4 rounded-2xl font-semibold transition text-gray-300 disabled:opacity-60 disabled:cursor-not-allowed">
+                Reset
+              </button>
             </div>
+          </form>
+        </section>
 
+        <section class="glass rounded-3xl p-8 border border-white/10 reveal">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <label class="block text-sm font-semibold text-gray-400 mb-2">Joined</label>
-              <input type="text" id="createdAt" disabled class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none text-gray-500 shadow-inner" />
+              <h2 class="text-2xl font-bold mb-2">Platforms</h2>
+              <p class="text-gray-400">Manage connected competitive programming accounts from account settings.</p>
             </div>
-
-            <button id="saveBtn" onclick="saveProfile()" class="w-full bg-emerald-600 py-4 rounded-2xl font-semibold hover:bg-emerald-500 transition shadow-[0_0_15px_rgba(16,185,129,0.4)] text-gray-900">
-              Save Changes
-            </button>
+            <a href="platforms.html" class="inline-flex justify-center bg-white/5 border border-white/10 hover:bg-white/10 hover:border-emerald-500/50 px-5 py-3 rounded-2xl transition font-semibold text-emerald-400">
+              Manage Platforms
+            </a>
           </div>
-        </div>
-
-        <div class="glass rounded-3xl p-8 border border-white/10 reveal">
-          <h2 class="text-2xl font-bold mb-6">Connected Platforms</h2>
-          <div id="platformsContent">
-            <div class="skeleton h-32 rounded-3xl"></div>
-          </div>
-        </div>
+        </section>
       </div>
     </main>
   </div>
 
   <div id="notificationContainer"></div>
-
-  <script>
-    function displaySidebar(profile) {
-      if (!profile) return;
-      const loader = document.getElementById('sidebarProfileLoader');
-      const image = document.getElementById('sidebarProfileImage');
-      document.getElementById('sidebarUsername').textContent = profile.user_profile?.display_name || profile.username || 'User';
-      if (profile.user_profile?.avatar_url && image) {
-        image.src = profile.user_profile.avatar_url;
-        image.classList.remove('hidden');
-      }
-      loader?.classList.add('hidden');
-    }
-
-    function displayProfile(profile) {
-      if (!profile) {
-        document.getElementById('profileLoader').innerHTML = `
-          <div class="glass rounded-3xl p-8 text-center border border-red-500/30">
-            <h3 class="text-xl font-bold text-white mb-2">Failed to load profile.</h3>
-            <p class="text-red-300 text-sm">Please refresh and try again.</p>
-          </div>
-        `;
-        return;
-      }
-
-      document.getElementById('username').value = profile.username || '';
-      document.getElementById('email').value = profile.email || '';
-      document.getElementById('displayName').value = profile.user_profile?.display_name || '';
-      document.getElementById('country').value = profile.user_profile?.country || '';
-      document.getElementById('timezone').value = profile.user_profile?.timezone || 'UTC';
-      document.getElementById('createdAt').value = new Date(profile.created_at).toLocaleDateString();
-
-      document.getElementById('profileLoader').classList.add('hidden');
-      document.getElementById('profileContent').classList.remove('hidden');
-      requestAnimationFrame(() => document.getElementById('profileContent').classList.add('show'));
-      displaySidebar(profile);
-    }
-
-    async function saveProfile() {
-      const saveBtn = document.getElementById('saveBtn');
-      saveBtn.disabled = true;
-      saveBtn.textContent = 'Saving...';
-
-      try {
-        const updates = {
-          display_name: document.getElementById('displayName').value,
-          country: document.getElementById('country').value,
-          timezone: document.getElementById('timezone').value
-        };
-
-        await userService.updateProfile(updates);
-        userService.clearProfileCache();
-        await stateManager.loadProfile();
-        stateManager.showNotification('Profile updated successfully!', 'success');
-      } catch (err) {
-        stateManager.showNotification('Failed to update profile: ' + err.message, 'error');
-      } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Save Changes';
-      }
-    }
-
-    function displayPlatforms() {
-      const { accounts, loading } = stateManager.getState().platforms;
-      const container = document.getElementById('platformsContent');
-
-      if (loading) {
-        container.innerHTML = '<div class="skeleton h-32 rounded-3xl"></div>';
-        return;
-      }
-
-      if (accounts.length === 0) {
-        container.innerHTML = `
-          <div class="glass rounded-3xl p-8 flex flex-col items-center justify-center text-center min-h-[220px] w-full">
-            <div class="text-4xl opacity-70 mb-3">--</div>
-            <h3 class="text-xl font-bold text-white mb-2">No connected platforms yet.</h3>
-            <p class="text-gray-400 text-sm max-w-md mb-5">Connect a platform account to start syncing competitive programming data.</p>
-            <a href="platforms.html" class="inline-block bg-emerald-600 px-5 py-3 rounded-2xl font-semibold hover:bg-emerald-500 transition text-gray-900">
-              Connect Platform
-            </a>
-          </div>
-        `;
-        return;
-      }
-
-      document.getElementById('platformsContent').innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          ${accounts.map(acc => `
-            <div class="glass rounded-3xl p-5 border border-white/10 hover:-translate-y-1 transition content-fade">
-              <div class="flex items-center justify-between mb-2">
-                <p class="font-semibold text-white">${acc.platform.charAt(0).toUpperCase() + acc.platform.slice(1)}</p>
-                <span class="text-emerald-400">Connected</span>
-              </div>
-              <p class="text-gray-400 text-sm">Handle: <span class="text-emerald-400 font-mono">${acc.handle}</span></p>
-              <p class="text-gray-500 text-xs">Rating: ${acc.rating || 'N/A'}</p>
-              <p class="text-gray-600 text-xs mt-2">Last synced: ${acc.last_synced_at ? new Date(acc.last_synced_at).toLocaleDateString() : 'Never'}</p>
-            </div>
-          `).join('')}
-        </div>
-      `;
-
-      requestAnimationFrame(() => {
-        container.querySelectorAll('.content-fade').forEach((el) => el.classList.add('show'));
-      });
-    }
-
-    async function logout() {
-      if (!confirm('Are you sure you want to logout?')) return;
-      try {
-        await authService.logout();
-        window.location.href = 'auth.html';
-      } catch (err) {
-        console.error('Logout failed:', err);
-      }
-    }
-
-    async function initializePage() {
-      if (!authService.isLoggedIn()) {
-        window.location.href = 'auth.html';
-        return;
-      }
-
-      try {
-        const profile = await userService.getProfile({ skipCache: false });
-        displayProfile(profile);
-        displayPlatforms();
-      } catch (err) {
-        document.getElementById('profileLoader').innerHTML = `
-          <div class="glass rounded-3xl p-8 text-center border border-red-500/30">
-            <h3 class="text-xl font-bold text-white mb-2">Failed to load profile.</h3>
-            <p class="text-red-300 text-sm mb-5">${err.message}</p>
-            <button onclick="location.reload()" class="px-5 py-3 bg-red-600 rounded-2xl text-white font-semibold hover:bg-red-500 transition">
-              Retry
-            </button>
-          </div>
-        `;
-      }
-    }
-
-    stateManager.subscribe((state) => {
-      if (state.profile.data) displaySidebar(state.profile.data);
-      if (state.platforms.accounts) displayPlatforms();
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      initRevealAnimations();
-      initializePage();
-    });
-  </script>
+  <script src="../script/profile.js"></script>
 </body>
 </html>

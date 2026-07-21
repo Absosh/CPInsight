@@ -1,0 +1,2 @@
+ALTER TABLE user_profiles
+  ALTER COLUMN country TYPE VARCHAR(80);

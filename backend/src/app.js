@@ -4,6 +4,7 @@ const cors = require('cors');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
+const path = require('path');
 const routes = require('./routes');
 const corsOptions = require('./config/cors');
 const errorHandler = require('./middleware/errorHandler');
@@ -20,6 +21,10 @@ app.use(compression());
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false }));
+app.use('/uploads', (_req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.join(__dirname, '..', 'uploads')));
 app.use(globalLimiter);
 app.use(morgan('combined'));
 

@@ -62,6 +62,12 @@ class PlatformService {
     }
   }
 
+  async syncPlatform(platform) {
+    const data = await httpClient.post(`/platforms/sync/${encodeURIComponent(platform)}`, {});
+    this.clearCache();
+    return data;
+  }
+
   async getConnectedPlatforms() {
     const accounts = await this.getAccounts();
     return accounts.map(acc => acc.platform);

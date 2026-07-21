@@ -106,4 +106,17 @@ async function list(userId) {
   return platformRepository.listAccounts(userId);
 }
 
-module.exports = { connect, disconnect, list };
+async function sync(userId, platform) {
+  const account = await platformRepository.findAccount(userId, platform);
+  if (!account) throw new HttpError(404, 'Platform account not found');
+
+  const result = await syncService.syncPlatformAccount(userId, account);
+  await Promise.all([
+    delByPattern(`profile:${userId}`),
+    delByPattern(`analytics:${userId}:*`)
+  ]).catch(() => {});
+
+  return result;
+}
+
+module.exports = { connect, disconnect, list, sync };

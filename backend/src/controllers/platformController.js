@@ -21,4 +21,9 @@ async function syncAccounts(req, res) {
   res.json(result);
 }
 
-module.exports = { connect, disconnect, list, syncAccounts };
+async function syncAccount(req, res) {
+  const result = await platformService.sync(req.user.id, req.params.platform);
+  res.json(result);
+}
+
+module.exports = { connect, disconnect, list, syncAccounts, syncAccount };
