@@ -10,10 +10,8 @@ class AnalyticsService {
       platform: data.platform || 'combined',
       handle: data.handle || null,
       solvedProblems: data.solvedProblems || 0,
-      solvedLastYear: data.solvedLastYear || 0,   // <-- ADD THIS
-      solvedLastMonth: data.solvedLastMonth || 0, // <-- ADD THIS
-      totalSubmissions: data.totalSubmissions ?? data.submissions ?? 0,
-      acceptedSubmissions: data.acceptedSubmissions || 0,
+      solvedLastYear: data.solvedLastYear || 0,
+      solvedLastMonth: data.solvedLastMonth || 0,
       totalSubmissions: data.totalSubmissions ?? data.submissions ?? 0,
       acceptedSubmissions: data.acceptedSubmissions || 0,
       contestCount: data.contestCount || 0,
@@ -39,50 +37,17 @@ class AnalyticsService {
     }
   }
 
-  async getCodeforcesAnalytics() {
-    try {
-      const data = await httpClient.get('/analytics/codeforces');
-      return this.normalizeAnalytics(data);
-    } catch (err) {
-      console.error('Failed to fetch Codeforces analytics:', err);
-      return null;
-    }
-  }
-
-  async getCodechefAnalytics() {
-    try {
-      const data = await httpClient.get('/analytics/codechef');
-      return this.normalizeAnalytics(data);
-    } catch (err) {
-      console.error('Failed to fetch CodeChef analytics:', err);
-      return null;
-    }
-  }
-
-  async getLeetcodeAnalytics() {
-    try {
-      const data = await httpClient.get('/analytics/leetcode');
-      return this.normalizeAnalytics(data);
-    } catch (err) {
-      console.error('Failed to fetch LeetCode analytics:', err);
-      return null;
-    }
-  }
-
   async getAnalytics(platform) {
     if (platform === 'combined') {
       return this.getCombinedAnalytics();
     }
 
-    switch (platform) {
-      case 'codeforces':
-        return this.getCodeforcesAnalytics();
-      case 'codechef':
-        return this.getCodechefAnalytics();
-      case 'leetcode':
-        return this.getLeetcodeAnalytics();
-      default:
-        return this.getCombinedAnalytics();
+    try {
+      const data = await httpClient.get(`/analytics/${encodeURIComponent(platform)}`);
+      return this.normalizeAnalytics(data);
+    } catch (err) {
+      console.error(`Failed to fetch ${platform} analytics:`, err);
+      return null;
     }
   }
 
@@ -256,49 +221,14 @@ class AnalyticsService {
       );
     }
 
-    // For multiple platforms, use weighted formula
-    const platformWeights = {
-      'codeforces': 1.0,
-      'codechef': 0.65,
-      'leetcode': 0.85
-    };
-
-    // Competitive Rating Component (0.60*CF + 0.25*CC + 0.15*LC)
-    let ratingComponent = 0;
-    let ratingCount = 0;
-    platformResults.forEach(result => {
-      const platform = result.platform || 'codeforces';
-      const rating = result.currentRating || 0;
-      const ratingScore = Math.min(100, Math.round((rating / 2400) * 100));
-      
-      if (platform === 'codeforces') {
-        ratingComponent += ratingScore * 0.60;
-      } else if (platform === 'codechef') {
-        ratingComponent += ratingScore * 0.25;
-      } else if (platform === 'leetcode') {
-        ratingComponent += ratingScore * 0.15;
-      }
-      ratingCount++;
-    });
-
-    // Problem Solving Component (0.50*LC + 0.30*CF + 0.20*CC)
-    let solvingComponent = 0;
-    let cfSolved = 0;
-    let ccSolved = 0;
-    let lcSolved = 0;
-
-    platformResults.forEach(result => {
-      const platform = result.platform || 'codeforces';
-      if (platform === 'codeforces') cfSolved = result.solvedProblems || 0;
-      if (platform === 'codechef') ccSolved = result.solvedProblems || 0;
-      if (platform === 'leetcode') lcSolved = result.solvedProblems || 0;
-    });
-
-    const lcScore = this.getSolveScore(lcSolved);
-    const cfScore = this.getSolveScore(cfSolved);
-    const ccScore = this.getSolveScore(ccSolved);
-
-    solvingComponent = lcScore * 0.50 + cfScore * 0.30 + ccScore * 0.20;
+    const ratingScores = platformResults
+      .map(result => result.currentRating)
+      .filter(rating => typeof rating === 'number')
+      .map(rating => Math.min(100, Math.round((rating / 2400) * 100)));
+    const ratingComponent = ratingScores.length
+      ? ratingScores.reduce((sum, score) => sum + score, 0) / ratingScores.length
+      : 0;
+    const solvingComponent = this.getSolveScore(totalSolved);
 
     // Consistency Component (based on combined streak)
     const consistencyComponent = Math.min(100, streak * 10);
@@ -311,7 +241,7 @@ class AnalyticsService {
 
     // Calculate final CPInsight Score
     const cpScore = 
-      0.40 * (ratingComponent / Math.max(1, ratingCount)) +
+      0.40 * ratingComponent +
       0.25 * solvingComponent +
       0.15 * consistencyComponent +
       0.10 * contestComponent +

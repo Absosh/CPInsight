@@ -86,14 +86,22 @@ class StateManager {
     });
 
     try {
-      const accounts = await platformService.getAccounts();
-      const accountPlatforms = accounts.map(a => a.platform);
+      const allAccounts = await platformService.getAccounts();
+      const accounts = allAccounts.filter((account) => this.isAnalyticsReadyAccount(account));
+      const accountPlatforms = accounts
+        .map(a => a.platform)
+        .filter(Boolean);
       
-      // Load saved platform selection from localStorage, or default to all accounts
-      const saved = localStorage.getItem('selectedPlatforms');
-      const selectedPlatforms = saved 
-        ? JSON.parse(saved).filter(p => accountPlatforms.includes(p))
+      const saved = this.readStoredPlatformList('selectedPlatforms');
+      const previouslyKnownPlatforms = this.readStoredPlatformList('selectedPlatformUniverse');
+      const existingSelection = saved
+        ? saved.filter(p => accountPlatforms.includes(p))
         : accountPlatforms;
+      const newlyDiscoveredPlatforms = accountPlatforms.filter(p => !previouslyKnownPlatforms.includes(p));
+      const selectedPlatforms = Array.from(new Set([...existingSelection, ...newlyDiscoveredPlatforms]));
+
+      localStorage.setItem('selectedPlatformUniverse', JSON.stringify(accountPlatforms));
+      localStorage.setItem('selectedPlatforms', JSON.stringify(selectedPlatforms));
 
       this.setState({
         platforms: {
@@ -115,6 +123,25 @@ class StateManager {
     }
   }
 
+  readStoredPlatformList(key) {
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || 'null');
+      return Array.isArray(value) ? value.filter(Boolean) : [];
+    } catch {
+      localStorage.removeItem(key);
+      return [];
+    }
+  }
+
+  isAnalyticsReadyAccount(account) {
+    const status = account?.sync_status ?? account?.syncStatus ?? account?.status;
+    if (!status) {
+      return true;
+    }
+
+    return status.toString().trim().toLowerCase() === 'synced';
+  }
+
   async loadAnalytics() {
     this.setState({
       analytics: { ...this.state.analytics, loading: true }
@@ -122,9 +149,14 @@ class StateManager {
 
     try {
       let data;
-      const { selectedPlatforms } = this.state.platforms;
+      const { accounts, selectedPlatforms } = this.state.platforms;
+      const accountPlatforms = accounts.map(a => a.platform).filter(Boolean);
+      const selectedSet = new Set(selectedPlatforms);
+      const allConnectedPlatformsSelected = accountPlatforms.length > 0
+        && selectedPlatforms.length === accountPlatforms.length
+        && accountPlatforms.every(platform => selectedSet.has(platform));
 
-      if (selectedPlatforms.length === 0) {
+      if (selectedPlatforms.length === 0 || allConnectedPlatformsSelected) {
         data = await analyticsService.getCombinedAnalytics();
       } else if (selectedPlatforms.length === 1) {
         data = await analyticsService.getAnalytics(selectedPlatforms[0]);

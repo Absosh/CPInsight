@@ -16,8 +16,30 @@ async function syncPlatformAccount(userId, account, options = {}) {
   const throwOnError = Boolean(options.throwOnError);
   const { id: accountId, platform, handle } = account;
   const client = platformClients[platform];
-  if (!client) {
-    throw new Error(`No client for platform: ${platform}`);
+    if (!client) {
+      throw new Error(`No client for platform: ${platform}`);
+    }
+
+  if (platform === 'leetcode') {
+    await db.query(
+      `UPDATE platform_accounts
+       SET sync_status = CASE WHEN last_synced_at IS NULL THEN 'pending_extension_upload' ELSE sync_status END,
+           metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb
+       WHERE id = $1`,
+      [
+        accountId,
+        JSON.stringify({
+          leetcodeSyncMode: 'authenticated_extension',
+          publicSyncDeprecatedAt: new Date().toISOString()
+        })
+      ]
+    );
+    return {
+      platform,
+      handle,
+      status: 'pending_extension_upload',
+      message: 'LeetCode uses the CPInsight browser extension as the canonical sync source.'
+    };
   }
 
   try {

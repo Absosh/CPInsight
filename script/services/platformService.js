@@ -12,14 +12,21 @@ class PlatformService {
     return [];
   }
 
-  async getAccounts() {
+  getCachedAccounts() {
     const cached = localStorage.getItem('platformAccounts');
-    if (cached) {
-      const accounts = this.normalizeAccounts(JSON.parse(cached));
-      localStorage.setItem('platformAccounts', JSON.stringify(accounts));
-      return accounts;
+    if (!cached) {
+      return [];
     }
 
+    try {
+      return this.normalizeAccounts(JSON.parse(cached));
+    } catch {
+      localStorage.removeItem('platformAccounts');
+      return [];
+    }
+  }
+
+  async getAccounts() {
     try {
       const data = await httpClient.get('/platforms/accounts');
       const accounts = this.normalizeAccounts(data);
@@ -27,7 +34,7 @@ class PlatformService {
       return accounts;
     } catch (err) {
       console.error('Failed to fetch platform accounts:', err);
-      return [];
+      return this.getCachedAccounts();
     }
   }
 

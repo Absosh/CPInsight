@@ -6,12 +6,7 @@ let lastAnalyticsKey = null;
 let isRendering = false;
 let selectedHeatmapYear = 'all';
 
-const PLATFORM_COLORS = {
-    codeforces: '#10b981',
-    codechef: '#f59e0b',
-    leetcode: '#6366f1',
-    combined: '#10b981'
-};
+const CHART_COLORS = ['#10b981', '#6366f1', '#a855f7', '#f59e0b', '#0ea5e9', '#f43f5e'];
 
 const KPI_CARD_IDS = {
     current: 'kpiCardCurrent',
@@ -28,24 +23,6 @@ function resolveDashboardLayout(selectedPlatforms = []) {
     const platforms = selectedPlatforms.filter(Boolean);
     const singlePlatform = platforms.length === 1;
     const platform = singlePlatform ? platforms[0] : 'combined';
-    const includesLeetCode = platforms.includes('leetcode');
-
-    if (singlePlatform && platform === 'leetcode') {
-        return {
-            mode: 'single',
-            platform,
-            kpiCards: ['current', 'focus', 'contests', 'solved'],
-            labels: {
-                current: 'Current Rank',
-                focus: 'Active Streak',
-                contests: 'Contest Count',
-                solved: 'Solved Problems'
-            },
-            ratingPlatforms: ['leetcode'],
-            showRecentSubmissions: true,
-            heatmapMode: 'cumulative'
-        };
-    }
 
     if (singlePlatform) {
         return {
@@ -59,7 +36,7 @@ function resolveDashboardLayout(selectedPlatforms = []) {
                 solved: 'Problems Solved'
             },
             ratingPlatforms: [platform],
-            showRecentSubmissions: includesLeetCode,
+            showRecentSubmissions: true,
             heatmapMode: 'cumulative'
         };
     }
@@ -75,7 +52,7 @@ function resolveDashboardLayout(selectedPlatforms = []) {
             solved: 'Problems Solved'
         },
         ratingPlatforms: platforms,
-        showRecentSubmissions: includesLeetCode,
+        showRecentSubmissions: true,
         heatmapMode: 'cumulative'
     };
 }
@@ -99,7 +76,24 @@ function showDashboardApp() {
 
 function capitalize(value) {
     if (!value) return '';
-    return value.charAt(0).toUpperCase() + value.slice(1);
+    return value
+        .toString()
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function getPlatformColor(platform) {
+    const key = (platform || 'combined').toString();
+    let hash = 0;
+
+    for (let i = 0; i < key.length; i += 1) {
+        hash = ((hash << 5) - hash) + key.charCodeAt(i);
+        hash |= 0;
+    }
+
+    return CHART_COLORS[Math.abs(hash) % CHART_COLORS.length];
 }
 
 function getActivePlatforms(state) {
@@ -191,7 +185,7 @@ function renderSidebarProfile(profile, activePlatforms) {
 function updateMetricLabels(layout) {
     const labels = layout.labels || {};
 
-    setText('currentMiniLabel', layout.mode === 'combined' ? 'CP Score' : (layout.platform === 'leetcode' ? 'Rank' : 'Current'));
+    setText('currentMiniLabel', layout.mode === 'combined' ? 'CP Score' : 'Current');
     setText('maxMiniLabel', layout.mode === 'combined' ? 'Max' : 'Max');
     setText('currentMetricLabel', labels.current || 'Current Rating');
     setText('maxMetricLabel', labels.max || 'Max Rating');
@@ -388,7 +382,7 @@ function createChart(points, layout) {
             map[label] = point;
             return map;
         }, {});
-        const color = PLATFORM_COLORS[platform] || PLATFORM_COLORS.combined;
+        const color = getPlatformColor(platform);
 
         return {
             label: capitalize(platform),
@@ -532,11 +526,11 @@ function renderRecentSubmissions(submissions, visible = true) {
     }
 
     const rows = Array.isArray(submissions)
-        ? submissions.filter((item) => (item.platform || 'leetcode') === 'leetcode')
+        ? submissions
         : [];
     if (!rows.length) {
         section.classList.remove('hidden');
-        list.innerHTML = '<p class="text-gray-400">Recent accepted LeetCode submissions will appear here after sync.</p>';
+        list.innerHTML = '<p class="text-gray-400">Recent accepted submissions will appear here after sync.</p>';
         return;
     }
 
@@ -544,12 +538,14 @@ function renderRecentSubmissions(submissions, visible = true) {
 
     list.innerHTML = rows.slice(0, 20).map((item) => {
         const submitted = item.submittedAt ? new Date(item.submittedAt).toLocaleString() : '--';
-        const platform = capitalize(item.platform || 'leetcode');
+        const platform = capitalize(item.platform || 'Platform');
         const verdict = item.verdict || 'AC';
-        const slug = item.problemKey || '';
-        const problemUrl = slug ? `https://leetcode.com/problems/${slug}/` : 'https://leetcode.com/problemset/';
+        const problemUrl = item.problemUrl || item.url || '#';
+        const linkAttrs = problemUrl === '#'
+            ? ''
+            : 'target="_blank" rel="noopener noreferrer"';
         return `
-            <a href="${problemUrl}" target="_blank" rel="noopener noreferrer" class="block glass rounded-2xl p-4 border border-white/5 hover:border-emerald-500/40 hover:bg-white/5 transition">
+            <a href="${problemUrl}" ${linkAttrs} class="block glass rounded-2xl p-4 border border-white/5 hover:border-emerald-500/40 hover:bg-white/5 transition">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div class="min-w-0">
                         <p class="font-semibold text-white truncate">${item.problemName || item.problemKey || 'Problem'}</p>

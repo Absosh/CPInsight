@@ -27,13 +27,33 @@ async function connect(userId, payload) {
       handle: payload.handle.trim(),
       handleNormalized,
       profileUrl: profileUrl(payload.platform, payload.handle.trim()),
-      metadata: { source: 'user_connected' }
+      metadata: payload.platform === 'leetcode'
+        ? { source: 'user_connected', leetcodeSyncMode: 'authenticated_extension' }
+        : { source: 'user_connected' }
     }, client);
 
-    const syncResult = await syncService.syncPlatformAccount(userId, account, {
-      db: client,
-      throwOnError: true
-    });
+    if (payload.platform === 'leetcode') {
+      const pending = await client.query(
+        `UPDATE platform_accounts
+         SET sync_status = 'pending_extension_upload'
+         WHERE id = $1
+         RETURNING *`,
+        [account.id]
+      );
+      Object.assign(account, pending.rows[0]);
+    }
+
+    const syncResult = payload.platform === 'leetcode'
+      ? {
+        platform: 'leetcode',
+        handle: account.handle,
+        status: 'pending_extension_upload',
+        message: 'LeetCode connected. Run the CPInsight browser extension to sync authenticated data.'
+      }
+      : await syncService.syncPlatformAccount(userId, account, {
+        db: client,
+        throwOnError: true
+      });
 
     await client.query('COMMIT');
 

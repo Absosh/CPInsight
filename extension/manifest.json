@@ -1,0 +1,72 @@
+{
+  "manifest_version": 3,
+  "name": "CPInsight Sync",
+  "description": "Securely collects authenticated competitive programming data for CPInsight.",
+  "version": "0.1.0",
+  "minimum_chrome_version": "114",
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_title": "CPInsight Sync"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "permissions": [
+    "alarms",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://leetcode.com/*",
+    "https://api.cpinsight.app/*",
+    "http://localhost:4000/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://leetcode.com/*"
+      ],
+      "js": [
+        "content/content-script.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "http://127.0.0.1:5500/*",
+        "http://localhost:5500/*",
+        "https://cpinsight.app/*",
+        "https://www.cpinsight.app/*"
+      ],
+      "js": [
+        "content/auth-bridge.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "config/*.js",
+        "constants/*.js",
+        "content/main.js",
+        "injected/page-runtime.js",
+        "messaging/*.js",
+        "providers/leetcode/config.js",
+        "providers/leetcode/dom/*.js",
+        "providers/leetcode/graphql/*.js",
+        "providers/leetcode/models/*.js",
+        "providers/leetcode/network/*.js",
+        "providers/leetcode/normalizers/*.js",
+        "providers/leetcode/parsers/*.js",
+        "providers/leetcode/validators/*.js",
+        "providers/*/content/*.js",
+        "providers/*/injected/*.js",
+        "utils/*.js"
+      ],
+      "matches": [
+        "https://leetcode.com/*"
+      ]
+    }
+  ]
+}

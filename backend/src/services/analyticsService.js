@@ -88,6 +88,21 @@ function computeLeetcodeSolvedMetrics(facts, now = Date.now()) {
     if (submission.problem_key.startsWith('leetcode-calendar-')) return false;
     return true;
   });
+  const extensionVerified = facts.account.metadata?.leetcodeExtension?.verified === true;
+  if (extensionVerified) {
+    const countDistinct = (items) => new Set(items.map((submission) => submission.problem_key)).size;
+    const solvedProblems = countDistinct(accepted);
+    return {
+      solvedProblems,
+      solvedLastYear: countDistinct(
+        accepted.filter((submission) => new Date(submission.submitted_at).getTime() >= oneYearAgo)
+      ),
+      solvedLastMonth: countDistinct(
+        accepted.filter((submission) => new Date(submission.submitted_at).getTime() >= oneMonthAgo)
+      )
+    };
+  }
+
   let expectedAcceptedSubmissions = null;
   const stats = facts.account.metadata && facts.account.metadata.leetcodeStats;
   if (stats && stats.all) {

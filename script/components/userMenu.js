@@ -55,24 +55,9 @@ class UserMenuComponent {
   renderDropdown(user) {
     const state = window.stateManager.getState();
     const { accounts, selectedPlatforms } = state.platforms;
-    const normalizedConnected = new Set((accounts || [])
-      .map((a) => (a?.platform || '').toString().trim().toLowerCase())
-      .filter(Boolean));
-    const normalizedSelected = new Set((selectedPlatforms || [])
-      .map((p) => (p || '').toString().trim().toLowerCase())
-      .filter(Boolean));
-    const knownPlatforms = new Set(['codeforces', 'codechef', 'leetcode']);
-    const visiblePlatforms = new Set([...normalizedConnected, ...normalizedSelected].filter((p) => knownPlatforms.has(p)));
-    
-    // Available platforms with their icons and emojis
-    const availablePlatforms = [
-      { id: 'codeforces', label: 'Codeforces', emoji: '⚙️' },
-      { id: 'codechef', label: 'CodeChef', emoji: '👨‍🍳' },
-      { id: 'leetcode', label: 'LeetCode', emoji: '💻' }
-    ];
-
-    // Filter to only connected platforms
-    const connectedPlatforms = availablePlatforms.filter((p) => visiblePlatforms.has(p.id));
+    const connectedPlatforms = (accounts || [])
+      .map((account) => this.toPlatformItem(account))
+      .filter(Boolean);
 
     return `
       <div class="absolute right-0 mt-2 w-64 glass rounded-2xl border border-white/10 shadow-2xl z-[999] overflow-hidden">
@@ -88,14 +73,15 @@ class UserMenuComponent {
           <div class="space-y-2">
             ${connectedPlatforms.map(platform => {
               const isSelected = selectedPlatforms.includes(platform.id);
+              const encodedPlatform = encodeURIComponent(platform.id);
               return `
                 <label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/5 cursor-pointer transition">
                   <input type="checkbox" 
                          ${isSelected ? 'checked' : ''} 
-                         onchange="window.userMenuComponent.togglePlatform('${platform.id}')"
+                         onchange="window.userMenuComponent.togglePlatform(decodeURIComponent('${encodedPlatform}'))"
                          class="w-4 h-4 rounded accent-emerald-500 cursor-pointer">
-                  <span class="text-lg">${platform.emoji}</span>
-                  <span class="text-sm text-gray-300 flex-1">${platform.label}</span>
+                  <span class="text-lg">${this.escapeHtml(platform.symbol)}</span>
+                  <span class="text-sm text-gray-300 flex-1">${this.escapeHtml(platform.label)}</span>
                 </label>
               `;
             }).join('')}
@@ -124,6 +110,39 @@ class UserMenuComponent {
         </div>
       </div>
     `;
+  }
+
+  toPlatformItem(account) {
+    const id = (account?.platform || '').toString().trim();
+    if (!id) {
+      return null;
+    }
+
+    const label = account.displayName || account.display_name || account.name || this.formatPlatformLabel(id);
+    return {
+      id,
+      label,
+      symbol: account.icon || account.emoji || label.charAt(0).toUpperCase()
+    };
+  }
+
+  formatPlatformLabel(value) {
+    return value
+      .toString()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  escapeHtml(value) {
+    return (value || '').toString().replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[char]);
   }
 
   togglePlatform(platform) {
