@@ -127,6 +127,20 @@ cd backend
 node scripts/verify-telemetry-pipeline.js
 ```
 
+Run backend Domain Event Bus verification:
+
+```powershell
+cd backend
+node scripts/verify-domain-event-bus.js
+```
+
+Run transactional outbox verification:
+
+```powershell
+cd backend
+node scripts/verify-transactional-outbox.js
+```
+
 Expected output includes:
 
 ```json
@@ -191,6 +205,33 @@ The telemetry processing pipeline verification covers:
 - Pipeline restart and replay idempotency.
 - Large batches.
 - Mixed collector metadata.
+- Transactional outbox event creation after processed telemetry persistence.
+
+The Domain Event Bus verification covers:
+
+- Multiple publishers through generic domain events.
+- Multiple independently registered subscribers.
+- Subscriber failure isolation.
+- Subscriber retry and dead-letter routing.
+- Same-aggregate ordering.
+- Concurrent dispatch for different aggregates.
+- Large event bursts.
+- Middleware execution.
+- Late subscriber registration.
+- Duplicate subscription rejection.
+
+The Transactional Outbox verification covers:
+
+- Rollback safety.
+- Crash recovery after commit.
+- Duplicate relay worker lease exclusion.
+- Lease expiration recovery.
+- Retry exhaustion and dead-letter creation.
+- Replay of selected events.
+- Per-aggregate ordering.
+- Large backlog relay.
+- Concurrent publication across mixed aggregates.
+- Logical exactly-once publication markers.
 
 ## Recovery Testing
 
@@ -259,12 +300,14 @@ Future work should add:
 - API integration tests with a test database.
 - Migration tests in CI.
 - Extension end-to-end tests with Playwright.
-- Telemetry ingestion tests once a backend endpoint exists.
+- End-to-end telemetry ingestion tests against a migrated test database.
 - Security regression tests for token rotation and extension message validation.
 
 ## Related Documentation
 
 - [Observability SDK](architecture/observability-sdk.md)
 - [Telemetry](architecture/telemetry.md)
+- [Domain Event Bus](architecture/domain-event-bus.md)
+- [Transactional Outbox](architecture/transactional-outbox.md)
 - [Operations](OPERATIONS.md)
 - [Security](SECURITY.md)

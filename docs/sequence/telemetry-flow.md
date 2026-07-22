@@ -8,32 +8,37 @@ sequenceDiagram
   participant SDK
   participant SessionEngine
   participant EventBus
-  participant Pipeline
+  participant SdkPipeline as SDK Event Pipeline
   participant Store
   participant Transport
   participant API as Backend Telemetry API
-  participant Pipeline as Processing Pipeline
+  participant Processing as Processing Pipeline
+  participant Outbox as Transactional Outbox
+  participant DomainBus as Domain Event Bus
   participant DB as PostgreSQL
 
   Collector->>SDK: Generic page context via snapshot
   SDK->>SessionEngine: handlePageSnapshot
   SessionEngine->>EventBus: emit(event)
-  EventBus->>Pipeline: process(event)
-  Pipeline->>Pipeline: Normalize and validate
-  Pipeline->>Store: Check dedupe key
-  Pipeline-->>EventBus: Frozen event
+  EventBus->>SdkPipeline: process(event)
+  SdkPipeline->>SdkPipeline: Normalize and validate
+  SdkPipeline->>Store: Check dedupe key
+  SdkPipeline-->>EventBus: Frozen event
   EventBus->>Store: appendEvent(event)
   EventBus->>Transport: publish(event)
   Transport->>Store: enqueue(event)
   Store->>Transport: Scheduler reads ordered queue
   Transport->>API: POST /api/telemetry/upload
-  API->>Pipeline: Process authenticated batch
-  Pipeline->>Pipeline: Validate schema, ordering, idempotency
-  Pipeline->>Pipeline: Enrich and classify immutable events
-  Pipeline->>DB: Store raw events and processed metadata
-  Pipeline-->>API: Acknowledgement
+  API->>Processing: Process authenticated batch
+  Processing->>Processing: Validate schema, ordering, idempotency
+  Processing->>Processing: Enrich and classify immutable events
+  Processing->>DB: Store raw events and processed metadata
+  Processing->>Outbox: Persist domain events inside transaction
+  Processing-->>API: Acknowledgement
   API-->>Transport: acknowledgedEventIds
   Transport->>Store: Remove acknowledged events only
+  Outbox->>DomainBus: Relay committed events after commit
+  DomainBus->>DB: Store domain events, audit, metrics, failures
 ```
 
 Collectors remain unaware of upload transport and backend ingestion.

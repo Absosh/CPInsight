@@ -34,6 +34,30 @@ Persistent queue stored in Chrome local storage for Observability SDK events. It
 
 SDK dispatcher that emits validated telemetry events after pipeline processing, persists them, publishes them to transport, and notifies listeners. See [ADR-0006](decisions/ADR-0006-event-pipeline.md).
 
+## Domain Event Bus
+
+Backend-wide publish/subscribe backbone for immutable business facts. It is independent of telemetry and routes domain events to subscribers with middleware, ordering, retry, and failure isolation. See [Domain Event Bus](architecture/domain-event-bus.md).
+
+## Domain Event
+
+Immutable backend event containing event identity, type, version, aggregate identity, source, payload, metadata, correlation id, and causation id.
+
+## Transactional Outbox
+
+Database-backed event publication pattern that stores domain events in the same transaction as business data, then relays them after commit. See [Transactional Outbox](architecture/transactional-outbox.md).
+
+## Outbox Relay
+
+Background worker that leases pending outbox events, publishes them to the Domain Event Bus, records success or failure, and supports replay.
+
+## Lease
+
+Temporary ownership marker that allows one relay worker to process an outbox row while allowing automatic recovery after expiration.
+
+## Aggregate
+
+Consistency boundary used by the Domain Event Bus for ordering. Events with the same aggregate type and aggregate id are dispatched serially.
+
 ## Event Pipeline
 
 Middleware-capable SDK component that normalizes, validates, deduplicates, and freezes events before they are persisted and transported. See [Observability SDK](architecture/observability-sdk.md).

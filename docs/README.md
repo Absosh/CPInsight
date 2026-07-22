@@ -24,6 +24,8 @@ Implemented:
 - Manifest V3 Chrome extension with background service worker, content scripts, provider messaging, local storage, and observability content bridge.
 - Platform-agnostic Observability SDK with collector registry, event bus, event pipeline, schema validation, session engine, lifecycle FSM, persistence, and queued transport.
 - Reliable telemetry upload from the Observability SDK queue to the authenticated backend ingestion API.
+- Generic backend Domain Event Bus with immutable event contract, middleware, subscriber isolation, retry, audit, persistence, and metrics.
+- Transactional Outbox and relay worker for reliable post-commit domain event publication.
 - Codeforces and CodeChef contest-session collector plugins.
 
 Planned:
@@ -64,6 +66,8 @@ flowchart LR
   Browser["Frontend pages"] --> API["Express API"]
   API --> PG["PostgreSQL"]
   API --> Redis["Redis cache"]
+  API --> DomainBus["Domain Event Bus"]
+  API --> Outbox["Transactional Outbox"]
   Extension["Chrome extension"] --> API
   Extension --> SDK["Observability SDK"]
   SDK --> Store["chrome.storage.local"]
@@ -92,6 +96,8 @@ Architecture:
 - [Database](architecture/database.md)
 - [Authentication](architecture/authentication.md)
 - [Telemetry](architecture/telemetry.md)
+- [Domain Event Bus](architecture/domain-event-bus.md)
+- [Transactional Outbox](architecture/transactional-outbox.md)
 - [RAG Roadmap](architecture/rag-roadmap.md)
 - [Future Roadmap](architecture/future-roadmap.md)
 - [Deployment](architecture/deployment.md)
@@ -114,6 +120,9 @@ Sequences:
 - [Extension Authentication](sequence/extension-authentication.md)
 - [Contest Session](sequence/contest-session.md)
 - [Telemetry Flow](sequence/telemetry-flow.md)
+- [Domain Event Dispatch](sequence/domain-event-dispatch.md)
+- [Outbox Relay](sequence/outbox-relay.md)
+- [Outbox Replay](sequence/outbox-replay.md)
 - [Extension Upload](sequence/extension-upload.md)
 - [Analytics Refresh](sequence/analytics-refresh.md)
 - [Future Live Telemetry](sequence/future-live-telemetry.md)
@@ -133,6 +142,8 @@ Architecture Decision Records:
 - [ADR-0011 Chrome Extension Architecture](decisions/ADR-0011-chrome-extension-architecture.md)
 - [ADR-0012 Repository Architecture](decisions/ADR-0012-repository-architecture.md)
 - [ADR-0013 Telemetry Processing Pipeline](decisions/ADR-0013-telemetry-processing-pipeline.md)
+- [ADR-0014 Domain Event Bus](decisions/ADR-0014-domain-event-bus.md)
+- [ADR-0015 Transactional Outbox Pattern](decisions/ADR-0015-transactional-outbox.md)
 
 Existing operational document:
 

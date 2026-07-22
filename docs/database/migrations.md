@@ -12,6 +12,8 @@ Migrations are SQL files in `backend/src/database/migrations`. They are executed
 | `004_profile_country_text.sql` | Changes `user_profiles.country` from `CHAR(2)` to `VARCHAR(80)` |
 | `005_telemetry_ingestion.sql` | Adds telemetry batch, event, upload attempt, and event failure storage |
 | `006_telemetry_processing_pipeline.sql` | Adds processed telemetry events, pipeline metrics, and dead-letter storage |
+| `007_domain_event_bus.sql` | Adds domain event persistence, audit log, subscriber failure, and dispatch metric storage |
+| `008_transactional_outbox.sql` | Adds transactional outbox, replay log, outbox indexes, and subscriber idempotency constraints |
 
 ## Migration Principles
 

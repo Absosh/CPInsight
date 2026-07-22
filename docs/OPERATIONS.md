@@ -57,6 +57,11 @@ Optional backend variables:
 | `CODEFORCES_API_BASE` | `https://codeforces.com/api` |
 | `LEETCODE_GRAPHQL_ENDPOINT` | `https://leetcode.com/graphql` |
 | `CODECHEF_BASE_URL` | `https://www.codechef.com` |
+| `OUTBOX_RELAY_ENABLED` | `true` |
+| `OUTBOX_RELAY_BATCH_SIZE` | `100` |
+| `OUTBOX_RELAY_LEASE_MS` | `30000` |
+| `OUTBOX_RELAY_POLL_INTERVAL_MS` | `1000` |
+| `OUTBOX_RELAY_MAX_ATTEMPTS` | `5` |
 
 ## Local Infrastructure Startup
 
@@ -214,6 +219,16 @@ Redis stores cache data. PostgreSQL is canonical. Restart Redis and allow backen
 
 PostgreSQL is canonical. Restore the latest verified backup before starting API traffic. Re-run migrations only after restore compatibility is confirmed.
 
+### Outbox Relay Backlog
+
+The outbox relay persists pending domain events in PostgreSQL. If the queue grows:
+
+1. Check API logs for relay publish failures.
+2. Inspect `domain_event_outbox` grouped by `status`.
+3. Confirm `OUTBOX_RELAY_ENABLED=true`.
+4. Check rows in `dead_letter` status and inspect `retry_history`.
+5. Increase `OUTBOX_RELAY_BATCH_SIZE` only after confirming PostgreSQL has capacity.
+
 ### Extension Session Corruption
 
 The Observability SDK validates local storage shapes and resets corrupted observability keys to safe defaults. If local extension behavior remains inconsistent, remove extension storage from Chrome and reload the unpacked extension.
@@ -226,6 +241,7 @@ The Observability SDK validates local storage shapes and resets corrupted observ
 | `401 Missing bearer token` | Missing `Authorization` header | Reauthenticate client or refresh token. |
 | LeetCode upload returns `409` | Account mismatch, disconnected account, or unsupported collector version | Verify connected LeetCode handle and extension version. |
 | Analytics returns outdated data | Redis/PostgreSQL analytics cache | Trigger platform sync or clear user analytics cache through service logic. |
+| Domain events are not reaching subscribers | Outbox relay disabled, stuck lease, or repeated subscriber failure | Inspect `domain_event_outbox`, `domain_event_subscriber_failures`, and relay environment variables. |
 | Extension collector does not run | Host permission or content script match issue | Check `extension/manifest.json` and service worker console. |
 | Duplicate contest tabs behave unexpectedly | Local extension state issue | Inspect `observability.sessions` and `observability.tabIndex` in Chrome storage. |
 
@@ -239,7 +255,7 @@ The Observability SDK validates local storage shapes and resets corrupted observ
 - Run migrations compatible with the restored version.
 - Restart Redis; allow cache warmup.
 - Restart API and frontend.
-- Verify auth, profile, platform sync, analytics, and extension upload smoke tests.
+- Verify auth, profile, platform sync, analytics, extension upload, telemetry ingestion, and outbox relay smoke tests.
 - Document incident cause, recovery steps, and follow-up fixes.
 
 ## Related Documentation
@@ -248,4 +264,5 @@ The Observability SDK validates local storage shapes and resets corrupted observ
 - [Database Migrations](database/migrations.md)
 - [Testing](TESTING.md)
 - [Security](SECURITY.md)
+- [Transactional Outbox](architecture/transactional-outbox.md)
 - [API Reference](api/README.md)

@@ -11,7 +11,7 @@ Primary assets:
 - Refresh token hashes.
 - Platform account handles and analytics data.
 - Extension upload payloads.
-- Future telemetry events.
+- Telemetry events and domain events.
 
 Primary threats:
 
@@ -82,7 +82,7 @@ Implemented Joi schemas validate:
 - LeetCode extension upload shape.
 - Observability SDK telemetry upload batch shape.
 
-Future telemetry ingestion must validate the Observability SDK event schema server-side; local SDK validation is not a substitute for backend validation.
+Telemetry ingestion validates the Observability SDK event schema server-side; local SDK validation is not a substitute for backend validation.
 
 ## Output Encoding
 
@@ -122,6 +122,10 @@ Collectors must not collect:
 - Private messages.
 - Arbitrary browsing history.
 - Full page snapshots.
+
+## Transactional Outbox and Replay
+
+Domain events persisted in the transactional outbox must follow the same data minimization boundary as telemetry. Replay is implemented as an internal relay capability and should only be exposed through future administrative interfaces that require authentication, authorization, audit logging, and explicit operator intent.
 
 ## Dependency Security
 
@@ -166,6 +170,7 @@ A mature public release should add:
 - API integration tests for refresh-token replay.
 - Security headers review for frontend Nginx.
 - Additional telemetry ingestion abuse detection and quota policy.
+- Administrative authorization controls before exposing outbox replay over HTTP.
 - Extension message fuzz tests.
 - Content Security Policy explicitly documented for extension and frontend.
 - Public responsible disclosure policy.

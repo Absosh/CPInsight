@@ -148,6 +148,7 @@ Stores raw accepted telemetry events.
 Important columns:
 
 - `event_id UUID UNIQUE`
+- `outbox_sequence BIGSERIAL UNIQUE`
 - `session_id`
 - `platform`
 - `contest_id`
@@ -202,3 +203,69 @@ Stores per-batch pipeline metrics, including processed counts, duplicate counts,
 ## `telemetry_dead_letters`
 
 Stores structured processing failures for batches or events that cannot be processed safely. Dead-letter rows include failure category, code, message, transient flag, and payload.
+
+## `domain_events`
+
+Stores immutable backend domain events published through the Domain Event Bus.
+
+Important columns:
+
+- `event_id UUID UNIQUE`
+- `event_type`
+- `event_version`
+- `occurred_at`
+- `published_at`
+- `aggregate_type`
+- `aggregate_id`
+- `source`
+- `payload JSONB`
+- `metadata JSONB`
+- `correlation_id`
+- `causation_id`
+
+Indexes support aggregate-ordered replay, event-type lookup, and correlation tracing.
+
+## `domain_event_audit_log`
+
+Stores audit observations produced by domain event subscribers. It records event identity, aggregate identity, subscriber id, action, status, metadata, and creation time.
+
+## `domain_event_subscriber_failures`
+
+Stores structured subscriber failures after retry exhaustion. Failures include subscriber id, event identity, aggregate identity, error code, message, attempts, and the failed event payload.
+
+## `domain_event_dispatch_metrics`
+
+Stores dispatch-level metrics for the Domain Event Bus, including subscriber count, failure count, dispatch latency, event type, and aggregate identity.
+
+## `domain_event_outbox`
+
+Stores domain events transactionally before relay publication.
+
+Important columns:
+
+- `event_id UUID UNIQUE`
+- `aggregate_type`
+- `aggregate_id`
+- `event_type`
+- `event_version`
+- `payload JSONB`
+- `metadata JSONB`
+- `correlation_id`
+- `causation_id`
+- `status`
+- `retry_count`
+- `next_attempt_at`
+- `last_error`
+- `retry_history JSONB`
+- `relay_owner`
+- `lease_expiration`
+- `publication_token`
+- `published_at`
+
+Valid statuses are `pending`, `publishing`, `published`, `failed`, and `dead_letter`.
+
+Indexes support status polling, due retries, aggregate ordering by monotonic outbox sequence, event type filtering, retry inspection, and lease recovery.
+
+## `domain_event_replay_log`
+
+Stores administrative replay attempts for published or dead-letter outbox events. It records the outbox row, event id, requesting user, reason, status, and replay timestamp.

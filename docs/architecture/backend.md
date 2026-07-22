@@ -9,11 +9,17 @@ flowchart LR
   Routes["Routes"] --> Middleware["Validation, auth,\nrate limits"]
   Middleware --> Controllers["Controllers"]
   Controllers --> Services["Services"]
+  Services --> Outbox["Transactional Outbox"]
+  Services --> DomainEvents["Domain Event Bus"]
   Services --> Repositories["Repositories"]
   Repositories --> PostgreSQL["PostgreSQL"]
   Services --> Redis["Redis"]
   Services --> PlatformClients["Platform clients"]
 ```
+
+The [Domain Event Bus](domain-event-bus.md) is the internal event-driven boundary for facts that downstream systems may consume. Telemetry is the first publisher; future authentication, profile, notification, recommendation, and AI subsystems should publish events through the same contract.
+
+The [Transactional Outbox](transactional-outbox.md) is the reliability boundary between request-time database writes and post-commit domain event dispatch.
 
 ## Module Responsibilities
 

@@ -10,27 +10,22 @@ function toPascalCase(eventType) {
     .join('');
 }
 
-class DomainEventPublicationStage extends PipelineStage {
-  constructor({ eventBus }) {
-    super('domain-event-publication');
-    this.eventBus = eventBus;
-  }
-
-  async initialize() {
-    await this.eventBus?.initialize?.();
+class OutboxPublicationStage extends PipelineStage {
+  constructor({ outboxRepository }) {
+    super('outbox-publication');
+    this.outboxRepository = outboxRepository;
   }
 
   async process(context) {
-    if (!this.eventBus) {
+    if (!this.outboxRepository) {
       return {
         ...context,
-        domainEvents: [],
-        domainDispatchResults: []
+        outboxEvents: []
       };
     }
 
     const inserted = new Set(context.insertedEvents || []);
-    const domainEvents = context.processableItems
+    const outboxEvents = context.processableItems
       .filter((item) => inserted.has(item.event.eventId))
       .map((item) => createDomainEvent({
         eventType: toPascalCase(item.event.eventType),
@@ -63,25 +58,18 @@ class DomainEventPublicationStage extends PipelineStage {
         causationId: item.event.eventId
       }));
 
-    const domainDispatchResults = [];
-    for (const domainEvent of domainEvents) {
-      domainDispatchResults.push(await this.eventBus.publish(domainEvent, {
-        userId: context.userId,
-        batchId: context.batch.batchId,
-        requestId: context.requestId
-      }));
+    const persistedOutboxEvents = [];
+    for (const event of outboxEvents) {
+      const row = await this.outboxRepository.insert(event);
+      if (row) persistedOutboxEvents.push(row);
     }
 
     return {
       ...context,
-      domainEvents,
-      domainDispatchResults
+      outboxEvents,
+      persistedOutboxEvents
     };
-  }
-
-  async shutdown() {
-    await this.eventBus?.shutdown?.();
   }
 }
 
-module.exports = { DomainEventPublicationStage, toPascalCase };
+module.exports = { OutboxPublicationStage, toPascalCase };

@@ -1,6 +1,7 @@
 const pool = require('../database/pool');
 const HttpError = require('../utils/httpError');
 const telemetryRepository = require('../repositories/telemetryRepository');
+const outboxRepository = require('../domain-events/outbox/repository');
 const { createTelemetryProcessingPipeline } = require('../telemetry/pipeline/factory');
 const { TelemetryPipelineError } = require('../telemetry/pipeline/errors');
 
@@ -11,6 +12,12 @@ function scopedRepository(db) {
     insertEvent: (payload) => telemetryRepository.insertEvent(payload, db),
     insertProcessedEvent: (payload) => telemetryRepository.insertProcessedEvent(payload, db),
     insertPipelineMetrics: (payload) => telemetryRepository.insertPipelineMetrics(payload, db)
+  };
+}
+
+function scopedOutboxRepository(db) {
+  return {
+    insert: (event) => outboxRepository.insert(event, db)
   };
 }
 
@@ -68,7 +75,10 @@ async function uploadTelemetryBatch(userId, batch, headers = {}) {
 
   try {
     await client.query('BEGIN');
-    const pipeline = createTelemetryProcessingPipeline({ repository: scopedRepository(client) });
+    const pipeline = createTelemetryProcessingPipeline({
+      repository: scopedRepository(client),
+      outboxRepository: scopedOutboxRepository(client)
+    });
     await pipeline.initialize();
     const context = await pipeline.process({
       userId,

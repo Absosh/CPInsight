@@ -17,7 +17,12 @@ const schema = Joi.object({
   BCRYPT_ROUNDS: Joi.number().integer().min(10).max(15).default(12),
   CODEFORCES_API_BASE: Joi.string().uri().default('https://codeforces.com/api'),
   LEETCODE_GRAPHQL_ENDPOINT: Joi.string().uri().default('https://leetcode.com/graphql'),
-  CODECHEF_BASE_URL: Joi.string().uri().default('https://www.codechef.com')
+  CODECHEF_BASE_URL: Joi.string().uri().default('https://www.codechef.com'),
+  OUTBOX_RELAY_ENABLED: Joi.boolean().truthy('true').falsy('false').default(true),
+  OUTBOX_RELAY_BATCH_SIZE: Joi.number().integer().min(1).max(1000).default(100),
+  OUTBOX_RELAY_LEASE_MS: Joi.number().integer().min(1000).max(300000).default(30000),
+  OUTBOX_RELAY_POLL_INTERVAL_MS: Joi.number().integer().min(100).max(60000).default(1000),
+  OUTBOX_RELAY_MAX_ATTEMPTS: Joi.number().integer().min(1).max(20).default(5)
 }).unknown(true);
 
 const { value, error } = schema.validate(process.env, { abortEarly: false });
@@ -48,5 +53,12 @@ module.exports = {
     codeforcesApiBase: value.CODEFORCES_API_BASE,
     leetcodeGraphqlEndpoint: value.LEETCODE_GRAPHQL_ENDPOINT,
     codechefBaseUrl: value.CODECHEF_BASE_URL
+  },
+  outboxRelay: {
+    enabled: value.OUTBOX_RELAY_ENABLED,
+    batchSize: value.OUTBOX_RELAY_BATCH_SIZE,
+    leaseMs: value.OUTBOX_RELAY_LEASE_MS,
+    pollIntervalMs: value.OUTBOX_RELAY_POLL_INTERVAL_MS,
+    maxAttempts: value.OUTBOX_RELAY_MAX_ATTEMPTS
   }
 };

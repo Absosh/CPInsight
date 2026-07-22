@@ -6,7 +6,6 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 
 ### Planned
 
-- Backend ingestion for Observability SDK telemetry events.
 - Realtime telemetry transport.
 - Live dashboard projections.
 - RAG and AI mentor architecture after telemetry ingestion exists.
@@ -24,6 +23,11 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Modular backend telemetry processing pipeline with composable stages.
 - Processed telemetry metadata, pipeline metrics, and dead-letter persistence.
 - Runtime verification harness for telemetry processing pipeline behavior.
+- Generic backend Domain Event Bus with immutable event contract, middleware, aggregate ordering, subscriber retry, audit, persistence, and dispatch metrics.
+- Runtime verification harness for Domain Event Bus behavior.
+- Transactional Outbox and relay worker for post-commit domain event publication.
+- Outbox migration with leasing, retry state, replay log, dead-letter state, and subscriber idempotency indexes.
+- Runtime verification harness for transactional outbox reliability behavior.
 - User authentication with registration, login, refresh-token rotation, and logout.
 - JWT access token and refresh token infrastructure.
 - PostgreSQL schema for users, profiles, platform accounts, contests, submissions, analytics cache, refresh tokens, and LeetCode extension uploads.
@@ -41,7 +45,7 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Durable local telemetry queue for Observability SDK events.
 - Runtime verification harness for observability session lifecycle behavior.
 - Architecture documentation suite under `docs/`.
-- Architecture Decision Records ADR-0001 through ADR-0012.
+- Architecture Decision Records ADR-0001 through ADR-0015.
 - Operations, testing, security, contributing, changelog, and glossary documentation.
 
 ### Security

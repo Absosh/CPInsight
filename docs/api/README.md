@@ -24,6 +24,8 @@ Authorization: Bearer <accessToken>
 - [Analytics API](analytics-api.md)
 - [Telemetry and Extension API](telemetry-api.md)
 
+The Domain Event Bus is internal backend infrastructure and does not expose a public HTTP endpoint. Its contract is documented in [Domain Event Bus](../architecture/domain-event-bus.md).
+
 ## Additional Current Endpoints
 
 | Method | URL | Auth | Purpose |

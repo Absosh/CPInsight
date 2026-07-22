@@ -58,6 +58,18 @@ class MemoryTelemetryRepository {
   }
 }
 
+class MemoryOutboxRepository {
+  constructor() {
+    this.events = [];
+  }
+
+  async insert(event) {
+    if (this.events.some((stored) => stored.eventId === event.eventId)) return null;
+    this.events.push(event);
+    return event;
+  }
+}
+
 function event(sequenceNumber, patch = {}) {
   return {
     sequenceNumber,
@@ -89,8 +101,13 @@ function batch(events, patch = {}) {
   };
 }
 
-async function process(repository, payload, userId = '00000000-0000-4000-8000-000000000001') {
-  const pipeline = createTelemetryProcessingPipeline({ repository, serverNode: 'test-node' });
+async function process(
+  repository,
+  payload,
+  userId = '00000000-0000-4000-8000-000000000001',
+  outboxRepository = null
+) {
+  const pipeline = createTelemetryProcessingPipeline({ repository, serverNode: 'test-node', outboxRepository });
   await pipeline.initialize();
   const result = await pipeline.process({
     userId,
@@ -110,13 +127,17 @@ async function assertPipelineError(fn, code) {
 
 async function run() {
   const repository = new MemoryTelemetryRepository();
+  const outboxRepository = new MemoryOutboxRepository();
   const normalBatch = batch([event(1), event(2, { eventType: 'PROBLEM_OPENED', problemId: 'A:A' })]);
-  const normal = await process(repository, normalBatch);
+  const normal = await process(repository, normalBatch, undefined, outboxRepository);
   assert.deepEqual(normal.acknowledgement.acknowledgedEventIds, normalBatch.events.map((item) => item.event.eventId));
   assert.equal(repository.events.size, 2);
   assert.equal(repository.processed.size, 2);
   assert.equal(repository.processed.get(normalBatch.events[1].event.eventId).classification, 'problem_navigation');
   assert.equal(normal.metrics.eventsProcessed, 2);
+  assert.equal(outboxRepository.events.length, 2, 'newly processed telemetry events must create outbox events');
+  assert.equal(outboxRepository.events[1].eventType, 'ProblemOpened');
+  assert.equal(outboxRepository.events[1].aggregateType, 'TelemetrySession');
 
   const replay = await process(repository, normalBatch);
   assert.equal(replay.metrics.duplicatesRemoved, 2);
@@ -183,6 +204,7 @@ async function run() {
     duplicateReplayRemoved: replay.metrics.duplicatesRemoved,
     largeBatchProcessed: large.metrics.eventsProcessed,
     mixedCollectorsProcessed: mixed.metrics.eventsProcessed,
+    outboxEventsPersisted: outboxRepository.events.length,
     metricsRecords: repository.metrics.length
   }, null, 2));
 }

@@ -133,7 +133,11 @@ flowchart LR
   Timestamps --> Enrichment["Metadata Enrichment"]
   Enrichment --> Classification["Event Classification"]
   Classification --> Persistence["Raw + Processed Persistence"]
-  Persistence --> Ack["Acknowledgement"]
+  Persistence --> Outbox["Transactional Outbox"]
+  Outbox --> Ack["Acknowledgement"]
+  Outbox --> Relay["Outbox Relay after commit"]
+  Relay --> Bus["Domain Event Bus"]
+  Bus --> Subscribers["Subscribers"]
 ```
 
 Stage responsibilities:
@@ -148,9 +152,16 @@ Stage responsibilities:
 | Metadata Enrichment | Add server metadata such as received time, ingested time, latency, request id, and server node. |
 | Event Classification | Classify events into lifecycle, problem navigation, browser lifecycle, or generic categories. |
 | Persistence | Store raw telemetry events and immutable processed metadata. |
+| Outbox Publication | Persist newly processed telemetry facts as generic domain events inside the database transaction. |
 | Acknowledgement | Return acknowledged event ids and highest sequence number. |
 
-The upload API does not compute analytics. Future analytics, replay, and streaming systems should consume processed telemetry records instead of raw upload bodies.
+The upload API does not compute analytics. Future analytics, replay, and streaming systems should consume processed telemetry records or subscribe to [Domain Event Bus](domain-event-bus.md) events instead of raw upload bodies. Events are published through the [Transactional Outbox](transactional-outbox.md) after commit.
+
+## Outbox Publication
+
+Processed telemetry events are persisted as generic outbox events after raw and processed telemetry persistence. The relay later publishes events such as `SessionStarted`, `ProblemOpened`, and `PageReloaded` with `aggregateType = TelemetrySession` and `aggregateId = sessionId`.
+
+Telemetry remains only one publisher. The bus is backend-wide and is documented in [Domain Event Bus](domain-event-bus.md).
 
 Acknowledgement shape:
 

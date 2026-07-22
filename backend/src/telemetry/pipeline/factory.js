@@ -8,11 +8,17 @@ const { TimestampNormalizationStage } = require('./stages/timestampNormalization
 const { MetadataEnrichmentStage } = require('./stages/metadataEnrichmentStage');
 const { EventClassificationStage } = require('./stages/eventClassificationStage');
 const { PersistenceStage } = require('./stages/persistenceStage');
+const { OutboxPublicationStage } = require('./stages/outboxPublicationStage');
 const { AcknowledgementStage } = require('./stages/acknowledgementStage');
 
 const SUPPORTED_SCHEMA_VERSION = 1;
 
-function createTelemetryProcessingPipeline({ repository, logger = null, serverNode = null } = {}) {
+function createTelemetryProcessingPipeline({
+  repository,
+  logger = null,
+  serverNode = null,
+  outboxRepository = null
+} = {}) {
   const metricsSink = new PipelineMetricsSink({ repository });
   return new TelemetryProcessingPipeline({
     logger,
@@ -26,6 +32,7 @@ function createTelemetryProcessingPipeline({ repository, logger = null, serverNo
       new MetadataEnrichmentStage(serverNode ? { serverNode } : {}),
       new EventClassificationStage(),
       new PersistenceStage({ repository }),
+      new OutboxPublicationStage({ outboxRepository }),
       new AcknowledgementStage()
     ]
   });

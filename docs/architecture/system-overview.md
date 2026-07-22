@@ -2,7 +2,7 @@
 
 CPInsight is a layered analytics system for competitive programming data. It uses a web frontend for user interaction, an Express API for authenticated business operations, PostgreSQL for durable domain data, Redis for cache acceleration, and a Chrome extension for authenticated browser-side collection and contest-session detection.
 
-The design separates data acquisition from analytics. Platform clients and extension collectors gather facts. Backend services normalize and persist facts. Analytics services read persisted facts and produce views. The Observability SDK provides a newer platform-agnostic foundation for telemetry events without coupling collectors to storage or transport.
+The design separates data acquisition from analytics. Platform clients and extension collectors gather facts. Backend services normalize and persist facts. Analytics services read persisted facts and produce views. The Observability SDK provides a newer platform-agnostic foundation for telemetry events without coupling collectors to storage or transport. The backend [Transactional Outbox](transactional-outbox.md) and [Domain Event Bus](domain-event-bus.md) decouple committed facts from downstream consumers.
 
 ## Runtime Architecture
 
@@ -26,6 +26,8 @@ flowchart TB
     Routes["Routes"]
     Controllers["Controllers"]
     Services["Services"]
+    Outbox["Transactional Outbox"]
+    DomainBus["Domain Event Bus"]
     Repositories["Repositories"]
     Middleware["Auth, validation,\nrate limit, errors"]
   end
@@ -47,6 +49,9 @@ flowchart TB
   Routes --> Middleware
   Middleware --> Controllers
   Controllers --> Services
+  Services --> Outbox
+  Outbox --> DomainBus
+  DomainBus --> Repositories
   Services --> Repositories
   Repositories --> Postgres
   Services --> Redis
@@ -59,6 +64,8 @@ flowchart TB
 | --- | --- | --- |
 | Frontend | `pages/`, `script/`, `css/` | Browser UI for auth, dashboard, analytics, profile, platform accounts, and comparison views |
 | Backend API | `backend/src/routes`, `controllers`, `services` | Authenticated HTTP API, validation, orchestration, platform sync, analytics, extension uploads |
+| Transactional Outbox | `backend/src/domain-events/outbox` | Durable post-commit relay for domain events |
+| Domain Event Bus | `backend/src/domain-events` | Generic publish/subscribe backbone for processed backend facts |
 | Persistence | `backend/src/database`, `repositories` | PostgreSQL tables and SQL access |
 | Cache | `backend/src/redis`, `analyticsService` | Redis read-through cache for analytics where safe |
 | Chrome extension | `extension/` | Manifest V3 extension, popup, background orchestration, content scripts, LeetCode provider sync, observability bridge |
@@ -87,9 +94,9 @@ The backend does not depend on the frontend. The Observability SDK does not depe
 1. Authentication flow: user credentials are validated by the backend; access and refresh tokens are returned to the frontend or extension.
 2. Platform sync flow: backend services call platform clients and write normalized account, contest, and submission facts.
 3. LeetCode extension upload flow: extension sends an authenticated collection payload to `/api/extension/leetcode/collection`; backend validates idempotency and persists facts.
-4. Observability flow: content scripts emit page snapshots; SDK sessions and events are persisted locally, batched, uploaded, acknowledged, and stored by the backend telemetry ingestion API.
+4. Observability flow: content scripts emit page snapshots; SDK sessions and events are persisted locally, batched, uploaded, processed, published as domain events, acknowledged, and stored by the backend telemetry ingestion API.
 5. Analytics flow: frontend requests analytics; backend reads database facts, optionally uses Redis/PostgreSQL cache, and returns computed payloads.
 
 ## Current and Future Boundaries
 
-Implemented telemetry includes durable local SDK event creation and authenticated backend upload. Realtime WebSockets, live dashboards, and analytics derived from telemetry remain future work and are documented in [Future Roadmap](future-roadmap.md).
+Implemented telemetry includes durable local SDK event creation, authenticated backend upload, backend processing, and publication to the Domain Event Bus. Realtime WebSockets, live dashboards, and analytics derived from telemetry remain future work and are documented in [Future Roadmap](future-roadmap.md).
