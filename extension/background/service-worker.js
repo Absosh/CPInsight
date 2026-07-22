@@ -12,6 +12,9 @@ import { SyncOrchestrator } from '../core/sync-orchestrator.js';
 import { ErrorReporter } from '../utils/errors.js';
 import { createId } from '../utils/id.js';
 import { createLogger } from '../utils/logger.js';
+import { ObservabilitySDK } from '../observability/core/observability-sdk.js';
+import { ObservabilityRuntimeConfig } from '../observability/config/runtime-config.js';
+import { observabilityCollectors } from '../observability/platforms/index.js';
 
 const logger = createLogger('background');
 const bootstrapLogger = createLogger('Bootstrap');
@@ -19,6 +22,7 @@ const chainLogger = createLogger('Chain');
 const stageLogger = createLogger('StageTrace');
 const guardLogger = createLogger('Guard');
 const telemetryLogger = createLogger('Telemetry');
+const observabilityLogger = createLogger('Observability');
 const errorReporter = new ErrorReporter(logger);
 const storage = new StorageService();
 const httpClient = new HttpClient();
@@ -27,6 +31,11 @@ const providerRegistry = new ProviderRegistry();
 const messageBus = new MessageBus({ source: MessageSource.BACKGROUND, logger, errorReporter });
 const syncOrchestrator = new SyncOrchestrator({ providerRegistry, stateStore, logger });
 const lifecycleManager = new LifecycleManager({ logger, providerRegistry, stateStore });
+const observabilitySdk = new ObservabilitySDK({
+  storage,
+  logger: observabilityLogger,
+  config: ObservabilityRuntimeConfig
+});
 
 let providersInitialized = false;
 const collectionRunsByTab = new Map();
@@ -79,6 +88,15 @@ const bootstrapState = {
 bootstrapLogger.info('Bootstrap loaded');
 bootstrapLogger.info('Provider module imported');
 bootstrapLogger.info(`Provider instantiated: ${providers.length > 0}`);
+
+async function initializeObservability() {
+  observabilityCollectors.forEach((collector) => {
+    if (!observabilitySdk.registry.collectors.has(collector.id)) {
+      observabilitySdk.registerCollector(collector);
+    }
+  });
+  await observabilitySdk.initialize({ runtime: 'background' });
+}
 
 async function initializeProviders() {
   bootstrapLogger.info('initializeProviders trigger fired');
@@ -1846,6 +1864,22 @@ messageBus.register(MessageType.PAGE_STATE_CHANGED, async (message, sender) => {
   });
   return null;
 });
+messageBus.register(MessageType.OBSERVABILITY_PAGE_SNAPSHOT, async (message, sender) => {
+  const payload = message.payload || {};
+  return observabilitySdk.handlePageSnapshot({
+    ...payload,
+    tabId: sender?.tab?.id,
+    frameId: sender?.frameId || 0,
+    url: payload.url || sender?.url || sender?.tab?.url || null
+  });
+});
+messageBus.register(MessageType.OBSERVABILITY_PAGE_EXIT, async (message, sender) => {
+  return observabilitySdk.handlePageExit({
+    tabId: sender?.tab?.id,
+    url: message.payload?.url || sender?.url || sender?.tab?.url || null,
+    reason: message.payload?.reason || message.payload?.trigger || 'page_exit'
+  });
+});
 
 messageBus.listenRuntime();
 bootstrapLogger.info('Runtime.onMessage listener registered');
@@ -1861,6 +1895,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
+  observabilitySdk.handleTabClosed(tabId).catch((error) => {
+    observabilityLogger.warn('Observability tab close handling failed', { reason: error?.message || 'unknown' });
+  });
   const run = collectionRunsByTab.get(tabId);
   if (!run?.sessionId && collectionGuard.state === LeetCodeCollectionState.IDLE) return;
   cancelCollectionWorkflow({
@@ -1874,6 +1911,15 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.url && !observabilitySdk.registry.findForUrl(changeInfo.url)) {
+    observabilitySdk.handlePageExit({
+      tabId,
+      url: changeInfo.url,
+      reason: 'navigation_url_changed'
+    }).catch((error) => {
+      observabilityLogger.warn('Observability navigation handling failed', { reason: error?.message || 'unknown' });
+    });
+  }
   if (!changeInfo.url) return;
   const run = collectionRunsByTab.get(tabId);
   const activeSessionId = run?.sessionId || collectionGuard.sessionId;
@@ -1907,17 +1953,22 @@ chrome.runtime.onSuspend.addListener(() => {
 
 chrome.runtime.onInstalled.addListener(async () => {
   bootstrapLogger.info('onInstalled trigger fired');
+  await initializeObservability();
   await initializeProviders();
   await lifecycleManager.install();
 });
 
 chrome.runtime.onStartup.addListener(async () => {
   bootstrapLogger.info('onStartup trigger fired');
+  await initializeObservability();
+  await observabilitySdk.recoverUnfinishedSessions('browser_startup');
   await initializeProviders();
   await lifecycleManager.startup();
 });
 
-initializeProviders()
+initializeObservability()
+  .then(() => observabilitySdk.recoverUnfinishedSessions('service_worker_bootstrap'))
+  .then(() => initializeProviders())
   .then(() => stateStore.initialize())
   .then(() => cleanupUploadLedger('background bootstrap'))
   .then(() => getActiveCollectionSession())

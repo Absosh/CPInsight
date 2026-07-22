@@ -14,14 +14,31 @@
   },
   "permissions": [
     "alarms",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "host_permissions": [
     "https://leetcode.com/*",
+    "https://codeforces.com/*",
+    "https://*.codeforces.com/*",
+    "https://www.codechef.com/*",
+    "https://*.codechef.com/*",
     "https://api.cpinsight.app/*",
     "http://localhost:4000/*"
   ],
   "content_scripts": [
+    {
+      "matches": [
+        "https://codeforces.com/*",
+        "https://*.codeforces.com/*",
+        "https://www.codechef.com/*",
+        "https://*.codechef.com/*"
+      ],
+      "js": [
+        "content/observability-bootstrap.js"
+      ],
+      "run_at": "document_start"
+    },
     {
       "matches": [
         "https://leetcode.com/*"
@@ -52,6 +69,12 @@
         "content/main.js",
         "injected/page-runtime.js",
         "messaging/*.js",
+        "observability/config/*.js",
+        "observability/core/*.js",
+        "observability/models/*.js",
+        "observability/platforms/*.js",
+        "observability/platforms/*/*.js",
+        "observability/plugin-api/*.js",
         "providers/leetcode/config.js",
         "providers/leetcode/dom/*.js",
         "providers/leetcode/graphql/*.js",
@@ -65,7 +88,11 @@
         "utils/*.js"
       ],
       "matches": [
-        "https://leetcode.com/*"
+        "https://leetcode.com/*",
+        "https://codeforces.com/*",
+        "https://*.codeforces.com/*",
+        "https://www.codechef.com/*",
+        "https://*.codechef.com/*"
       ]
     }
   ]

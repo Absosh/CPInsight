@@ -20,6 +20,8 @@ export const MessageType = Object.freeze({
   PAGE_BRIDGE_READY: 'page:bridge:ready',
   PAGE_COMMAND: 'page:command',
   PAGE_COMMAND_RESULT: 'page:command:result',
+  OBSERVABILITY_PAGE_SNAPSHOT: 'observability:page:snapshot',
+  OBSERVABILITY_PAGE_EXIT: 'observability:page:exit',
   NETWORK_EVENT: 'network:event',
   SPA_NAVIGATION: 'spa:navigation',
   SYNC_REQUESTED: 'sync:requested',

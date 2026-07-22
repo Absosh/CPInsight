@@ -1,6 +1,7 @@
 const AccountSettingsNav = [
   { id: 'profile', label: 'Profile', href: 'profile.html' },
-  { id: 'platforms', label: 'Platforms', href: 'platforms.html' }
+  { id: 'platforms', label: 'Platforms', href: 'platforms.html' },
+  { id: 'return', label: 'Return', href: 'dashboard.html', icon: 'return' }
 ];
 
 const PlatformsPage = {
@@ -31,10 +32,21 @@ const PlatformsPage = {
 
       return `
         <a href="${item.href}" class="block w-full min-w-0 rounded-2xl p-4 text-left transition truncate font-semibold ${classes}">
-          ${this.escapeHtml(item.label)}
+          <span class="inline-flex items-center gap-3">
+            ${item.icon === 'return' ? this.returnIcon() : ''}
+            <span>${this.escapeHtml(item.label)}</span>
+          </span>
         </a>
       `;
     }).join('');
+  },
+
+  returnIcon() {
+    return `
+      <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+    `;
   },
 
   async load() {
