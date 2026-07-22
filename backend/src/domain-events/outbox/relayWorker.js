@@ -14,6 +14,7 @@ class OutboxRelayWorker {
     batchSize = 100,
     leaseMs = 30000,
     pollIntervalMs = 1000,
+    requiredSubscriberIds = [],
     logger = null
   } = {}) {
     this.repository = repository;
@@ -23,6 +24,7 @@ class OutboxRelayWorker {
     this.batchSize = batchSize;
     this.leaseMs = leaseMs;
     this.pollIntervalMs = pollIntervalMs;
+    this.requiredSubscriberIds = requiredSubscriberIds;
     this.logger = logger;
     this.timer = null;
     this.running = false;
@@ -87,10 +89,11 @@ class OutboxRelayWorker {
   async publishRecord(record) {
     const startedAt = Date.now();
     try {
-      await this.eventBus.publish(rowToDomainEvent(record), {
+      const publishResult = await this.eventBus.publish(rowToDomainEvent(record), {
         outboxId: record.id,
         publicationToken: record.publication_token
       });
+      this.assertRequiredSubscribers(publishResult);
       const marked = await this.repository.markPublished({
         id: record.id,
         publicationToken: record.publication_token
@@ -127,6 +130,19 @@ class OutboxRelayWorker {
       });
       this.stats.failedEvents += 1;
       this.stats.retryCount += 1;
+    }
+  }
+
+  assertRequiredSubscribers(publishResult) {
+    if (!this.requiredSubscriberIds.length) return;
+    const resultsById = new Map((publishResult.subscriberResults || []).map((result) => [result.subscriberId, result]));
+    for (const subscriberId of this.requiredSubscriberIds) {
+      const result = resultsById.get(subscriberId);
+      if (!result || result.status !== 'fulfilled') {
+        const error = new Error(`Required domain event subscriber failed: ${subscriberId}`);
+        error.code = 'REQUIRED_SUBSCRIBER_FAILURE';
+        throw error;
+      }
     }
   }
 

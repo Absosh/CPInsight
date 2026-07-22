@@ -29,8 +29,9 @@ flowchart TB
   Tx --> Commit["COMMIT"]
   Commit --> Relay["Outbox Relay Worker"]
   Relay --> Bus["Domain Event Bus"]
+  Bus --> Redis["Redis Streams"]
   Bus --> Subscribers["Subscribers"]
-  Bus --> Broker["Future External Broker"]
+  Redis --> Broker["Future External Broker"]
 ```
 
 No event is published before commit. If the transaction rolls back, the outbox row rolls back with the telemetry records.
@@ -123,6 +124,7 @@ Replay publishes through the same Domain Event Bus contract and records attempts
 | Crash during transaction | Transaction rolls back; no outbox row exists. |
 | Crash after commit | Relay later finds `pending` rows. |
 | Crash during publish | Lease expires; relay marks eligible for retry. |
+| Redis publish failure | Required Redis publisher subscriber failure prevents outbox publication success and triggers retry. |
 | Crash before acknowledgement | Upload idempotency and telemetry event ids prevent duplicate telemetry rows. |
 | Relay restart | Pending and failed rows remain durable. |
 | Deployment restart | Relay resumes from PostgreSQL state. |

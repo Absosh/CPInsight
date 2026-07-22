@@ -1,6 +1,6 @@
 # Domain Event Bus
 
-The Domain Event Bus is the backend communication layer for business facts produced inside CPInsight. It is generic: telemetry is one publisher, not the owner of the bus. Request-time publishers write domain events to the [Transactional Outbox](transactional-outbox.md); the relay publishes committed events to the bus.
+The Domain Event Bus is the backend communication layer for business facts produced inside CPInsight. It is generic: telemetry is one publisher, not the owner of the bus. Request-time publishers write domain events to the [Transactional Outbox](transactional-outbox.md); the relay publishes committed events to the bus. When enabled, the bus publishes to [Redis Event Distribution](redis-event-distribution.md) through a dedicated Redis publisher subscriber.
 
 ## Purpose
 
@@ -33,6 +33,7 @@ Implemented subscribers:
 - `domain-event-persistence`: stores immutable domain events in `domain_events`.
 - `domain-event-metrics`: records dispatch metrics.
 - `domain-event-audit`: records audit observations.
+- `redis-event-publisher`: publishes committed domain events to Redis Streams when configured.
 - `future-websocket-gateway`: registered placeholder with no event subscriptions.
 - `future-analytics`: registered placeholder with no event subscriptions.
 

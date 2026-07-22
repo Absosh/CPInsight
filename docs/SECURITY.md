@@ -127,6 +127,8 @@ Collectors must not collect:
 
 Domain events persisted in the transactional outbox must follow the same data minimization boundary as telemetry. Replay is implemented as an internal relay capability and should only be exposed through future administrative interfaces that require authentication, authorization, audit logging, and explicit operator intent.
 
+Redis event payloads carry the same immutable domain event contract. Consumers must treat `eventId` as the idempotency key and must not enrich Redis stream entries with secrets, access tokens, refresh tokens, cookies, clipboard data, or sensitive DOM content.
+
 ## Dependency Security
 
 Run backend production audit:

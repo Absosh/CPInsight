@@ -2,7 +2,7 @@
 
 CPInsight is a layered analytics system for competitive programming data. It uses a web frontend for user interaction, an Express API for authenticated business operations, PostgreSQL for durable domain data, Redis for cache acceleration, and a Chrome extension for authenticated browser-side collection and contest-session detection.
 
-The design separates data acquisition from analytics. Platform clients and extension collectors gather facts. Backend services normalize and persist facts. Analytics services read persisted facts and produce views. The Observability SDK provides a newer platform-agnostic foundation for telemetry events without coupling collectors to storage or transport. The backend [Transactional Outbox](transactional-outbox.md) and [Domain Event Bus](domain-event-bus.md) decouple committed facts from downstream consumers.
+The design separates data acquisition from analytics. Platform clients and extension collectors gather facts. Backend services normalize and persist facts. Analytics services read persisted facts and produce views. The Observability SDK provides a newer platform-agnostic foundation for telemetry events without coupling collectors to storage or transport. The backend [Transactional Outbox](transactional-outbox.md), [Domain Event Bus](domain-event-bus.md), and [Redis Event Distribution](redis-event-distribution.md) decouple committed facts from downstream consumers.
 
 ## Runtime Architecture
 
@@ -28,6 +28,7 @@ flowchart TB
     Services["Services"]
     Outbox["Transactional Outbox"]
     DomainBus["Domain Event Bus"]
+    RedisEvents["Redis Streams"]
     Repositories["Repositories"]
     Middleware["Auth, validation,\nrate limit, errors"]
   end
@@ -51,6 +52,7 @@ flowchart TB
   Controllers --> Services
   Services --> Outbox
   Outbox --> DomainBus
+  DomainBus --> RedisEvents
   DomainBus --> Repositories
   Services --> Repositories
   Repositories --> Postgres
@@ -66,6 +68,7 @@ flowchart TB
 | Backend API | `backend/src/routes`, `controllers`, `services` | Authenticated HTTP API, validation, orchestration, platform sync, analytics, extension uploads |
 | Transactional Outbox | `backend/src/domain-events/outbox` | Durable post-commit relay for domain events |
 | Domain Event Bus | `backend/src/domain-events` | Generic publish/subscribe backbone for processed backend facts |
+| Redis Event Distribution | `backend/src/redis/events` | Redis Streams publisher and consumer framework for distributed domain event delivery |
 | Persistence | `backend/src/database`, `repositories` | PostgreSQL tables and SQL access |
 | Cache | `backend/src/redis`, `analyticsService` | Redis read-through cache for analytics where safe |
 | Chrome extension | `extension/` | Manifest V3 extension, popup, background orchestration, content scripts, LeetCode provider sync, observability bridge |

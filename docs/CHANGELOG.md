@@ -28,6 +28,8 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Transactional Outbox and relay worker for post-commit domain event publication.
 - Outbox migration with leasing, retry state, replay log, dead-letter state, and subscriber idempotency indexes.
 - Runtime verification harness for transactional outbox reliability behavior.
+- Redis Streams event distribution platform with publisher, connection manager, stream topology, consumer framework, pending recovery, and dead-letter routing.
+- Runtime verification harness for Redis event distribution behavior.
 - User authentication with registration, login, refresh-token rotation, and logout.
 - JWT access token and refresh token infrastructure.
 - PostgreSQL schema for users, profiles, platform accounts, contests, submissions, analytics cache, refresh tokens, and LeetCode extension uploads.
@@ -45,7 +47,7 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Durable local telemetry queue for Observability SDK events.
 - Runtime verification harness for observability session lifecycle behavior.
 - Architecture documentation suite under `docs/`.
-- Architecture Decision Records ADR-0001 through ADR-0015.
+- Architecture Decision Records ADR-0001 through ADR-0016.
 - Operations, testing, security, contributing, changelog, and glossary documentation.
 
 ### Security

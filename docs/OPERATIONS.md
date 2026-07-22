@@ -62,6 +62,8 @@ Optional backend variables:
 | `OUTBOX_RELAY_LEASE_MS` | `30000` |
 | `OUTBOX_RELAY_POLL_INTERVAL_MS` | `1000` |
 | `OUTBOX_RELAY_MAX_ATTEMPTS` | `5` |
+| `REDIS_EVENT_DISTRIBUTION_ENABLED` | `true` |
+| `REDIS_EVENT_STREAM_MAX_LENGTH` | `1000000` |
 
 ## Local Infrastructure Startup
 
@@ -229,6 +231,16 @@ The outbox relay persists pending domain events in PostgreSQL. If the queue grow
 4. Check rows in `dead_letter` status and inspect `retry_history`.
 5. Increase `OUTBOX_RELAY_BATCH_SIZE` only after confirming PostgreSQL has capacity.
 
+### Redis Event Stream Backlog
+
+Redis Streams distribute domain events to workers. If stream lag grows:
+
+1. Inspect stream lengths for `cpinsight:v1:*`.
+2. Inspect consumer-group pending entries.
+3. Check dead-letter streams ending in `.dead-letter`.
+4. Verify Redis connectivity and `REDIS_EVENT_DISTRIBUTION_ENABLED`.
+5. Scale consumers within the affected consumer group.
+
 ### Extension Session Corruption
 
 The Observability SDK validates local storage shapes and resets corrupted observability keys to safe defaults. If local extension behavior remains inconsistent, remove extension storage from Chrome and reload the unpacked extension.
@@ -242,6 +254,7 @@ The Observability SDK validates local storage shapes and resets corrupted observ
 | LeetCode upload returns `409` | Account mismatch, disconnected account, or unsupported collector version | Verify connected LeetCode handle and extension version. |
 | Analytics returns outdated data | Redis/PostgreSQL analytics cache | Trigger platform sync or clear user analytics cache through service logic. |
 | Domain events are not reaching subscribers | Outbox relay disabled, stuck lease, or repeated subscriber failure | Inspect `domain_event_outbox`, `domain_event_subscriber_failures`, and relay environment variables. |
+| Redis consumers stop progressing | Consumer crash, pending entries, or poison message | Check Redis pending entries, dead-letter streams, and worker logs. |
 | Extension collector does not run | Host permission or content script match issue | Check `extension/manifest.json` and service worker console. |
 | Duplicate contest tabs behave unexpectedly | Local extension state issue | Inspect `observability.sessions` and `observability.tabIndex` in Chrome storage. |
 
@@ -265,4 +278,5 @@ The Observability SDK validates local storage shapes and resets corrupted observ
 - [Testing](TESTING.md)
 - [Security](SECURITY.md)
 - [Transactional Outbox](architecture/transactional-outbox.md)
+- [Redis Event Distribution](architecture/redis-event-distribution.md)
 - [API Reference](api/README.md)

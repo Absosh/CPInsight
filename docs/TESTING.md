@@ -141,6 +141,13 @@ cd backend
 node scripts/verify-transactional-outbox.js
 ```
 
+Run Redis event distribution verification:
+
+```powershell
+cd backend
+node scripts/verify-redis-event-distribution.js
+```
+
 Expected output includes:
 
 ```json
@@ -233,6 +240,18 @@ The Transactional Outbox verification covers:
 - Concurrent publication across mixed aggregates.
 - Logical exactly-once publication markers.
 
+The Redis Event Distribution verification covers:
+
+- Stream routing.
+- Batch publishing.
+- Consumer group initialization.
+- Acknowledgement.
+- Pending recovery.
+- Dead-letter routing.
+- Duplicate consumer load balancing.
+- Large backlog publishing.
+- Heartbeat health checks.
+
 ## Recovery Testing
 
 ### Browser Restart
@@ -309,5 +328,6 @@ Future work should add:
 - [Telemetry](architecture/telemetry.md)
 - [Domain Event Bus](architecture/domain-event-bus.md)
 - [Transactional Outbox](architecture/transactional-outbox.md)
+- [Redis Event Distribution](architecture/redis-event-distribution.md)
 - [Operations](OPERATIONS.md)
 - [Security](SECURITY.md)

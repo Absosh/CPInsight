@@ -26,6 +26,7 @@ Implemented:
 - Reliable telemetry upload from the Observability SDK queue to the authenticated backend ingestion API.
 - Generic backend Domain Event Bus with immutable event contract, middleware, subscriber isolation, retry, audit, persistence, and metrics.
 - Transactional Outbox and relay worker for reliable post-commit domain event publication.
+- Redis Streams event distribution layer for cross-process domain event consumers.
 - Codeforces and CodeChef contest-session collector plugins.
 
 Planned:
@@ -68,6 +69,7 @@ flowchart LR
   API --> Redis["Redis cache"]
   API --> DomainBus["Domain Event Bus"]
   API --> Outbox["Transactional Outbox"]
+  DomainBus --> RedisStreams["Redis Streams"]
   Extension["Chrome extension"] --> API
   Extension --> SDK["Observability SDK"]
   SDK --> Store["chrome.storage.local"]
@@ -98,6 +100,7 @@ Architecture:
 - [Telemetry](architecture/telemetry.md)
 - [Domain Event Bus](architecture/domain-event-bus.md)
 - [Transactional Outbox](architecture/transactional-outbox.md)
+- [Redis Event Distribution](architecture/redis-event-distribution.md)
 - [RAG Roadmap](architecture/rag-roadmap.md)
 - [Future Roadmap](architecture/future-roadmap.md)
 - [Deployment](architecture/deployment.md)
@@ -123,6 +126,7 @@ Sequences:
 - [Domain Event Dispatch](sequence/domain-event-dispatch.md)
 - [Outbox Relay](sequence/outbox-relay.md)
 - [Outbox Replay](sequence/outbox-replay.md)
+- [Redis Event Distribution](sequence/redis-event-distribution.md)
 - [Extension Upload](sequence/extension-upload.md)
 - [Analytics Refresh](sequence/analytics-refresh.md)
 - [Future Live Telemetry](sequence/future-live-telemetry.md)
@@ -144,6 +148,7 @@ Architecture Decision Records:
 - [ADR-0013 Telemetry Processing Pipeline](decisions/ADR-0013-telemetry-processing-pipeline.md)
 - [ADR-0014 Domain Event Bus](decisions/ADR-0014-domain-event-bus.md)
 - [ADR-0015 Transactional Outbox Pattern](decisions/ADR-0015-transactional-outbox.md)
+- [ADR-0016 Redis Event Distribution Layer](decisions/ADR-0016-redis-event-distribution-layer.md)
 
 Existing operational document:
 

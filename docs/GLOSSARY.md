@@ -50,6 +50,14 @@ Database-backed event publication pattern that stores domain events in the same 
 
 Background worker that leases pending outbox events, publishes them to the Domain Event Bus, records success or failure, and supports replay.
 
+## Redis Event Distribution
+
+Redis Streams transport layer for distributing committed domain events to cross-process consumers. See [Redis Event Distribution](architecture/redis-event-distribution.md).
+
+## Consumer Group
+
+Redis Streams mechanism that load-balances stream entries across consumers and tracks pending entries for recovery.
+
 ## Lease
 
 Temporary ownership marker that allows one relay worker to process an outbox row while allowing automatic recovery after expiration.

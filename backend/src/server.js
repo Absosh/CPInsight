@@ -4,6 +4,9 @@ const pool = require('./database/pool');
 const { redis } = require('./redis/client');
 const { OutboxRelayWorker } = require('./domain-events/outbox/relayWorker');
 const { OutboxRetryPolicy } = require('./domain-events/outbox/retryPolicy');
+const { createDomainEventBus } = require('./domain-events/factory');
+const { RedisEventConnectionManager } = require('./redis/events/connectionManager');
+const { RedisEventPublisher } = require('./redis/events/publisher');
 
 async function start() {
   await pool.query('SELECT 1');
@@ -17,10 +20,22 @@ async function start() {
   }
 
   if (env.outboxRelay.enabled) {
+    let eventBus = undefined;
+    if (env.redisEvents.enabled) {
+      const redisEventConnection = new RedisEventConnectionManager({ redis, logger: console });
+      const redisPublisher = new RedisEventPublisher({
+        connectionManager: redisEventConnection,
+        maxStreamLength: env.redisEvents.maxStreamLength,
+        logger: console
+      });
+      eventBus = createDomainEventBus({ redisPublisher, logger: console });
+    }
     relay = new OutboxRelayWorker({
+      eventBus,
       batchSize: env.outboxRelay.batchSize,
       leaseMs: env.outboxRelay.leaseMs,
       pollIntervalMs: env.outboxRelay.pollIntervalMs,
+      requiredSubscriberIds: env.redisEvents.enabled ? ['redis-event-publisher'] : [],
       retryPolicy: new OutboxRetryPolicy({ maxAttempts: env.outboxRelay.maxAttempts }),
       logger: console
     });

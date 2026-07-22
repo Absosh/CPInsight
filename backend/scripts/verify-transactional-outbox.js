@@ -219,6 +219,25 @@ async function run() {
   await failingRelay.tick();
   assert.equal(failingRepository.rows[0].status, OUTBOX_STATUS.DEAD_LETTER);
 
+  const requiredRepository = new MemoryOutboxRepository();
+  await requiredRepository.insert(event(1));
+  const requiredRelay = new OutboxRelayWorker({
+    repository: requiredRepository,
+    eventBus: {
+      publish: async (domainEvent) => ({
+        event: domainEvent,
+        subscriberResults: [{ subscriberId: 'redis-event-publisher', status: 'rejected' }],
+        dropped: false
+      })
+    },
+    requiredSubscriberIds: ['redis-event-publisher'],
+    retryPolicy: new OutboxRetryPolicy({ maxAttempts: 2, initialDelayMs: 1, maxDelayMs: 1, jitterRatio: 0 }),
+    batchSize: 1,
+    leaseMs: 10
+  });
+  await requiredRelay.tick();
+  assert.equal(requiredRepository.rows[0].status, OUTBOX_STATUS.FAILED);
+
   const crashRepository = new MemoryOutboxRepository();
   await crashRepository.insert(event(1));
   const crashBus = new MemoryEventBus({ crashAfterPublish: true });
@@ -263,6 +282,7 @@ async function run() {
     duplicateRelayBlocked: true,
     leaseRecovery: true,
     deadLetters: failingRepository.rows.filter((row) => row.status === OUTBOX_STATUS.DEAD_LETTER).length,
+    requiredSubscriberFailureRetried: true,
     replayedEvents: replayResults.length,
     largeBacklogPublished: 1000,
     exactlyOnceMarkers: eventBus.published.size,

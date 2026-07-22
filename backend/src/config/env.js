@@ -22,7 +22,9 @@ const schema = Joi.object({
   OUTBOX_RELAY_BATCH_SIZE: Joi.number().integer().min(1).max(1000).default(100),
   OUTBOX_RELAY_LEASE_MS: Joi.number().integer().min(1000).max(300000).default(30000),
   OUTBOX_RELAY_POLL_INTERVAL_MS: Joi.number().integer().min(100).max(60000).default(1000),
-  OUTBOX_RELAY_MAX_ATTEMPTS: Joi.number().integer().min(1).max(20).default(5)
+  OUTBOX_RELAY_MAX_ATTEMPTS: Joi.number().integer().min(1).max(20).default(5),
+  REDIS_EVENT_DISTRIBUTION_ENABLED: Joi.boolean().truthy('true').falsy('false').default(true),
+  REDIS_EVENT_STREAM_MAX_LENGTH: Joi.number().integer().min(1000).max(10000000).default(1000000)
 }).unknown(true);
 
 const { value, error } = schema.validate(process.env, { abortEarly: false });
@@ -60,5 +62,9 @@ module.exports = {
     leaseMs: value.OUTBOX_RELAY_LEASE_MS,
     pollIntervalMs: value.OUTBOX_RELAY_POLL_INTERVAL_MS,
     maxAttempts: value.OUTBOX_RELAY_MAX_ATTEMPTS
+  },
+  redisEvents: {
+    enabled: value.REDIS_EVENT_DISTRIBUTION_ENABLED,
+    maxStreamLength: value.REDIS_EVENT_STREAM_MAX_LENGTH
   }
 };

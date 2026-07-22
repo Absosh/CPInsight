@@ -26,6 +26,8 @@ Authorization: Bearer <accessToken>
 
 The Domain Event Bus is internal backend infrastructure and does not expose a public HTTP endpoint. Its contract is documented in [Domain Event Bus](../architecture/domain-event-bus.md).
 
+Redis Event Distribution is internal backend infrastructure and does not expose a public HTTP endpoint. Its contract is documented in [Redis Event Distribution](../architecture/redis-event-distribution.md).
+
 ## Additional Current Endpoints
 
 | Method | URL | Auth | Purpose |

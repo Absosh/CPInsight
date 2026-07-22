@@ -21,6 +21,8 @@ The [Domain Event Bus](domain-event-bus.md) is the internal event-driven boundar
 
 The [Transactional Outbox](transactional-outbox.md) is the reliability boundary between request-time database writes and post-commit domain event dispatch.
 
+[Redis Event Distribution](redis-event-distribution.md) is the transport boundary for cross-process consumers. The backend publishes to Redis through the Domain Event Bus; consumers use Redis Streams and Consumer Groups.
+
 ## Module Responsibilities
 
 | Layer | Location | Responsibility |
