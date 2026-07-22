@@ -41,6 +41,7 @@ Authorization: Bearer <accessToken>
 | `DELETE` | `/api/platforms/disconnect` | Yes | Disconnect platform handle |
 | `POST` | `/api/platforms/sync` | Yes | Sync all accounts |
 | `POST` | `/api/platforms/sync/:platform` | Yes | Sync one account |
+| `POST` | `/api/telemetry/upload` | Yes | Observability SDK telemetry batch ingestion |
 | `GET` | `/api/debug/submissions/:platform` | Yes | Debug submission inspection |
 | `GET` | `/api/debug/user-accounts` | Yes | Debug account inspection |
 

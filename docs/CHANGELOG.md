@@ -16,6 +16,14 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 
 ### Added
 
+- Reliable Observability SDK telemetry upload infrastructure.
+- Authenticated backend telemetry ingestion endpoint at `/api/telemetry/upload`.
+- Telemetry batch, raw event, upload attempt, and event failure tables.
+- Extension upload scheduler, batch builder, retry policy, authenticated HTTP telemetry transport, and upload state store.
+- Runtime verification harness for telemetry upload reliability scenarios.
+- Modular backend telemetry processing pipeline with composable stages.
+- Processed telemetry metadata, pipeline metrics, and dead-letter persistence.
+- Runtime verification harness for telemetry processing pipeline behavior.
 - User authentication with registration, login, refresh-token rotation, and logout.
 - JWT access token and refresh token infrastructure.
 - PostgreSQL schema for users, profiles, platform accounts, contests, submissions, analytics cache, refresh tokens, and LeetCode extension uploads.

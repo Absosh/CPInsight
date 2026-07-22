@@ -175,9 +175,9 @@ The SDK stores:
 
 Storage shape is validated before use. Invalid shapes are replaced with safe defaults and logged.
 
-## Transport
+## Transport and Upload
 
-The current transport is `QueuedTransport`, which durably queues events. Backend telemetry ingestion is not implemented. HTTP, WebSocket, gRPC, desktop bridge, or mobile bridge transports can be added behind the transport interface without changing collectors.
+`QueuedTransport` durably queues events as part of the SDK event pipeline. Phase 2.1 adds an upload layer on top of that queue: the upload scheduler assigns stable upload sequence numbers, builds bounded batches, sends them through authenticated HTTP, and removes only backend-acknowledged event ids. WebSocket, gRPC, desktop bridge, or mobile bridge transports can still be added behind the transport boundary without changing collectors.
 
 ## Why There Is No Platform Logic in the SDK
 

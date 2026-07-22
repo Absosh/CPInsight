@@ -12,7 +12,7 @@ Telemetry transport requirements are not fixed. CPInsight may need HTTP batch up
 
 ## Decision
 
-The SDK publishes through a transport abstraction. The current implementation is `QueuedTransport`, which writes events to the durable queue. Future transports can publish queued events to backend systems without changing collectors or session lifecycle code.
+The SDK publishes through a transport abstraction. `QueuedTransport` writes events to the durable queue, and the Phase 2.1 upload layer drains that queue through authenticated HTTP. Future transports can publish queued events to other backend systems without changing collectors or session lifecycle code.
 
 ## Consequences
 
@@ -24,8 +24,7 @@ Positive:
 
 Negative:
 
-- Current implementation does not upload Observability SDK events.
-- Queue-drain policy must be designed before backend ingestion.
+- Backend ingestion exists, but future quota, compression, and live backpressure policy still need explicit design.
 
 ## Alternatives Considered
 

@@ -114,6 +114,19 @@ Run Observability SDK runtime verification:
 node tests/observability-runtime-verification.mjs
 ```
 
+Run telemetry upload runtime verification:
+
+```powershell
+node tests/telemetry-upload-runtime-verification.mjs
+```
+
+Run backend telemetry processing pipeline verification:
+
+```powershell
+cd backend
+node scripts/verify-telemetry-pipeline.js
+```
+
 Expected output includes:
 
 ```json
@@ -148,6 +161,36 @@ The runtime verification harness covers:
 - UUID event identity.
 - Deduplication by metadata key.
 - Corrupted storage shape recovery.
+
+The telemetry upload verification harness covers:
+
+- Upload sequence assignment for previously unsequenced queued events.
+- Batch ordering.
+- Maximum events per batch.
+- Full acknowledgement cleanup.
+- Partial acknowledgement preservation.
+- Exponential retry state.
+- Retry backoff skip.
+- Offline skip.
+- Queue corruption recovery.
+- Oversized event rejection.
+- Expired access token refresh-and-retry.
+- `429 Retry-After` handling.
+- Timeout classification.
+
+The telemetry processing pipeline verification covers:
+
+- Normal batches.
+- Duplicate uploads.
+- Duplicate events.
+- Unsupported schema versions.
+- Duplicate sequence numbers.
+- Missing sequence numbers.
+- Out-of-order events.
+- Simulated storage failure.
+- Pipeline restart and replay idempotency.
+- Large batches.
+- Mixed collector metadata.
 
 ## Recovery Testing
 

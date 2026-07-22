@@ -134,6 +134,10 @@ export class PersistentStore {
     return this.recoverShape(StorageKey.OBSERVABILITY_QUEUE, [], Array.isArray);
   }
 
+  async saveQueue(queue) {
+    return this.storage.set(StorageKey.OBSERVABILITY_QUEUE, queue);
+  }
+
   async enqueue(event) {
     return this.withWriteLock(async () => {
       const queue = await this.getQueue();
@@ -141,6 +145,30 @@ export class PersistentStore {
       const nextQueue = [...queue, event].slice(-this.config.maxQueuedEvents);
       await this.storage.set(StorageKey.OBSERVABILITY_QUEUE, nextQueue);
       return event;
+    });
+  }
+
+  async replaceQueue(queue) {
+    return this.withWriteLock(async () => this.saveQueue(queue));
+  }
+
+  async updateQueue(mutator) {
+    return this.withWriteLock(async () => {
+      const queue = await this.getQueue();
+      const nextQueue = await mutator(queue);
+      await this.saveQueue(nextQueue);
+      return nextQueue;
+    });
+  }
+
+  async removeAcknowledgedEvents(eventIds) {
+    const acknowledged = new Set(eventIds || []);
+    if (acknowledged.size === 0) return this.getQueue();
+    return this.withWriteLock(async () => {
+      const queue = await this.getQueue();
+      const nextQueue = queue.filter((entry) => !acknowledged.has(entry.eventId || entry.event?.eventId));
+      await this.saveQueue(nextQueue);
+      return nextQueue;
     });
   }
 

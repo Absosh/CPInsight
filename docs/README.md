@@ -23,11 +23,11 @@ Implemented:
 - LeetCode authenticated extension upload endpoint.
 - Manifest V3 Chrome extension with background service worker, content scripts, provider messaging, local storage, and observability content bridge.
 - Platform-agnostic Observability SDK with collector registry, event bus, event pipeline, schema validation, session engine, lifecycle FSM, persistence, and queued transport.
+- Reliable telemetry upload from the Observability SDK queue to the authenticated backend ingestion API.
 - Codeforces and CodeChef contest-session collector plugins.
 
 Planned:
 
-- Backend telemetry ingestion for Observability SDK events.
 - Realtime telemetry transport.
 - Live dashboards.
 - RAG and AI mentor features.
@@ -132,6 +132,7 @@ Architecture Decision Records:
 - [ADR-0010 UUID Event Identity](decisions/ADR-0010-uuid-event-identity.md)
 - [ADR-0011 Chrome Extension Architecture](decisions/ADR-0011-chrome-extension-architecture.md)
 - [ADR-0012 Repository Architecture](decisions/ADR-0012-repository-architecture.md)
+- [ADR-0013 Telemetry Processing Pipeline](decisions/ADR-0013-telemetry-processing-pipeline.md)
 
 Existing operational document:
 

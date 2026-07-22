@@ -49,6 +49,10 @@ flowchart LR
 
 `extensionUploadService` validates authenticated LeetCode extension payloads, verifies collector version and account ownership, persists upload records, replaces LeetCode submission facts, and invalidates analytics cache.
 
+### Telemetry Ingestion
+
+`telemetryService` accepts authenticated Observability SDK upload batches and delegates telemetry semantics to the processing pipeline. The pipeline validates schema version, timestamp sanity, ordering, and idempotency; enriches and classifies events; stores raw events and processed metadata; records metrics; and returns acknowledged event ids. It does not compute analytics.
+
 ## Error Handling
 
 Controllers are wrapped with `asyncHandler`. Domain errors use `HttpError`. The global error handler serializes errors into HTTP responses. Validation uses Joi schemas and rejects invalid request shapes before service execution.

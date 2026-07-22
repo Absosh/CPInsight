@@ -32,7 +32,7 @@ Primary threats:
 | Access tokens | JWTs signed with `JWT_ACCESS_SECRET`, issuer `cpinsight-api`. |
 | Refresh tokens | JWTs signed separately, stored by SHA-256 hash, rotated on refresh. |
 | Authentication middleware | Verifies bearer token and loads the user from PostgreSQL. |
-| Input validation | Joi schemas on auth, user, platform, and extension upload routes. |
+| Input validation | Joi schemas on auth, user, platform, extension upload, and telemetry upload routes. |
 | HTTP hardening | Helmet middleware. |
 | Rate limiting | Global limiter, auth limiter, analytics limiter. |
 | CORS | Centralized CORS configuration. |
@@ -80,6 +80,7 @@ Implemented Joi schemas validate:
 - Profile updates and avatar upload payload size.
 - Platform connect and sync parameters.
 - LeetCode extension upload shape.
+- Observability SDK telemetry upload batch shape.
 
 Future telemetry ingestion must validate the Observability SDK event schema server-side; local SDK validation is not a substitute for backend validation.
 
@@ -164,7 +165,7 @@ A mature public release should add:
 - Automated dependency scanning in CI.
 - API integration tests for refresh-token replay.
 - Security headers review for frontend Nginx.
-- Telemetry ingestion authentication and idempotency design.
+- Additional telemetry ingestion abuse detection and quota policy.
 - Extension message fuzz tests.
 - Content Security Policy explicitly documented for extension and frontend.
 - Public responsible disclosure policy.

@@ -1,6 +1,6 @@
 # Telemetry and Extension API
 
-This document separates implemented extension upload APIs from planned Observability SDK telemetry ingestion.
+This document covers implemented extension upload and Observability SDK telemetry ingestion APIs.
 
 ## Implemented: LeetCode Extension Upload
 
@@ -62,30 +62,79 @@ Errors:
 - `409`: unsupported collector version, account mismatch, idempotency conflict, or disconnected LeetCode account.
 - `401`: missing or invalid bearer token.
 
-## Planned: Observability SDK Telemetry Ingestion
+## Implemented: Observability SDK Telemetry Ingestion
 
-No backend endpoint currently accepts Observability SDK events. The SDK queues validated events locally in Chrome storage.
+```http
+POST /api/telemetry/upload
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+Idempotency-Key: <batchId>
+```
 
-A future endpoint should accept batches of this schema:
+Request:
 
 ```json
 {
+  "batchId": "550e8400-e29b-41d4-a716-446655440000",
+  "sequenceNumber": 1,
+  "createdAt": "2026-07-22T12:00:00.000Z",
+  "sdkVersion": "observability-sdk-v1",
+  "schemaVersion": 1,
+  "collectorVersion": "codeforces-contest-session",
   "events": [
     {
-      "eventId": "uuid",
-      "sessionId": "contest_session_...",
-      "userId": "uuid",
-      "platform": "codeforces",
-      "contestId": "1999",
-      "contestName": "Contest",
-      "problemId": "A:A",
-      "eventType": "PROBLEM_OPENED",
-      "timestamp": "2026-07-22T12:00:00.000Z",
-      "pageUrl": "https://codeforces.com/contest/1999/problem/A",
-      "metadata": {}
+      "sequenceNumber": 1,
+      "event": {
+        "eventId": "550e8400-e29b-41d4-a716-446655440001",
+        "sessionId": "contest_session_...",
+        "userId": null,
+        "platform": "codeforces",
+        "contestId": "1999",
+        "contestName": "Contest",
+        "problemId": "A:A",
+        "eventType": "PROBLEM_OPENED",
+        "timestamp": "2026-07-22T12:00:00.000Z",
+        "pageUrl": "https://codeforces.com/contest/1999/problem/A",
+        "metadata": {}
+      }
     }
   ]
 }
 ```
 
-The future endpoint should be authenticated, idempotent by event id, and separated from analytics derivation.
+Success: `202 Accepted`.
+
+Response:
+
+```json
+{
+  "batchId": "550e8400-e29b-41d4-a716-446655440000",
+  "acknowledgedEventIds": [
+    "550e8400-e29b-41d4-a716-446655440001"
+  ],
+  "highestSequenceNumber": 1,
+  "serverTimestamp": "2026-07-22T12:00:01.000Z"
+}
+```
+
+Validation:
+
+- `batchId` and `event.eventId` must be UUIDs.
+- `schemaVersion` must be supported by the backend.
+- Events must be ordered by increasing `sequenceNumber`.
+- Timestamps must be valid ISO timestamps and cannot be more than five minutes in the future.
+- Page URLs must be HTTP or HTTPS URLs.
+
+Errors:
+
+- `400`: malformed payload, invalid timestamps, or invalid ordering.
+- `401`: missing or invalid bearer token.
+- `409`: unsupported schema version or event id conflict.
+- `429`: rate limit response from middleware if configured for this route in the future.
+- `500`: server-side ingestion failure.
+
+Idempotency:
+
+- Duplicate event ids already stored for the same user are acknowledged without inserting duplicate rows.
+- Event ids already owned by another user are rejected with `409`.
+- Batch ids are unique per user in `telemetry_batches`.

@@ -87,9 +87,9 @@ The backend does not depend on the frontend. The Observability SDK does not depe
 1. Authentication flow: user credentials are validated by the backend; access and refresh tokens are returned to the frontend or extension.
 2. Platform sync flow: backend services call platform clients and write normalized account, contest, and submission facts.
 3. LeetCode extension upload flow: extension sends an authenticated collection payload to `/api/extension/leetcode/collection`; backend validates idempotency and persists facts.
-4. Observability flow: content scripts emit page snapshots; SDK sessions and events are persisted locally; backend ingestion is not implemented yet.
+4. Observability flow: content scripts emit page snapshots; SDK sessions and events are persisted locally, batched, uploaded, acknowledged, and stored by the backend telemetry ingestion API.
 5. Analytics flow: frontend requests analytics; backend reads database facts, optionally uses Redis/PostgreSQL cache, and returns computed payloads.
 
 ## Current and Future Boundaries
 
-Implemented telemetry stops at durable local SDK event creation. It does not upload contest-session telemetry to the backend. Future backend telemetry ingestion should be added behind the existing transport abstraction and documented in [Telemetry](telemetry.md) and [ADR-0008](../decisions/ADR-0008-transport-abstraction.md).
+Implemented telemetry includes durable local SDK event creation and authenticated backend upload. Realtime WebSockets, live dashboards, and analytics derived from telemetry remain future work and are documented in [Future Roadmap](future-roadmap.md).

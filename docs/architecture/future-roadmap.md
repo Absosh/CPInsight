@@ -7,7 +7,7 @@ This document describes planned architecture only. It does not describe implemen
 - Backend account, platform, analytics, authentication, and LeetCode extension upload APIs.
 - PostgreSQL fact storage and Redis analytics cache.
 - Chrome extension runtime.
-- Platform-agnostic Observability SDK with durable local session/event queue.
+- Platform-agnostic Observability SDK with durable local session/event queue and authenticated HTTP upload.
 - Codeforces and CodeChef contest-session detection collectors.
 
 ## Realtime Telemetry
@@ -17,8 +17,8 @@ Planned direction:
 ```mermaid
 flowchart LR
   SDK["Observability SDK"] --> Queue["Local durable queue"]
-  Queue --> Transport["HTTP or WebSocket transport"]
-  Transport --> API["Telemetry ingestion API"]
+  Queue --> Transport["Implemented HTTP upload transport"]
+  Transport --> API["Implemented telemetry ingestion API"]
   API --> RawStore["Raw event store"]
   RawStore --> Stream["Realtime stream"]
   Stream --> Dashboard["Live dashboard"]
@@ -68,7 +68,7 @@ Future platform onboarding should follow this path:
 1. Add platform account support in backend validation and platform clients if account analytics are needed.
 2. Add an Observability SDK collector if contest-session telemetry is needed.
 3. Add manifest host permissions for browser collectors.
-4. Add backend ingestion mappings only after telemetry API exists.
+4. Verify backend telemetry ingestion accepts the generic event schema without platform-specific changes.
 
 The Observability SDK core should not be modified for a new platform unless the generic collector contract itself is insufficient.
 

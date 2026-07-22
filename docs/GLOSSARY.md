@@ -38,6 +38,10 @@ SDK dispatcher that emits validated telemetry events after pipeline processing, 
 
 Middleware-capable SDK component that normalizes, validates, deduplicates, and freezes events before they are persisted and transported. See [Observability SDK](architecture/observability-sdk.md).
 
+## Telemetry Processing Pipeline
+
+Backend pipeline that processes uploaded telemetry batches through validation, ordering, idempotency, enrichment, classification, persistence, metrics, and acknowledgement stages. Future analytics, replay, and streaming systems should consume processed telemetry records from this pipeline. See [ADR-0013](decisions/ADR-0013-telemetry-processing-pipeline.md).
+
 ## Extension Runtime
 
 The Chrome extension execution environment, including service worker, popup, content scripts, injected scripts, message bus, and Chrome storage.
@@ -92,7 +96,7 @@ The mapping between browser tabs and a single active observability session. Owne
 
 ## Telemetry
 
-Structured event data that describes contest-session lifecycle and page transitions. Current Observability SDK telemetry is local-only and not yet ingested by the backend. See [Telemetry](architecture/telemetry.md).
+Structured event data that describes contest-session lifecycle and page transitions. Observability SDK telemetry is persisted locally, uploaded in authenticated batches, acknowledged by the backend, and stored as raw telemetry events. See [Telemetry](architecture/telemetry.md).
 
 ## Transport Layer
 

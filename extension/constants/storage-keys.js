@@ -6,6 +6,7 @@ export const StorageArea = Object.freeze({
 export const StorageKey = Object.freeze({
   AUTH_STATE: 'auth.state',
   CPINSIGHT_ACCESS_TOKEN: 'cpinsight.accessToken',
+  CPINSIGHT_REFRESH_TOKEN: 'cpinsight.refreshToken',
   EXTENSION_STATE: 'extension.state',
   PROVIDER_METADATA: 'provider.metadata',
   PROVIDER_CHECKPOINTS: 'provider.checkpoints',
@@ -16,6 +17,7 @@ export const StorageKey = Object.freeze({
   OBSERVABILITY_QUEUE: 'observability.queue',
   OBSERVABILITY_TAB_INDEX: 'observability.tabIndex',
   OBSERVABILITY_METADATA: 'observability.metadata',
+  TELEMETRY_UPLOAD_STATE: 'telemetry.upload.state',
   PROVIDER_HEALTH: 'provider.health',
   SYNC_PROGRESS: 'sync.progress',
   UPLOAD_QUEUE_METADATA: 'uploadQueue.metadata',

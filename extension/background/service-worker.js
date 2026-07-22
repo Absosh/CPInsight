@@ -15,6 +15,10 @@ import { createLogger } from '../utils/logger.js';
 import { ObservabilitySDK } from '../observability/core/observability-sdk.js';
 import { ObservabilityRuntimeConfig } from '../observability/config/runtime-config.js';
 import { observabilityCollectors } from '../observability/platforms/index.js';
+import { UploadStateStore } from '../observability/upload/upload-state-store.js';
+import { AuthTokenProvider } from '../observability/upload/auth-token-provider.js';
+import { HttpTelemetryTransport } from '../observability/upload/http-telemetry-transport.js';
+import { TelemetryUploadScheduler } from '../observability/upload/upload-scheduler.js';
 
 const logger = createLogger('background');
 const bootstrapLogger = createLogger('Bootstrap');
@@ -35,6 +39,18 @@ const observabilitySdk = new ObservabilitySDK({
   storage,
   logger: observabilityLogger,
   config: ObservabilityRuntimeConfig
+});
+const telemetryUploadStateStore = new UploadStateStore({ storage, logger: observabilityLogger });
+const telemetryTokenProvider = new AuthTokenProvider({ storage, logger: observabilityLogger });
+const telemetryUploadTransport = new HttpTelemetryTransport({
+  tokenProvider: telemetryTokenProvider,
+  logger: observabilityLogger
+});
+const telemetryUploadScheduler = new TelemetryUploadScheduler({
+  store: observabilitySdk.store,
+  uploadStateStore: telemetryUploadStateStore,
+  transport: telemetryUploadTransport,
+  logger: observabilityLogger
 });
 
 let providersInitialized = false;
@@ -96,6 +112,7 @@ async function initializeObservability() {
     }
   });
   await observabilitySdk.initialize({ runtime: 'background' });
+  await telemetryUploadScheduler.start();
 }
 
 async function initializeProviders() {

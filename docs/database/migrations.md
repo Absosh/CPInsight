@@ -10,6 +10,8 @@ Migrations are SQL files in `backend/src/database/migrations`. They are executed
 | `002_leetcode_extension_uploads.sql` | Adds LeetCode extension upload idempotency table |
 | `003_profile_management.sql` | Adds college and avatar profile fields |
 | `004_profile_country_text.sql` | Changes `user_profiles.country` from `CHAR(2)` to `VARCHAR(80)` |
+| `005_telemetry_ingestion.sql` | Adds telemetry batch, event, upload attempt, and event failure storage |
+| `006_telemetry_processing_pipeline.sql` | Adds processed telemetry events, pipeline metrics, and dead-letter storage |
 
 ## Migration Principles
 

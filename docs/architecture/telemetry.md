@@ -1,11 +1,12 @@
 # Telemetry Architecture
 
-Telemetry currently has two distinct paths:
+Telemetry currently has three distinct paths:
 
 1. Implemented LeetCode extension upload path.
 2. Implemented local Observability SDK event/session detection path.
+3. Implemented Observability SDK telemetry upload path.
 
-Backend ingestion of Observability SDK events is planned but not yet implemented.
+Backend ingestion of Observability SDK events is implemented at `/api/telemetry/upload`.
 
 ## Current LeetCode Upload Path
 
@@ -31,7 +32,62 @@ flowchart LR
   Events --> Queue["Durable local queue"]
 ```
 
-This path detects contest sessions and problem transitions for Codeforces and CodeChef. It does not upload those events to the backend.
+This path detects contest sessions and problem transitions for Codeforces and CodeChef.
+
+## Observability SDK Upload Path
+
+```mermaid
+flowchart LR
+  Queue["Persistent Queue"] --> Scheduler["Upload Scheduler"]
+  Scheduler --> Builder["Batch Builder"]
+  Builder --> Transport["Authenticated HTTP Transport"]
+  Transport --> API["POST /api/telemetry/upload"]
+  API --> DB["telemetry_* tables"]
+  API --> Ack["Acknowledgement"]
+  Ack --> Cleanup["Queue cleanup"]
+```
+
+The extension upload scheduler periodically inspects the durable queue, assigns stable upload sequence numbers to unsequenced events, builds ordered batches, sends them over authenticated HTTP, and removes only acknowledged event ids.
+
+Retry policy:
+
+- Exponential backoff starts at 1 second.
+- Delay doubles through 2, 4, 8, and 16 seconds.
+- Maximum delay is 30 seconds.
+- Jitter is applied.
+- `Retry-After` is respected for retryable HTTP responses.
+- Retry state is persisted in Chrome storage.
+
+## Batch Format
+
+```json
+{
+  "batchId": "uuid",
+  "sequenceNumber": 1,
+  "createdAt": "2026-07-22T12:00:00.000Z",
+  "sdkVersion": "observability-sdk-v1",
+  "schemaVersion": 1,
+  "collectorVersion": "codeforces-contest-session",
+  "events": [
+    {
+      "sequenceNumber": 1,
+      "event": {
+        "eventId": "uuid",
+        "sessionId": "contest_session_...",
+        "userId": null,
+        "platform": "codeforces",
+        "contestId": "1999",
+        "contestName": "Contest",
+        "problemId": "A:A",
+        "eventType": "PROBLEM_OPENED",
+        "timestamp": "2026-07-22T12:00:00.000Z",
+        "pageUrl": "https://codeforces.com/contest/1999/problem/A",
+        "metadata": {}
+      }
+    }
+  ]
+}
+```
 
 ## Standard Event Schema
 
@@ -51,15 +107,58 @@ The SDK emits:
 
 Event identity uses UUIDs. Deduplication is handled separately through metadata dedupe keys.
 
-## Future Telemetry Ingestion
+## Backend Telemetry Ingestion
 
-The future backend telemetry API should:
+The backend telemetry API:
 
-- Accept batches of schema-validated events.
+- Accepts batches of schema-validated events.
 - Authenticate the user.
-- Preserve idempotency by event id and dedupe key.
-- Store raw events before analytics derivation.
-- Keep analytics computation separate from ingestion.
-- Support replay and backfill.
+- Preserves idempotency by event id and batch id.
+- Stores raw events before analytics derivation.
+- Keeps analytics computation separate from ingestion.
+- Returns acknowledged event ids and highest sequence number.
 
-The SDK already has a transport abstraction for this future path.
+## Processing Pipeline
+
+Every uploaded event passes through the backend telemetry processing pipeline before durable storage is acknowledged.
+
+```mermaid
+flowchart LR
+  API["Telemetry API"] --> Ingress["Ingress Validation"]
+  Ingress --> Schema["Schema Version"]
+  Schema --> Auth["Authentication Context"]
+  Auth --> Ordering["Ordering Verification"]
+  Ordering --> Idempotency["Idempotency Check"]
+  Idempotency --> Timestamps["Timestamp Normalization"]
+  Timestamps --> Enrichment["Metadata Enrichment"]
+  Enrichment --> Classification["Event Classification"]
+  Classification --> Persistence["Raw + Processed Persistence"]
+  Persistence --> Ack["Acknowledgement"]
+```
+
+Stage responsibilities:
+
+| Stage | Responsibility |
+| --- | --- |
+| Schema Version | Reject unsupported telemetry schema versions. |
+| Authentication Context | Attach authenticated user context to processing. |
+| Ordering Verification | Detect duplicate, missing, and out-of-order sequence numbers within a batch. |
+| Idempotency Check | Identify already stored event ids and reject cross-user event id conflicts. |
+| Timestamp Normalization | Normalize ISO timestamps and reject future-skewed timestamps. |
+| Metadata Enrichment | Add server metadata such as received time, ingested time, latency, request id, and server node. |
+| Event Classification | Classify events into lifecycle, problem navigation, browser lifecycle, or generic categories. |
+| Persistence | Store raw telemetry events and immutable processed metadata. |
+| Acknowledgement | Return acknowledged event ids and highest sequence number. |
+
+The upload API does not compute analytics. Future analytics, replay, and streaming systems should consume processed telemetry records instead of raw upload bodies.
+
+Acknowledgement shape:
+
+```json
+{
+  "batchId": "uuid",
+  "acknowledgedEventIds": ["uuid"],
+  "highestSequenceNumber": 1,
+  "serverTimestamp": "2026-07-22T12:00:01.000Z"
+}
+```

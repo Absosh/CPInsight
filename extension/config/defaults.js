@@ -21,6 +21,19 @@ export const AppConfig = Object.freeze({
       uploading: 60000
     }
   },
+  telemetryUpload: {
+    enabled: true,
+    path: '/telemetry/upload',
+    maxEventsPerBatch: 100,
+    maxPayloadBytes: 262144,
+    requestTimeoutMs: 15000,
+    schedulePeriodMinutes: 1,
+    maxRetryDelayMs: 30000,
+    initialRetryDelayMs: 1000,
+    expiredEventTtlMs: 7 * 24 * 60 * 60 * 1000,
+    lowStorageWarningThreshold: 1800,
+    sdkVersion: 'observability-sdk-v1'
+  },
   messaging: {
     requestTimeoutMs: 10000,
     pageCommandMaxAgeMs: 30000
