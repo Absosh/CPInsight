@@ -73,6 +73,15 @@ flowchart LR
 
 ## Documentation Index
 
+Repository operations:
+
+- [Operations Handbook](OPERATIONS.md)
+- [Testing Strategy](TESTING.md)
+- [Security Engineering](SECURITY.md)
+- [Contributing Guide](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
+- [Glossary](GLOSSARY.md)
+
 Architecture:
 
 - [System Overview](architecture/system-overview.md)

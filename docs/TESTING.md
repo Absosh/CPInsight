@@ -1,0 +1,227 @@
+# Testing Strategy
+
+CPInsight testing is currently a mix of syntax checks, runtime verification harnesses, health checks, and manual extension validation. The repository does not yet contain a full unit or integration test suite for every backend service.
+
+## Philosophy
+
+- Test architectural invariants close to the subsystem that owns them.
+- Prefer deterministic runtime verification for lifecycle-heavy extension behavior.
+- Validate database changes with migrations against a real PostgreSQL instance.
+- Treat authentication, storage recovery, idempotency, and cross-tab synchronization as reliability-critical paths.
+- Document gaps explicitly instead of implying coverage that does not exist.
+
+## Backend Testing
+
+Install dependencies:
+
+```powershell
+cd backend
+npm ci
+```
+
+Run current backend test script:
+
+```powershell
+npm test
+```
+
+Expected result:
+
+- `backend/scripts/check-syntax.js` completes successfully.
+- Exit code is `0`.
+
+Run production dependency audit:
+
+```powershell
+npm run audit:prod
+```
+
+Pass criteria:
+
+- No high or critical production dependency vulnerabilities remain untriaged.
+
+## Database Testing
+
+Start dependencies:
+
+```powershell
+docker compose up -d postgres redis
+```
+
+Run migrations:
+
+```powershell
+docker compose --profile tools run --rm migrate
+```
+
+Pass criteria:
+
+- Migration command exits `0`.
+- Tables documented in [Database Schema](database/schema.md) exist.
+- Re-running migrations does not fail for migrations that use `IF NOT EXISTS`.
+
+## API Smoke Testing
+
+Start API:
+
+```powershell
+docker compose up -d api
+```
+
+Run:
+
+```powershell
+curl http://localhost:4000/health
+curl http://localhost:4000/ready
+```
+
+Pass criteria:
+
+- `/health` returns a successful HTTP response.
+- `/ready` returns a successful response only when dependencies are ready.
+
+## Authentication Testing
+
+Manual API flow:
+
+1. `POST /api/auth/register` with a valid username, email, and strong password.
+2. `POST /api/auth/login`.
+3. Call a protected route with `Authorization: Bearer <accessToken>`.
+4. `POST /api/auth/refresh`.
+5. Verify the old refresh token cannot be reused after rotation.
+6. `POST /api/auth/logout`.
+
+Pass criteria:
+
+- Invalid credentials return `401`.
+- Invalid bodies return validation errors.
+- Refresh rotation revokes the previous refresh token row.
+
+See [Authentication API](api/authentication-api.md).
+
+## Extension Testing
+
+Install extension dependencies:
+
+```powershell
+cd extension
+npm ci
+```
+
+Run Observability SDK runtime verification:
+
+```powershell
+node tests/observability-runtime-verification.mjs
+```
+
+Expected output includes:
+
+```json
+{
+  "verdict": "PASS"
+}
+```
+
+Pass criteria:
+
+- Exit code is `0`.
+- Final state includes archived session coverage.
+- Queue length matches stored event count in the harness.
+
+## Telemetry Testing
+
+The runtime verification harness covers:
+
+- Collector contract enforcement.
+- Codeforces collector context parsing.
+- CodeChef collector context parsing.
+- Contest detection.
+- Problem opening.
+- Problem switching.
+- Page reload.
+- Tab hidden and visible events.
+- Duplicate contest load suppression.
+- Multiple tabs sharing one contest session.
+- Tab close ownership transfer.
+- Browser restart style recovery.
+- Session archival.
+- UUID event identity.
+- Deduplication by metadata key.
+- Corrupted storage shape recovery.
+
+## Recovery Testing
+
+### Browser Restart
+
+Use the runtime harness:
+
+```powershell
+cd extension
+node tests/observability-runtime-verification.mjs
+```
+
+The harness seeds a new SDK instance with previous storage values and calls `recoverUnfinishedSessions`.
+
+### Storage Recovery
+
+The harness seeds invalid shapes for:
+
+- `observability.sessions`
+- `observability.events`
+- `observability.queue`
+- `observability.tabIndex`
+
+Pass criteria: invalid shapes are reset to safe defaults.
+
+### Duplicate Session Tests
+
+The harness opens the same contest twice and verifies only one session exists.
+
+### Cross-Tab Synchronization
+
+The harness attaches two tab ids to the same contest, closes one, and verifies ownership remains with the surviving tab.
+
+### Offline Mode
+
+Current offline behavior is represented by queued local transport. Events are persisted to the durable local queue without backend upload.
+
+Pass criteria:
+
+- Event queue persists emitted events.
+- Collectors do not perform network calls.
+
+## Chrome Manual Runtime Test
+
+1. Load the extension unpacked from `extension/`.
+2. Open a Codeforces contest URL.
+3. Inspect service worker logs.
+4. Open a problem page in the same contest.
+5. Refresh the page.
+6. Open the same contest in another tab.
+7. Close one tab.
+8. Inspect Chrome storage for observability keys.
+
+Pass criteria:
+
+- A single session exists per contest.
+- Problem events are emitted.
+- Refresh emits reload behavior.
+- Tab close does not create a duplicate session.
+
+## Future Integration Testing
+
+Future work should add:
+
+- Backend service unit tests.
+- API integration tests with a test database.
+- Migration tests in CI.
+- Extension end-to-end tests with Playwright.
+- Telemetry ingestion tests once a backend endpoint exists.
+- Security regression tests for token rotation and extension message validation.
+
+## Related Documentation
+
+- [Observability SDK](architecture/observability-sdk.md)
+- [Telemetry](architecture/telemetry.md)
+- [Operations](OPERATIONS.md)
+- [Security](SECURITY.md)
