@@ -28,6 +28,8 @@ The Domain Event Bus is internal backend infrastructure and does not expose a pu
 
 Redis Event Distribution is internal backend infrastructure and does not expose a public HTTP endpoint. Its contract is documented in [Redis Event Distribution](../architecture/redis-event-distribution.md).
 
+The WebSocket Gateway upgrades authenticated clients at `/realtime` by default. Its protocol is documented in [WebSocket Gateway](../architecture/websocket-gateway.md).
+
 ## Additional Current Endpoints
 
 | Method | URL | Auth | Purpose |

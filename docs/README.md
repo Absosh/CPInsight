@@ -27,6 +27,7 @@ Implemented:
 - Generic backend Domain Event Bus with immutable event contract, middleware, subscriber isolation, retry, audit, persistence, and metrics.
 - Transactional Outbox and relay worker for reliable post-commit domain event publication.
 - Redis Streams event distribution layer for cross-process domain event consumers.
+- Authenticated Redis-backed WebSocket Gateway for realtime event delivery.
 - Codeforces and CodeChef contest-session collector plugins.
 
 Planned:
@@ -70,6 +71,7 @@ flowchart LR
   API --> DomainBus["Domain Event Bus"]
   API --> Outbox["Transactional Outbox"]
   DomainBus --> RedisStreams["Redis Streams"]
+  RedisStreams --> Realtime["WebSocket Gateway"]
   Extension["Chrome extension"] --> API
   Extension --> SDK["Observability SDK"]
   SDK --> Store["chrome.storage.local"]
@@ -101,6 +103,7 @@ Architecture:
 - [Domain Event Bus](architecture/domain-event-bus.md)
 - [Transactional Outbox](architecture/transactional-outbox.md)
 - [Redis Event Distribution](architecture/redis-event-distribution.md)
+- [WebSocket Gateway](architecture/websocket-gateway.md)
 - [RAG Roadmap](architecture/rag-roadmap.md)
 - [Future Roadmap](architecture/future-roadmap.md)
 - [Deployment](architecture/deployment.md)
@@ -127,6 +130,8 @@ Sequences:
 - [Outbox Relay](sequence/outbox-relay.md)
 - [Outbox Replay](sequence/outbox-replay.md)
 - [Redis Event Distribution](sequence/redis-event-distribution.md)
+- [Realtime Event Flow](sequence/realtime-event-flow.md)
+- [Client Reconnect](sequence/client-reconnect.md)
 - [Extension Upload](sequence/extension-upload.md)
 - [Analytics Refresh](sequence/analytics-refresh.md)
 - [Future Live Telemetry](sequence/future-live-telemetry.md)
@@ -149,6 +154,7 @@ Architecture Decision Records:
 - [ADR-0014 Domain Event Bus](decisions/ADR-0014-domain-event-bus.md)
 - [ADR-0015 Transactional Outbox Pattern](decisions/ADR-0015-transactional-outbox.md)
 - [ADR-0016 Redis Event Distribution Layer](decisions/ADR-0016-redis-event-distribution-layer.md)
+- [ADR-0017 Realtime Event Gateway](decisions/ADR-0017-realtime-event-gateway.md)
 
 Existing operational document:
 

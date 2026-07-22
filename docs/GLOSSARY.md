@@ -58,6 +58,14 @@ Redis Streams transport layer for distributing committed domain events to cross-
 
 Redis Streams mechanism that load-balances stream entries across consumers and tracks pending entries for recovery.
 
+## WebSocket Gateway
+
+Authenticated realtime delivery service that consumes Redis Streams and routes serialized messages to subscribed clients. See [WebSocket Gateway](architecture/websocket-gateway.md).
+
+## Channel
+
+Logical realtime subscription target such as `telemetry:{userId}`, `analytics:{userId}`, `contest:{contestId}`, or `system`.
+
 ## Lease
 
 Temporary ownership marker that allows one relay worker to process an outbox row while allowing automatic recovery after expiration.

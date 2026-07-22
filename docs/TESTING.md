@@ -148,6 +148,13 @@ cd backend
 node scripts/verify-redis-event-distribution.js
 ```
 
+Run realtime gateway verification:
+
+```powershell
+cd backend
+node scripts/verify-realtime-gateway.js
+```
+
 Expected output includes:
 
 ```json
@@ -252,6 +259,19 @@ The Redis Event Distribution verification covers:
 - Large backlog publishing.
 - Heartbeat health checks.
 
+The Realtime Gateway verification covers:
+
+- 100+ simultaneous connections.
+- Multi-tab-style fan-out.
+- Unauthorized channel rejection.
+- Reconnect acknowledgement.
+- Redis stream consumption.
+- Redis acknowledgement.
+- Burst event delivery.
+- Slow-client backpressure.
+- Heartbeat cleanup.
+- Graceful shutdown.
+
 ## Recovery Testing
 
 ### Browser Restart
@@ -329,5 +349,6 @@ Future work should add:
 - [Domain Event Bus](architecture/domain-event-bus.md)
 - [Transactional Outbox](architecture/transactional-outbox.md)
 - [Redis Event Distribution](architecture/redis-event-distribution.md)
+- [WebSocket Gateway](architecture/websocket-gateway.md)
 - [Operations](OPERATIONS.md)
 - [Security](SECURITY.md)

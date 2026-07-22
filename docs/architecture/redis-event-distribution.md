@@ -20,7 +20,7 @@ flowchart TB
   end
 
   Streams --> Groups["Consumer Groups"]
-  Groups --> WebSocket["Future WebSocket Gateway"]
+  Groups --> WebSocket["WebSocket Gateway"]
   Groups --> AnalyticsWorker["Future Analytics Worker"]
   Groups --> Notifications["Future Notification Worker"]
   Groups --> Replay["Future Replay Worker"]

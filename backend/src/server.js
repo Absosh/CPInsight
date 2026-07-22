@@ -7,10 +7,15 @@ const { OutboxRetryPolicy } = require('./domain-events/outbox/retryPolicy');
 const { createDomainEventBus } = require('./domain-events/factory');
 const { RedisEventConnectionManager } = require('./redis/events/connectionManager');
 const { RedisEventPublisher } = require('./redis/events/publisher');
+const { RealtimeGateway } = require('./realtime/gateway/realtimeGateway');
+const { RedisGatewayConsumer } = require('./realtime/gateway/redisGatewayConsumer');
 
 async function start() {
   await pool.query('SELECT 1');
   let relay = null;
+  let realtimeGateway = null;
+  let realtimeConsumer = null;
+  let redisEventConnection = null;
 
   // Try to connect to Redis in background (optional)
   if (redis.status !== 'ready') {
@@ -22,7 +27,7 @@ async function start() {
   if (env.outboxRelay.enabled) {
     let eventBus = undefined;
     if (env.redisEvents.enabled) {
-      const redisEventConnection = new RedisEventConnectionManager({ redis, logger: console });
+      redisEventConnection = new RedisEventConnectionManager({ redis, logger: console });
       const redisPublisher = new RedisEventPublisher({
         connectionManager: redisEventConnection,
         maxStreamLength: env.redisEvents.maxStreamLength,
@@ -46,9 +51,32 @@ async function start() {
     console.log(`CPInsight API listening on port ${env.port}`);
   });
 
+  if (env.realtimeGateway.enabled) {
+    redisEventConnection = redisEventConnection || new RedisEventConnectionManager({ redis, logger: console });
+    realtimeGateway = new RealtimeGateway({
+      path: env.realtimeGateway.path,
+      maxQueueSize: env.realtimeGateway.maxQueueSize,
+      idleTimeoutMs: env.realtimeGateway.idleTimeoutMs,
+      logger: console
+    });
+    realtimeGateway.attach(server);
+    realtimeConsumer = new RedisGatewayConsumer({
+      connectionManager: redisEventConnection,
+      gateway: realtimeGateway,
+      group: env.realtimeGateway.group,
+      batchSize: env.realtimeGateway.batchSize,
+      logger: console
+    });
+    realtimeConsumer.start().catch((error) => {
+      console.warn('Realtime Redis consumer failed', { message: error.message });
+    });
+  }
+
   async function shutdown(signal) {
     console.log(`Received ${signal}; shutting down CPInsight API`);
     relay?.stop();
+    await realtimeConsumer?.shutdown?.();
+    await realtimeGateway?.shutdown?.();
     server.close(async () => {
       await Promise.allSettled([
         pool.end(),

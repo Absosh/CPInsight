@@ -23,6 +23,8 @@ The [Transactional Outbox](transactional-outbox.md) is the reliability boundary 
 
 [Redis Event Distribution](redis-event-distribution.md) is the transport boundary for cross-process consumers. The backend publishes to Redis through the Domain Event Bus; consumers use Redis Streams and Consumer Groups.
 
+[WebSocket Gateway](websocket-gateway.md) consumes Redis Streams and delivers authorized realtime messages to authenticated clients.
+
 ## Module Responsibilities
 
 | Layer | Location | Responsibility |

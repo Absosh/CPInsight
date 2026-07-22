@@ -24,7 +24,13 @@ const schema = Joi.object({
   OUTBOX_RELAY_POLL_INTERVAL_MS: Joi.number().integer().min(100).max(60000).default(1000),
   OUTBOX_RELAY_MAX_ATTEMPTS: Joi.number().integer().min(1).max(20).default(5),
   REDIS_EVENT_DISTRIBUTION_ENABLED: Joi.boolean().truthy('true').falsy('false').default(true),
-  REDIS_EVENT_STREAM_MAX_LENGTH: Joi.number().integer().min(1000).max(10000000).default(1000000)
+  REDIS_EVENT_STREAM_MAX_LENGTH: Joi.number().integer().min(1000).max(10000000).default(1000000),
+  REALTIME_GATEWAY_ENABLED: Joi.boolean().truthy('true').falsy('false').default(true),
+  REALTIME_GATEWAY_PATH: Joi.string().default('/realtime'),
+  REALTIME_GATEWAY_GROUP: Joi.string().default('websocket-gateway'),
+  REALTIME_GATEWAY_MAX_QUEUE_SIZE: Joi.number().integer().min(1).max(10000).default(1000),
+  REALTIME_GATEWAY_IDLE_TIMEOUT_MS: Joi.number().integer().min(5000).max(300000).default(60000),
+  REALTIME_GATEWAY_BATCH_SIZE: Joi.number().integer().min(1).max(1000).default(100)
 }).unknown(true);
 
 const { value, error } = schema.validate(process.env, { abortEarly: false });
@@ -66,5 +72,13 @@ module.exports = {
   redisEvents: {
     enabled: value.REDIS_EVENT_DISTRIBUTION_ENABLED,
     maxStreamLength: value.REDIS_EVENT_STREAM_MAX_LENGTH
+  },
+  realtimeGateway: {
+    enabled: value.REALTIME_GATEWAY_ENABLED,
+    path: value.REALTIME_GATEWAY_PATH,
+    group: value.REALTIME_GATEWAY_GROUP,
+    maxQueueSize: value.REALTIME_GATEWAY_MAX_QUEUE_SIZE,
+    idleTimeoutMs: value.REALTIME_GATEWAY_IDLE_TIMEOUT_MS,
+    batchSize: value.REALTIME_GATEWAY_BATCH_SIZE
   }
 };

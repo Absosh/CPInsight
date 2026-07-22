@@ -64,6 +64,12 @@ Optional backend variables:
 | `OUTBOX_RELAY_MAX_ATTEMPTS` | `5` |
 | `REDIS_EVENT_DISTRIBUTION_ENABLED` | `true` |
 | `REDIS_EVENT_STREAM_MAX_LENGTH` | `1000000` |
+| `REALTIME_GATEWAY_ENABLED` | `true` |
+| `REALTIME_GATEWAY_PATH` | `/realtime` |
+| `REALTIME_GATEWAY_GROUP` | `websocket-gateway` |
+| `REALTIME_GATEWAY_MAX_QUEUE_SIZE` | `1000` |
+| `REALTIME_GATEWAY_IDLE_TIMEOUT_MS` | `60000` |
+| `REALTIME_GATEWAY_BATCH_SIZE` | `100` |
 
 ## Local Infrastructure Startup
 
@@ -241,6 +247,16 @@ Redis Streams distribute domain events to workers. If stream lag grows:
 4. Verify Redis connectivity and `REDIS_EVENT_DISTRIBUTION_ENABLED`.
 5. Scale consumers within the affected consumer group.
 
+### WebSocket Gateway Issues
+
+The gateway consumes Redis Streams and serves `/realtime` by default. If clients do not receive messages:
+
+1. Verify the access token used during WebSocket upgrade.
+2. Check Redis stream lag for the `websocket-gateway` consumer group.
+3. Inspect gateway logs for unauthorized channel subscriptions.
+4. Check dropped message and heartbeat failure metrics.
+5. Confirm the load balancer supports WebSocket upgrades.
+
 ### Extension Session Corruption
 
 The Observability SDK validates local storage shapes and resets corrupted observability keys to safe defaults. If local extension behavior remains inconsistent, remove extension storage from Chrome and reload the unpacked extension.
@@ -255,6 +271,7 @@ The Observability SDK validates local storage shapes and resets corrupted observ
 | Analytics returns outdated data | Redis/PostgreSQL analytics cache | Trigger platform sync or clear user analytics cache through service logic. |
 | Domain events are not reaching subscribers | Outbox relay disabled, stuck lease, or repeated subscriber failure | Inspect `domain_event_outbox`, `domain_event_subscriber_failures`, and relay environment variables. |
 | Redis consumers stop progressing | Consumer crash, pending entries, or poison message | Check Redis pending entries, dead-letter streams, and worker logs. |
+| WebSocket clients disconnect under load | Slow client or full outbound queue | Inspect dropped message metrics and increase `REALTIME_GATEWAY_MAX_QUEUE_SIZE` only after checking client behavior. |
 | Extension collector does not run | Host permission or content script match issue | Check `extension/manifest.json` and service worker console. |
 | Duplicate contest tabs behave unexpectedly | Local extension state issue | Inspect `observability.sessions` and `observability.tabIndex` in Chrome storage. |
 
@@ -279,4 +296,5 @@ The Observability SDK validates local storage shapes and resets corrupted observ
 - [Security](SECURITY.md)
 - [Transactional Outbox](architecture/transactional-outbox.md)
 - [Redis Event Distribution](architecture/redis-event-distribution.md)
+- [WebSocket Gateway](architecture/websocket-gateway.md)
 - [API Reference](api/README.md)

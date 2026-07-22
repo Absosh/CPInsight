@@ -129,6 +129,8 @@ Domain events persisted in the transactional outbox must follow the same data mi
 
 Redis event payloads carry the same immutable domain event contract. Consumers must treat `eventId` as the idempotency key and must not enrich Redis stream entries with secrets, access tokens, refresh tokens, cookies, clipboard data, or sensitive DOM content.
 
+WebSocket clients authenticate with JWT access tokens during upgrade. The gateway never trusts client-supplied identity and authorizes every channel subscription before routing events.
+
 ## Dependency Security
 
 Run backend production audit:
