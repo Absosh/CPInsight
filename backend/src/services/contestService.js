@@ -1,13 +1,9 @@
-console.log("=== INSIDE CONTEST SERVICE: FILE IS LOADING ===");
 const axios = require("axios");
 const { getJson, setJson } = require("../redis/client");
 
 const CACHE_KEY = "calendar:contests:v2";
-const CACHE_TTL = 60 * 15; // 15 minutes
-
-// -----------------------------
-// GraphQL Query
-// -----------------------------
+const CACHE_TTL = 60 * 15;
+const UPSTREAM_TIMEOUT_MS = 6000;
 
 const LEETCODE_CONTEST_QUERY = `
 query {
@@ -20,21 +16,27 @@ query {
 }
 `;
 
-// -----------------------------
-// Helpers
-// -----------------------------
-
 function sortByTime(events) {
   return events.sort((a, b) => a.startTimeSeconds - b.startTimeSeconds);
 }
 
-// -----------------------------
-// Codeforces
-// -----------------------------
+async function withTimeout(label, work, timeoutMs = UPSTREAM_TIMEOUT_MS) {
+  let timer = null;
+  try {
+    return await Promise.race([
+      work(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} contest source timed out`)), timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 async function getCodeforcesContests() {
   const { data } = await axios.get("https://codeforces.com/api/contest.list", {
-    timeout: 10000
+    timeout: UPSTREAM_TIMEOUT_MS
   });
 
   if (data.status !== "OK") {
@@ -42,58 +44,46 @@ async function getCodeforcesContests() {
   }
 
   return data.result
-    .filter(c => !c.name.toLowerCase().includes("stream"))
-    .map(c => ({
-      id: `cf-${c.id}`,
+    .filter((contest) => !contest.name.toLowerCase().includes("stream"))
+    .map((contest) => ({
+      id: `cf-${contest.id}`,
       platform: "codeforces",
-      title: c.name,
-      startTimeSeconds: c.startTimeSeconds,
-      durationSeconds: c.durationSeconds,
-      phase: c.phase,
-      url: `https://codeforces.com/contest/${c.id}`
+      title: contest.name,
+      startTimeSeconds: contest.startTimeSeconds,
+      durationSeconds: contest.durationSeconds,
+      phase: contest.phase,
+      url: `https://codeforces.com/contest/${contest.id}`
     }));
 }
-
-// -----------------------------
-// LeetCode
-// -----------------------------
 
 async function getLeetCodeContests() {
   const { data } = await axios.post(
     "https://leetcode.com/graphql",
+    { query: LEETCODE_CONTEST_QUERY },
     {
-      query: LEETCODE_CONTEST_QUERY
-    },
-    {
-      timeout: 10000,
-      headers: {
-        "content-type": "application/json"
-      }
+      timeout: UPSTREAM_TIMEOUT_MS,
+      headers: { "content-type": "application/json" }
     }
   );
 
   const contests = data?.data?.allContests || [];
 
-  return contests.map(c => ({
-    id: `lc-${c.titleSlug}`,
+  return contests.map((contest) => ({
+    id: `lc-${contest.titleSlug}`,
     platform: "leetcode",
-    title: c.title,
-    startTimeSeconds: Number(c.startTime),
-    durationSeconds: Number(c.duration),
-    phase: Number(c.startTime) * 1000 > Date.now() ? "BEFORE" : "FINISHED",
-    url: `https://leetcode.com/contest/${c.titleSlug}/`
+    title: contest.title,
+    startTimeSeconds: Number(contest.startTime),
+    durationSeconds: Number(contest.duration),
+    phase: Number(contest.startTime) * 1000 > Date.now() ? "BEFORE" : "FINISHED",
+    url: `https://leetcode.com/contest/${contest.titleSlug}/`
   }));
 }
-
-// -----------------------------
-// CodeChef
-// -----------------------------
 
 async function getCodeChefContests() {
   const { data } = await axios.get(
     "https://www.codechef.com/api/list/contests/all?sort_by=START&sorting_order=asc&offset=0&mode=all",
     {
-      timeout: 10000,
+      timeout: UPSTREAM_TIMEOUT_MS,
       headers: {
         accept: "application/json",
         "user-agent": "Mozilla/5.0 CPInsight Calendar"
@@ -105,58 +95,48 @@ async function getCodeChefContests() {
     throw new Error("Failed to fetch CodeChef contests.");
   }
 
-  const { present_contests, future_contests, past_contests } = data;
+  const formatContest = (contest, phase) => ({
+    id: `cc-${contest.contest_code}`,
+    platform: "codechef",
+    title: contest.contest_name,
+    startTimeSeconds: Math.floor(new Date(contest.contest_start_date_iso).getTime() / 1000),
+    durationSeconds: Number.parseInt(contest.contest_duration, 10) * 60,
+    phase,
+    url: `https://www.codechef.com/${contest.contest_code}`
+  });
 
-  const formatContest = (contest, phase) => {
-    return {
-      id: `cc-${contest.contest_code}`,
-      platform: "codechef",
-      title: contest.contest_name,
-      startTimeSeconds: Math.floor(new Date(contest.contest_start_date_iso).getTime() / 1000),
-      durationSeconds: Number.parseInt(contest.contest_duration, 10) * 60,
-      phase: phase,
-      url: `https://www.codechef.com/${contest.contest_code}`
-    };
-  };
-
-  const active = (present_contests || []).map(c => formatContest(c, "CODING"));
-  const upcoming = (future_contests || []).map(c => formatContest(c, "BEFORE"));
-  const past = (past_contests || []).map(c => formatContest(c, "FINISHED"));
-
-  return [...active, ...upcoming, ...past];
+  return [
+    ...(data.present_contests || []).map((contest) => formatContest(contest, "CODING")),
+    ...(data.future_contests || []).map((contest) => formatContest(contest, "BEFORE")),
+    ...(data.past_contests || []).map((contest) => formatContest(contest, "FINISHED"))
+  ];
 }
 
-// -----------------------------
-// Combined Calendar
-// -----------------------------
-
 async function getCombinedContestCalendar() {
-  const cached = await getJson(CACHE_KEY);
+  const cached = await getJson(CACHE_KEY).catch(() => null);
 
   if (cached) {
     return cached;
   }
 
   const settled = await Promise.allSettled([
-    getCodeforcesContests(),
-    getLeetCodeContests(),
-    getCodeChefContests()
+    withTimeout("Codeforces", getCodeforcesContests),
+    withTimeout("LeetCode", getLeetCodeContests),
+    withTimeout("CodeChef", getCodeChefContests)
   ]);
 
   let contests = [];
 
-  settled.forEach(result => {
+  settled.forEach((result) => {
     if (result.status === "fulfilled") {
       contests.push(...result.value);
     } else {
-      console.error("[ContestService]", result.reason.message);
+      console.warn("[ContestService]", result.reason.message);
     }
   });
 
   contests = sortByTime(contests);
-
-  await setJson(CACHE_KEY, contests, CACHE_TTL);
-
+  await setJson(CACHE_KEY, contests, CACHE_TTL).catch(() => {});
   return contests;
 }
 

@@ -1,5 +1,15 @@
 // Authentication Manager
-const AUTH_API = 'http://localhost:4000/api/auth';
+function resolveCpInsightApiBase() {
+  const configured = window.CPINSIGHT_API_BASE || localStorage.getItem('cpinsight:apiBaseUrl');
+  if (configured) return configured.replace(/\/$/, '');
+  if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+    return `${window.location.origin}/api`;
+  }
+  return 'http://localhost:4000/api';
+}
+
+const API_BASE = resolveCpInsightApiBase();
+const AUTH_API = `${API_BASE}/auth`;
 
 class AuthManager {
   static getAccessToken() {
@@ -82,7 +92,7 @@ class AuthManager {
     if (cached) return JSON.parse(cached);
 
     try {
-      const response = await this.fetchWithAuth('http://localhost:4000/api/user/profile');
+      const response = await this.fetchWithAuth(`${API_BASE}/user/profile`);
       if (!response || !response.ok) return null;
 
       const data = await response.json();
@@ -95,7 +105,7 @@ class AuthManager {
 
   static async connectPlatform(platform, handle) {
     try {
-      const response = await this.fetchWithAuth('http://localhost:4000/api/platforms/connect', {
+      const response = await this.fetchWithAuth(`${API_BASE}/platforms/connect`, {
         method: 'POST',
         body: JSON.stringify({ platform, handle })
       });
@@ -113,7 +123,7 @@ class AuthManager {
 
   static async getAnalytics(platform) {
     try {
-      const response = await this.fetchWithAuth(`http://localhost:4000/api/analytics/${platform}`);
+      const response = await this.fetchWithAuth(`${API_BASE}/analytics/${platform}`);
       if (!response || !response.ok) return null;
       return await response.json();
     } catch (err) {
@@ -123,7 +133,7 @@ class AuthManager {
 
   static async getCombinedAnalytics() {
     try {
-      const response = await this.fetchWithAuth('http://localhost:4000/api/analytics/combined');
+      const response = await this.fetchWithAuth(`${API_BASE}/analytics/combined`);
       if (!response || !response.ok) return null;
       return await response.json();
     } catch (err) {
@@ -133,7 +143,7 @@ class AuthManager {
 
   static async getPlatformAccounts() {
     try {
-      const response = await this.fetchWithAuth('http://localhost:4000/api/platforms/accounts');
+      const response = await this.fetchWithAuth(`${API_BASE}/platforms/accounts`);
       if (!response || !response.ok) return [];
       return await response.json();
     } catch (err) {

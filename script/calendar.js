@@ -57,8 +57,12 @@ async function loadCalendar() {
         document.getElementById('calendarGrid').classList.add('hidden');
         
         try {
-            const res = await fetch('http://localhost:4000/api/calendar/contests');
-            const data = await res.json();
+            const data = window.httpClient
+                ? await httpClient.get('/calendar/contests')
+                : await fetch('/api/calendar/contests').then((res) => {
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return res.json();
+                });
             calendarEvents = data;
         } catch (e) {
             console.error("Failed to fetch contests:", e);

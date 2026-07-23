@@ -23,7 +23,8 @@ class AnalyticsService {
       streak: data.streak || 0,
       recentSubmissions: data.recentSubmissions || [],
       cpInsightScore: data.cpInsightScore ?? null,
-      platforms: data.platforms || []
+      platforms: data.platforms || [],
+      skippedPlatforms: data.skippedPlatforms || []
     };
   }
 
@@ -33,7 +34,7 @@ class AnalyticsService {
       return this.normalizeAnalytics(data);
     } catch (err) {
       console.error('Failed to fetch combined analytics:', err);
-      return null;
+      throw err;
     }
   }
 
@@ -47,7 +48,7 @@ class AnalyticsService {
       return this.normalizeAnalytics(data);
     } catch (err) {
       console.error(`Failed to fetch ${platform} analytics:`, err);
-      return null;
+      throw err;
     }
   }
 

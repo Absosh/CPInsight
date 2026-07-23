@@ -10,9 +10,11 @@ const { RedisEventPublisher } = require('./redis/events/publisher');
 const { RealtimeGateway } = require('./realtime/gateway/realtimeGateway');
 const { RedisGatewayConsumer } = require('./realtime/gateway/redisGatewayConsumer');
 const { ContestReviewWorker } = require('./review-worker/contestReviewWorker');
+const migrate = require('./database/migrate');
 
 async function start() {
   await pool.query('SELECT 1');
+  await migrate();
   let relay = null;
   let realtimeGateway = null;
   let realtimeConsumer = null;

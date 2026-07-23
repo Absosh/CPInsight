@@ -7,6 +7,11 @@ const HttpError = require('../utils/httpError');
 const PLATFORM_TTL_MINUTES = 30;
 const COMBINED_TTL_MINUTES = 15;
 const ANALYTICS_PAYLOAD_VERSION = 2;
+const SKIPPABLE_COMBINED_ANALYTICS_CODES = new Set([
+  'SYNC_FAILED',
+  'PLATFORM_UNAVAILABLE',
+  'INVALID_HANDLE'
+]);
 
 function acceptedVerdict(platform) {
   if (platform === 'leetcode') return 'AC';
@@ -240,6 +245,12 @@ function platformAnalytics(platform, facts) {
   };
 }
 
+function isSkippableCombinedAnalyticsError(error) {
+  return error.status === 404
+    || error.status === 409
+    || SKIPPABLE_COMBINED_ANALYTICS_CODES.has(error.code);
+}
+
 function cpInsightScore({ solvedProblems, contestCount, streak, topicStrength, ratingProgression }) {
   const latestRating = ratingProgression.length ? ratingProgression[ratingProgression.length - 1].rating || 0 : 0;
   const ratingPercentileScore = Math.min(100, Math.round((latestRating / 2400) * 100));
@@ -341,11 +352,18 @@ async function getCombinedAnalytics(userId, windowKey = 'all') {
 
   const platforms = ['codeforces', 'codechef', 'leetcode'];
   const results = [];
+  const skippedPlatforms = [];
   for (const platform of platforms) {
     try {
       results.push(await getPlatformAnalytics(userId, platform, windowKey));
     } catch (error) {
-      if (error.status !== 404) throw error;
+      if (!isSkippableCombinedAnalyticsError(error)) throw error;
+      skippedPlatforms.push({
+        platform,
+        status: error.status || 500,
+        code: error.code || 'ANALYTICS_UNAVAILABLE',
+        message: error.message
+      });
     }
   }
 
@@ -394,7 +412,8 @@ async function getCombinedAnalytics(userId, windowKey = 'all') {
     recentSubmissions,
     cpInsightScore: cpInsightScore({ solvedProblems, contestCount, streak, topicStrength, ratingProgression }),
     analyticsVersion: ANALYTICS_PAYLOAD_VERSION,
-    platforms: results
+    platforms: results,
+    skippedPlatforms
   };
 
   if (canUseCombinedCache) {

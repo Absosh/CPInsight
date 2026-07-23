@@ -18,12 +18,12 @@ async function claimNextJobs({ workerId, limit, leaseMs, retryLimit }, db = pool
        FOR UPDATE SKIP LOCKED
      )
      UPDATE contest_review_jobs job
-     SET status = $4,
+     SET status = $4::varchar,
          lease_owner = $5,
          lease_expires_at = $6,
          claimed_at = COALESCE(claimed_at, NOW()),
          max_retries = GREATEST(max_retries, $7),
-         last_stage = $4,
+         last_stage = $4::text,
          progress_percent = 5,
          updated_at = NOW()
      FROM candidates
@@ -69,8 +69,8 @@ async function recoverExpiredLeases(db = pool) {
 async function markStage(job, { stage, progressPercent, metadata = {}, message = null }, db = pool) {
   const result = await db.query(
     `UPDATE contest_review_jobs
-     SET status = $2,
-         last_stage = $2,
+     SET status = $2::varchar,
+         last_stage = $2::text,
          progress_percent = $3,
          started_at = CASE WHEN $2 = 'running' THEN COALESCE(started_at, NOW()) ELSE started_at END,
          stage_timings = stage_timings || $4::jsonb,

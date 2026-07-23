@@ -1,8 +1,17 @@
 // HTTP Client with JWT interceptor
 class HttpClient {
   constructor() {
-    this.baseURL = 'http://localhost:4000/api';
+    this.baseURL = this.resolveBaseURL();
     this.timeout = 10000;
+  }
+
+  resolveBaseURL() {
+    const configured = window.CPINSIGHT_API_BASE || localStorage.getItem('cpinsight:apiBaseUrl');
+    if (configured) return configured.replace(/\/$/, '');
+    if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+      return `${window.location.origin}/api`;
+    }
+    return 'http://localhost:4000/api';
   }
 
   async request(endpoint, options = {}) {

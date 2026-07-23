@@ -5,6 +5,9 @@ services:
       - "4000:4000"
     env_file:
       - .env
+    environment:
+      DATABASE_URL: postgres://cpinsight:cpinsight@postgres:5432/cpinsight
+      REDIS_URL: redis://redis:6379
     depends_on:
       - postgres
       - redis
@@ -21,8 +24,6 @@ services:
   redis:
     image: redis:7-alpine
     command: ["redis-server", "--appendonly", "yes"]
-    ports:
-      - "6379:6379"
     volumes:
       - redis-data:/data
 volumes:
