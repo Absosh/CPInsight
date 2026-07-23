@@ -5,6 +5,9 @@
   "description": "CPInsight frontend and AI design system workspace.",
   "scripts": {
     "verify:ai-design-system": "node scripts/verify-ai-design-system.js",
+    "verify:ai-coach-workspace": "node scripts/verify-ai-coach-workspace.js",
+    "dev:ai-coach": "vite --host 0.0.0.0",
+    "build:frontend": "vite build",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

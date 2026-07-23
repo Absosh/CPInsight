@@ -22,4 +22,10 @@ npm run build-storybook
 - dark, light, and high-contrast themes through the Storybook toolbar;
 - layout patterns.
 
+`src/features/ai-coach/stories/AiCoachWorkspace.stories.jsx` includes stories for:
+
+- default three-panel workspace;
+- reflection timeline view;
+- study plan view.
+
 The a11y addon is configured for interactive accessibility checks. Visual regression should be added in CI after the frontend build pipeline is formalized.

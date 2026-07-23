@@ -50,6 +50,8 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Runtime verification harness for malformed responses, grounding failures, citation failures, recommendation failures, confidence clamping, reflection creation, human feedback, regeneration requests, deterministic validation, and 1000 raw responses.
 - AI Design System with semantic tokens, dark/light/high-contrast themes, core AI components, composite components, layout primitives, animation classes, Storybook configuration, and accessibility guidance.
 - Static AI Design System verification harness for token coverage, presentational boundaries, reduced motion, focus styling, and Storybook coverage.
+- AI Coach Workspace with three-panel layout, session state, conversation composer, structured response rendering, evidence exploration, reasoning panels, recommendation actions, reflection timeline, roadmap view, contextual insights, keyboard shortcuts, and API adapter.
+- Static AI Coach Workspace verification harness for session lifecycle, API wiring, design-system integration, interaction affordances, responsive layout, and frontend/backend boundary checks.
 - User authentication with registration, login, refresh-token rotation, and logout.
 - JWT access token and refresh token infrastructure.
 - PostgreSQL schema for users, profiles, platform accounts, contests, submissions, analytics cache, refresh tokens, and LeetCode extension uploads.
@@ -67,7 +69,7 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Durable local telemetry queue for Observability SDK events.
 - Runtime verification harness for observability session lifecycle behavior.
 - Architecture documentation suite under `docs/`.
-- Architecture Decision Records ADR-0001 through ADR-0026.
+- Architecture Decision Records ADR-0001 through ADR-0027.
 - Operations, testing, security, contributing, changelog, and glossary documentation.
 
 ### Security

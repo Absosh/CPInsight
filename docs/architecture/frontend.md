@@ -40,9 +40,17 @@ src/components/ai/
   timeline/
   feedback/
   layout/
+src/features/ai-coach/
+  api/
+  components/
+  hooks/
+  state/
+  styles/
 ```
 
 The React AI Design System is isolated under `src/components/ai`. It is available for future AI surfaces without requiring existing static pages to migrate immediately. See [AI Design System](../frontend/ai-design-system.md).
+
+The AI Coach Workspace is isolated under `src/features/ai-coach`. It consumes existing backend AI APIs and uses the AI Design System throughout. See [AI Coach Workspace](../frontend/ai-coach-workspace.md).
 
 ## Component Model
 
@@ -69,4 +77,4 @@ Frontend services call backend endpoints documented in [API Reference](../api/RE
 
 ## Future Direction
 
-If the broader frontend is migrated to a component framework, the architectural boundary should remain the same: UI components call service modules, service modules call the backend, and domain persistence remains server-side. The AI Design System already follows this boundary: it is presentational and does not call backend APIs.
+If the broader frontend is migrated to a component framework, the architectural boundary should remain the same: UI components call service modules, service modules call the backend, and domain persistence remains server-side. The AI Design System already follows this boundary: it is presentational and does not call backend APIs. The AI Coach Workspace follows the application-side boundary: it calls backend APIs through an adapter but does not implement AI reasoning, retrieval, or validation locally.

@@ -133,6 +133,15 @@ curl http://localhost:4000/ready
 
 ## Frontend Startup
 
+For the React AI Coach Workspace:
+
+```powershell
+npm install
+npm run dev:ai-coach
+```
+
+The production frontend image runs `npm run build:frontend` and serves the Vite output together with the existing static pages.
+
 The frontend is static HTML, CSS, and browser JavaScript. Production-style Docker startup:
 
 ```powershell

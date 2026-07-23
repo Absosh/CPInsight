@@ -217,6 +217,18 @@ Run AI design system verification:
 npm run verify:ai-design-system
 ```
 
+Run AI Coach Workspace verification:
+
+```powershell
+npm run verify:ai-coach-workspace
+```
+
+Build the React/Vite frontend bundle:
+
+```powershell
+npm run build:frontend
+```
+
 Expected output includes:
 
 ```json
@@ -447,6 +459,18 @@ The AI Design System verification covers:
 - Storybook story exports.
 - Presentational boundary checks for no API calls, storage reads, or backend coupling.
 
+The AI Coach Workspace verification covers:
+
+- Required workspace files.
+- AI Design System integration.
+- Session lifecycle reducer actions.
+- Existing backend AI endpoint wiring.
+- Copy, export, regenerate, and recommendation action affordances.
+- Keyboard and ARIA accessibility patterns.
+- Responsive three-panel layout rules.
+- Vite/Docker frontend build wiring.
+- No duplicated backend AI reasoning, grounding, or validation logic.
+
 ## Recovery Testing
 
 ### Browser Restart
@@ -553,5 +577,9 @@ Future work should add:
 - [AI Design Tokens](frontend/design-tokens.md)
 - [AI Component Library](frontend/component-library.md)
 - [AI Accessibility](frontend/accessibility.md)
+- [AI Coach Workspace](frontend/ai-coach-workspace.md)
+- [AI Coach Session Lifecycle](frontend/session-lifecycle.md)
+- [AI Coach Workspace Layout](frontend/workspace-layout.md)
+- [AI Coach Interaction Patterns](frontend/interaction-patterns.md)
 - [Operations](OPERATIONS.md)
 - [Security](SECURITY.md)

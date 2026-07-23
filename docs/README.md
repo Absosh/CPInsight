@@ -37,6 +37,7 @@ Implemented:
 - LLM Runtime Engine for provider-agnostic model invocation, streaming, retries, failover, and token/cost accounting.
 - AI Quality Layer for response normalization, schema validation, grounding, citation checks, recommendation support, quality scoring, reflection memory, and human feedback.
 - AI Design System for reusable evidence-first React components, semantic tokens, themes, accessibility patterns, and Storybook review.
+- AI Coach Workspace for the flagship three-panel evidence-first coaching experience.
 - Codeforces and CodeChef contest-session collector plugins.
 
 Planned:
@@ -91,6 +92,7 @@ flowchart LR
   TaskPlan --> Runtime["LLM Runtime"]
   Runtime --> Quality["AI Quality Layer"]
   Quality --> DesignSystem["AI Design System"]
+  DesignSystem --> CoachWorkspace["AI Coach Workspace"]
   Extension["Chrome extension"] --> API
   Extension --> SDK["Observability SDK"]
   SDK --> Store["chrome.storage.local"]
@@ -154,6 +156,10 @@ Architecture:
 - [AI Animation System](frontend/animation-system.md)
 - [AI Accessibility](frontend/accessibility.md)
 - [Storybook](frontend/storybook.md)
+- [AI Coach Workspace](frontend/ai-coach-workspace.md)
+- [AI Coach Session Lifecycle](frontend/session-lifecycle.md)
+- [AI Coach Workspace Layout](frontend/workspace-layout.md)
+- [AI Coach Interaction Patterns](frontend/interaction-patterns.md)
 - [RAG Roadmap](architecture/rag-roadmap.md)
 - [Future Roadmap](architecture/future-roadmap.md)
 - [Deployment](architecture/deployment.md)
@@ -231,6 +237,7 @@ Architecture Decision Records:
 - [ADR-0024 LLM Runtime Engine](decisions/ADR-0024-llm-runtime-engine.md)
 - [ADR-0025 Response Validation and Grounding Layer](decisions/ADR-0025-response-validation.md)
 - [ADR-0026 AI Design System](decisions/ADR-0026-ai-design-system.md)
+- [ADR-0027 AI Coach Workspace](decisions/ADR-0027-ai-coach-workspace.md)
 
 Existing operational document:
 
