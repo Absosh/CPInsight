@@ -30,7 +30,15 @@ const schema = Joi.object({
   REALTIME_GATEWAY_GROUP: Joi.string().default('websocket-gateway'),
   REALTIME_GATEWAY_MAX_QUEUE_SIZE: Joi.number().integer().min(1).max(10000).default(1000),
   REALTIME_GATEWAY_IDLE_TIMEOUT_MS: Joi.number().integer().min(5000).max(300000).default(60000),
-  REALTIME_GATEWAY_BATCH_SIZE: Joi.number().integer().min(1).max(1000).default(100)
+  REALTIME_GATEWAY_BATCH_SIZE: Joi.number().integer().min(1).max(1000).default(100),
+  REVIEW_WORKER_ENABLED: Joi.boolean().truthy('true').falsy('false').default(true),
+  REVIEW_WORKER_CONCURRENCY: Joi.number().integer().min(1).max(16).default(2),
+  REVIEW_WORKER_POLL_INTERVAL_MS: Joi.number().integer().min(250).max(60000).default(2000),
+  REVIEW_WORKER_RETRY_LIMIT: Joi.number().integer().min(1).max(20).default(3),
+  REVIEW_WORKER_BATCH_SIZE: Joi.number().integer().min(1).max(100).default(5),
+  REVIEW_WORKER_LEASE_MS: Joi.number().integer().min(5000).max(900000).default(120000),
+  REVIEW_WORKER_PROVIDER_TIMEOUT_MS: Joi.number().integer().min(1000).max(600000).default(120000),
+  REVIEW_WORKER_QUEUE_CLEANUP_DAYS: Joi.number().integer().min(1).max(365).default(30)
 }).unknown(true);
 
 const { value, error } = schema.validate(process.env, { abortEarly: false });
@@ -80,5 +88,15 @@ module.exports = {
     maxQueueSize: value.REALTIME_GATEWAY_MAX_QUEUE_SIZE,
     idleTimeoutMs: value.REALTIME_GATEWAY_IDLE_TIMEOUT_MS,
     batchSize: value.REALTIME_GATEWAY_BATCH_SIZE
+  },
+  reviewWorker: {
+    enabled: value.REVIEW_WORKER_ENABLED,
+    concurrency: value.REVIEW_WORKER_CONCURRENCY,
+    pollIntervalMs: value.REVIEW_WORKER_POLL_INTERVAL_MS,
+    retryLimit: value.REVIEW_WORKER_RETRY_LIMIT,
+    batchSize: value.REVIEW_WORKER_BATCH_SIZE,
+    leaseMs: value.REVIEW_WORKER_LEASE_MS,
+    providerTimeoutMs: value.REVIEW_WORKER_PROVIDER_TIMEOUT_MS,
+    queueCleanupDays: value.REVIEW_WORKER_QUEUE_CLEANUP_DAYS
   }
 };

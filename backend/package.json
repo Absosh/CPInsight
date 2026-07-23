@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "worker:reviews": "node src/workers/reviewWorkerProcess.js",
     "migrate": "node src/database/migrate.js",
     "test": "node scripts/check-syntax.js",
     "audit:prod": "npm audit --omit=dev",

@@ -44,6 +44,10 @@ stateDiagram-v2
 - Redis distribution;
 - WebSocket gateway routing.
 
+## Review Automation
+
+`POST /api/telemetry/session/stop` changes the live session to `processing_review` and creates or reuses one `contest_review_jobs` record for the live session. The [Contest Review Worker](review-worker.md) processes that job asynchronously and marks the live session `completed` after the final review is persisted.
+
 ## Persistence
 
 Migration `017_live_contest_monitoring.sql` adds:
@@ -53,3 +57,5 @@ Migration `017_live_contest_monitoring.sql` adds:
 - `telemetry_live_event_receipts`
 - `contest_monitoring_metrics`
 - `contest_review_jobs`
+
+Migration `018_contest_review_worker.sql` extends review job persistence and adds review output, roadmap update, execution log, metric, and dead-letter tables.

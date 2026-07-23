@@ -39,6 +39,7 @@ Implemented:
 - AI Design System for reusable evidence-first React components, semantic tokens, themes, accessibility patterns, and Storybook review.
 - AI Coach Workspace for the flagship three-panel evidence-first coaching experience.
 - Live Contest Monitoring for Codeforces contest telemetry, backend live sessions, realtime dashboard updates, and contest review job creation.
+- Contest Review Worker automation for asynchronous review generation, retry, dead-letter handling, roadmap updates, and realtime review-ready notifications.
 - Codeforces and CodeChef contest-session collector plugins.
 
 Planned:
@@ -167,6 +168,10 @@ Architecture:
 - [Extension Live Monitoring](extension/live-monitoring.md)
 - [Live Telemetry Session API](backend/telemetry-session.md)
 - [Submission Diff Engine](backend/submission-diff-engine.md)
+- [Contest Review Worker](backend/review-worker.md)
+- [Contest Review Job Processing](backend/job-processing.md)
+- [Contest Review Queue](backend/review-queue.md)
+- [Contest Review Dead Letter Queue](backend/dead-letter-queue.md)
 - [Live Contest Dashboard](frontend/live-dashboard.md)
 - [RAG Roadmap](architecture/rag-roadmap.md)
 - [Future Roadmap](architecture/future-roadmap.md)
@@ -247,6 +252,7 @@ Architecture Decision Records:
 - [ADR-0026 AI Design System](decisions/ADR-0026-ai-design-system.md)
 - [ADR-0027 AI Coach Workspace](decisions/ADR-0027-ai-coach-workspace.md)
 - [ADR-0028 Live Contest Monitoring](decisions/ADR-0028-live-monitoring.md)
+- [ADR-0029 Contest Review Worker](decisions/ADR-0029-review-worker.md)
 
 Existing operational document:
 

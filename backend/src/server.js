@@ -9,6 +9,7 @@ const { RedisEventConnectionManager } = require('./redis/events/connectionManage
 const { RedisEventPublisher } = require('./redis/events/publisher');
 const { RealtimeGateway } = require('./realtime/gateway/realtimeGateway');
 const { RedisGatewayConsumer } = require('./realtime/gateway/redisGatewayConsumer');
+const { ContestReviewWorker } = require('./review-worker/contestReviewWorker');
 
 async function start() {
   await pool.query('SELECT 1');
@@ -16,6 +17,7 @@ async function start() {
   let realtimeGateway = null;
   let realtimeConsumer = null;
   let redisEventConnection = null;
+  let reviewWorker = null;
 
   // Try to connect to Redis in background (optional)
   if (redis.status !== 'ready') {
@@ -72,9 +74,15 @@ async function start() {
     });
   }
 
+  if (env.reviewWorker.enabled) {
+    reviewWorker = new ContestReviewWorker({ logger: console });
+    reviewWorker.start();
+  }
+
   async function shutdown(signal) {
     console.log(`Received ${signal}; shutting down CPInsight API`);
     relay?.stop();
+    await reviewWorker?.stop?.();
     await realtimeConsumer?.shutdown?.();
     await realtimeGateway?.shutdown?.();
     server.close(async () => {

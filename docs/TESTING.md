@@ -229,6 +229,12 @@ Run live monitoring verification:
 npm run verify:live-monitoring
 ```
 
+Run contest review worker verification:
+
+```powershell
+npm run verify:review-worker
+```
+
 Build the React/Vite frontend bundle:
 
 ```powershell
@@ -248,6 +254,8 @@ Pass criteria:
 - Exit code is `0`.
 - Final state includes archived session coverage.
 - Queue length matches stored event count in the harness.
+
+The contest review worker verifier additionally checks atomic database claiming, retry and dead-letter support, progress event names, route mounting, worker startup scripts, and idempotent review job enqueueing.
 
 ## Telemetry Testing
 
@@ -600,6 +608,8 @@ Future work should add:
 - [AI Coach Interaction Patterns](frontend/interaction-patterns.md)
 - [Extension Live Monitoring](extension/live-monitoring.md)
 - [Live Telemetry Session API](backend/telemetry-session.md)
+- [Contest Review Worker](backend/review-worker.md)
+- [Contest Review Queue](backend/review-queue.md)
 - [Live Contest Dashboard](frontend/live-dashboard.md)
 - [Operations](OPERATIONS.md)
 - [Security](SECURITY.md)

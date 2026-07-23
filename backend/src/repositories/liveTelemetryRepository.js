@@ -121,6 +121,9 @@ async function queueReviewJob(record, db = pool) {
     `INSERT INTO contest_review_jobs
        (live_session_id, user_id, status, metadata)
      VALUES ($1, $2, 'queued', $3)
+     ON CONFLICT (live_session_id) DO UPDATE
+       SET metadata = contest_review_jobs.metadata || EXCLUDED.metadata,
+           updated_at = NOW()
      RETURNING *`,
     [record.liveSessionId, record.userId, JSON.stringify(record.metadata || {})]
   );

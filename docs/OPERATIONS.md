@@ -118,6 +118,15 @@ cd backend
 npm start
 ```
 
+Contest review worker:
+
+```powershell
+cd backend
+npm run worker:reviews
+```
+
+The worker may also run embedded in the API process when `REVIEW_WORKER_ENABLED=true`. Production deployments should run at least one dedicated worker process so review generation capacity can scale independently from HTTP request capacity. See [Contest Review Worker](backend/review-worker.md).
+
 Docker Compose:
 
 ```powershell

@@ -138,3 +138,14 @@ Idempotency:
 - Duplicate event ids already stored for the same user are acknowledged without inserting duplicate rows.
 - Event ids already owned by another user are rejected with `409`.
 - Batch ids are unique per user in `telemetry_batches`.
+
+## Implemented: Contest Review Status
+
+Contest review jobs are created by live telemetry session stop requests and processed asynchronously by the [Contest Review Worker](../backend/review-worker.md).
+
+| Method | URL | Authentication | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/reviews/jobs/:id` | Bearer token | Inspect one review job |
+| `GET` | `/api/reviews/jobs` | Bearer token | List authenticated user review jobs |
+| `GET` | `/api/reviews/latest` | Bearer token | Fetch the latest completed review |
+| `GET` | `/api/reviews/status/:contestId` | Bearer token | Fetch review status for a contest |

@@ -23,6 +23,7 @@ Migrations are SQL files in `backend/src/database/migrations`. They are executed
 | `015_llm_runtime_engine.sql` | Adds LLM providers, models, requests, usage, provider metrics, and runtime metrics |
 | `016_ai_quality_layer.sql` | Adds validated responses, quality reports, reflection memory, feedback, and validation metrics |
 | `017_live_contest_monitoring.sql` | Adds live telemetry sessions, heartbeat logs, event receipts, monitoring metrics, and contest review jobs |
+| `018_contest_review_worker.sql` | Extends review jobs and adds contest reviews, execution logs, DLQ, worker metrics, and roadmap updates |
 
 ## Migration Principles
 
@@ -149,3 +150,16 @@ Adds live contest monitoring storage:
 - `contest_review_jobs`
 
 The migration stores live monitoring session state and review job requests without changing existing telemetry ingestion or processed telemetry schemas.
+
+## `018_contest_review_worker.sql`
+
+Adds durable contest review automation storage:
+
+- extended `contest_review_jobs`
+- `contest_reviews`
+- `contest_review_execution_logs`
+- `contest_review_dead_letters`
+- `contest_review_metrics`
+- `contest_roadmap_updates`
+
+The migration keeps live session stop requests lightweight while giving background workers enough state for atomic claiming, retry, crash recovery, dead-letter inspection, review persistence, and roadmap automation.
