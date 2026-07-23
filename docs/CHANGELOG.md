@@ -52,6 +52,8 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Static AI Design System verification harness for token coverage, presentational boundaries, reduced motion, focus styling, and Storybook coverage.
 - AI Coach Workspace with three-panel layout, session state, conversation composer, structured response rendering, evidence exploration, reasoning panels, recommendation actions, reflection timeline, roadmap view, contextual insights, keyboard shortcuts, and API adapter.
 - Static AI Coach Workspace verification harness for session lifecycle, API wiring, design-system integration, interaction affordances, responsive layout, and frontend/backend boundary checks.
+- Live Contest Monitoring for Codeforces with extension popup controls, contest detection, official API polling, submission diffing, offline queueing, signed backend live sessions, telemetry pipeline reuse, WebSocket dashboard consumer, and contest review job creation.
+- Static Live Monitoring verification harness for backend endpoints, extension SDK contracts, Codeforces API usage, sensitive data boundaries, dashboard integration, and review job queueing.
 - User authentication with registration, login, refresh-token rotation, and logout.
 - JWT access token and refresh token infrastructure.
 - PostgreSQL schema for users, profiles, platform accounts, contests, submissions, analytics cache, refresh tokens, and LeetCode extension uploads.
@@ -69,7 +71,7 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Durable local telemetry queue for Observability SDK events.
 - Runtime verification harness for observability session lifecycle behavior.
 - Architecture documentation suite under `docs/`.
-- Architecture Decision Records ADR-0001 through ADR-0027.
+- Architecture Decision Records ADR-0001 through ADR-0028.
 - Operations, testing, security, contributing, changelog, and glossary documentation.
 
 ### Security

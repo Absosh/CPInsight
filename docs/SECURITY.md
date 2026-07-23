@@ -148,6 +148,8 @@ The LLM Runtime Engine reads provider credentials from environment variables at 
 
 The AI Quality Layer validates raw runtime output before response acceptance. Grounding, citation, recommendation, confidence, and consistency validators prevent unsupported claims from silently becoming trusted AI Coach output. Reflection memory stores only validated, evidence-backed behavioral reflections and does not store conversation transcripts. Human feedback records user judgments about responses and must not mutate Evidence Packages, Reasoning Contexts, Behavior Knowledge rows, or telemetry.
 
+Live Contest Monitoring requires bearer authentication and a per-session random token. The backend stores only the session token hash and rejects event, heartbeat, or stop requests with invalid tokens. The extension uses Codeforces official APIs and does not collect keyboard contents, clipboard, cookies, passwords, private messages, full page text, or unrelated browsing history.
+
 ## Dependency Security
 
 Run backend production audit:

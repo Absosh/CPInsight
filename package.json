@@ -6,6 +6,7 @@
   "scripts": {
     "verify:ai-design-system": "node scripts/verify-ai-design-system.js",
     "verify:ai-coach-workspace": "node scripts/verify-ai-coach-workspace.js",
+    "verify:live-monitoring": "node scripts/verify-live-monitoring.js",
     "dev:ai-coach": "vite --host 0.0.0.0",
     "build:frontend": "vite build",
     "storybook": "storybook dev -p 6006",

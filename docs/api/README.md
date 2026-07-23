@@ -48,6 +48,10 @@ The WebSocket Gateway upgrades authenticated clients at `/realtime` by default. 
 | `POST` | `/api/platforms/sync` | Yes | Sync all accounts |
 | `POST` | `/api/platforms/sync/:platform` | Yes | Sync one account |
 | `POST` | `/api/telemetry/upload` | Yes | Observability SDK telemetry batch ingestion |
+| `POST` | `/api/telemetry/session/start` | Yes | Start or resume live contest monitoring |
+| `POST` | `/api/telemetry/events` | Yes | Submit live contest telemetry events |
+| `POST` | `/api/telemetry/session/heartbeat` | Yes | Record live monitoring connection heartbeat |
+| `POST` | `/api/telemetry/session/stop` | Yes | Stop live monitoring and queue contest review generation |
 | `POST` | `/api/behavior/extract` | Yes | Run behavior reconstruction and feature extraction |
 | `GET` | `/api/behavior/sessions` | Yes | List reconstructed behavior sessions |
 | `GET` | `/api/behavior/profile` | Yes | Latest behavior profile |

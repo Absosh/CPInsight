@@ -46,11 +46,18 @@ src/features/ai-coach/
   hooks/
   state/
   styles/
+src/features/live-monitoring/
+  components/
+  realtime/
+  state/
+  styles/
 ```
 
 The React AI Design System is isolated under `src/components/ai`. It is available for future AI surfaces without requiring existing static pages to migrate immediately. See [AI Design System](../frontend/ai-design-system.md).
 
 The AI Coach Workspace is isolated under `src/features/ai-coach`. It consumes existing backend AI APIs and uses the AI Design System throughout. See [AI Coach Workspace](../frontend/ai-coach-workspace.md).
+
+The Live Contest Dashboard is isolated under `src/features/live-monitoring`. It consumes existing WebSocket Gateway events and renders deterministic contest state. See [Live Contest Dashboard](../frontend/live-dashboard.md).
 
 ## Component Model
 

@@ -1,0 +1,47 @@
+.live-contest-dashboard {
+  display: grid;
+  gap: var(--ai-space-lg);
+  padding: var(--ai-space-lg);
+}
+
+.live-contest-dashboard > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ai-space-md);
+}
+
+.live-contest-dashboard h2,
+.live-contest-dashboard p {
+  margin: 0;
+}
+
+.live-contest-dashboard p {
+  color: var(--ai-text-muted);
+}
+
+.live-contest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--ai-space-md);
+}
+
+.live-contest-metric {
+  border: 1px solid var(--ai-border);
+  border-radius: var(--ai-radius-lg);
+  background: var(--ai-surface-raised);
+  padding: var(--ai-space-lg);
+}
+
+.live-contest-metric span {
+  display: block;
+  color: var(--ai-text-muted);
+  font-size: 0.75rem;
+}
+
+.live-contest-metric strong {
+  display: block;
+  margin-block-start: var(--ai-space-xs);
+  color: var(--ai-text);
+  font-size: 1.6rem;
+}

@@ -14,3 +14,95 @@ body {
 #popup-root {
   padding: 16px;
 }
+body {
+  margin: 0;
+  min-inline-size: 320px;
+  background: #09111f;
+  color: #f4f7fb;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.popup-shell {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.popup-shell header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.popup-shell header span,
+.popup-shell button,
+.popup-shell input {
+  border: 1px solid #223047;
+  border-radius: 6px;
+  background: #0f1a2b;
+  color: #f4f7fb;
+}
+
+.popup-shell header span {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.popup-shell dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 12px;
+  margin: 0;
+}
+
+.popup-shell dt {
+  color: #a8b4c7;
+}
+
+.popup-shell dd {
+  margin: 0;
+  text-align: right;
+}
+
+.popup-shell label {
+  display: grid;
+  gap: 4px;
+}
+
+.popup-shell label span {
+  color: #a8b4c7;
+  font-size: 12px;
+}
+
+.popup-shell input {
+  min-block-size: 34px;
+  padding: 0 10px;
+}
+
+.popup-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.popup-actions button:first-child {
+  grid-column: 1 / -1;
+}
+
+.popup-shell button {
+  min-block-size: 36px;
+  cursor: pointer;
+}
+
+.popup-shell button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.popup-error {
+  border: 1px solid #fb7185;
+  border-radius: 6px;
+  color: #fecdd3;
+  margin: 0;
+  padding: 8px;
+}

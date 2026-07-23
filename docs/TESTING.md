@@ -223,6 +223,12 @@ Run AI Coach Workspace verification:
 npm run verify:ai-coach-workspace
 ```
 
+Run live monitoring verification:
+
+```powershell
+npm run verify:live-monitoring
+```
+
 Build the React/Vite frontend bundle:
 
 ```powershell
@@ -471,6 +477,17 @@ The AI Coach Workspace verification covers:
 - Vite/Docker frontend build wiring.
 - No duplicated backend AI reasoning, grounding, or validation logic.
 
+The Live Monitoring verification covers:
+
+- Required backend, extension, and frontend files.
+- Live telemetry session endpoints.
+- Codeforces official API polling.
+- Submission diff event generation.
+- Sensitive collection boundary.
+- Existing telemetry pipeline reuse.
+- WebSocket dashboard integration.
+- Contest review job queueing.
+
 ## Recovery Testing
 
 ### Browser Restart
@@ -581,5 +598,8 @@ Future work should add:
 - [AI Coach Session Lifecycle](frontend/session-lifecycle.md)
 - [AI Coach Workspace Layout](frontend/workspace-layout.md)
 - [AI Coach Interaction Patterns](frontend/interaction-patterns.md)
+- [Extension Live Monitoring](extension/live-monitoring.md)
+- [Live Telemetry Session API](backend/telemetry-session.md)
+- [Live Contest Dashboard](frontend/live-dashboard.md)
 - [Operations](OPERATIONS.md)
 - [Security](SECURITY.md)

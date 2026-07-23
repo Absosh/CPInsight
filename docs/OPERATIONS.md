@@ -142,6 +142,8 @@ npm run dev:ai-coach
 
 The production frontend image runs `npm run build:frontend` and serves the Vite output together with the existing static pages.
 
+For live contest monitoring, Redis and the WebSocket Gateway path must be available because dashboard updates are delivered through existing realtime channels. The extension must be loaded from `extension/`, authenticated through CPInsight, and opened on a supported Codeforces contest page.
+
 The frontend is static HTML, CSS, and browser JavaScript. Production-style Docker startup:
 
 ```powershell

@@ -619,3 +619,42 @@ Stores aggregate feedback counters by feedback type.
 ## `validation_metrics`
 
 Stores AI quality observability, including validation latency, grounding failures, citation failures, confidence mismatch, recommendation rejections, reflection count, regeneration count, status, and error message.
+
+## `telemetry_live_sessions`
+
+Stores authenticated live contest monitoring sessions.
+
+Important columns:
+
+- `live_session_id`
+- `telemetry_session_id`
+- `platform`
+- `contest_id`
+- `contest_name`
+- `contest_url`
+- `user_handle`
+- `state`
+- `session_token_hash`
+- `started_at`
+- `stopped_at`
+- `last_heartbeat_at`
+- `connection_status`
+- `events_received`
+- `events_acknowledged`
+- `statistics JSONB`
+
+## `telemetry_live_heartbeat_logs`
+
+Stores live monitoring heartbeat observations, including connection status, event count, queue depth, and metadata.
+
+## `telemetry_live_event_receipts`
+
+Stores live event receipts by event id and sequence number. This table complements the canonical `telemetry_events` table and does not replace it.
+
+## `contest_monitoring_metrics`
+
+Stores monitoring-level metric observations such as connection, review processing, or future live dashboard counters.
+
+## `contest_review_jobs`
+
+Stores queued contest review generation requests created when live monitoring stops.

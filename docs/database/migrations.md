@@ -22,6 +22,7 @@ Migrations are SQL files in `backend/src/database/migrations`. They are executed
 | `014_ai_task_orchestrator.sql` | Adds AI tasks, prompt strategies, output schemas, policies, execution plans, and execution metrics |
 | `015_llm_runtime_engine.sql` | Adds LLM providers, models, requests, usage, provider metrics, and runtime metrics |
 | `016_ai_quality_layer.sql` | Adds validated responses, quality reports, reflection memory, feedback, and validation metrics |
+| `017_live_contest_monitoring.sql` | Adds live telemetry sessions, heartbeat logs, event receipts, monitoring metrics, and contest review jobs |
 
 ## Migration Principles
 
@@ -136,3 +137,15 @@ Adds AI quality storage:
 - `validation_metrics`
 
 The migration stores validated response structures, reports, reflections, and feedback. It does not store provider secrets and does not modify deterministic evidence tables.
+
+## `017_live_contest_monitoring.sql`
+
+Adds live contest monitoring storage:
+
+- `telemetry_live_sessions`
+- `telemetry_live_heartbeat_logs`
+- `telemetry_live_event_receipts`
+- `contest_monitoring_metrics`
+- `contest_review_jobs`
+
+The migration stores live monitoring session state and review job requests without changing existing telemetry ingestion or processed telemetry schemas.

@@ -19,6 +19,7 @@ import { UploadStateStore } from '../observability/upload/upload-state-store.js'
 import { AuthTokenProvider } from '../observability/upload/auth-token-provider.js';
 import { HttpTelemetryTransport } from '../observability/upload/http-telemetry-transport.js';
 import { TelemetryUploadScheduler } from '../observability/upload/upload-scheduler.js';
+import { LiveTelemetrySDK } from '../live-monitoring/live-telemetry-sdk.js';
 
 const logger = createLogger('background');
 const bootstrapLogger = createLogger('Bootstrap');
@@ -51,6 +52,12 @@ const telemetryUploadScheduler = new TelemetryUploadScheduler({
   uploadStateStore: telemetryUploadStateStore,
   transport: telemetryUploadTransport,
   logger: observabilityLogger
+});
+const liveTelemetrySdk = new LiveTelemetrySDK({
+  storage,
+  httpClient,
+  tokenProvider: telemetryTokenProvider,
+  logger: createLogger('LiveMonitoring')
 });
 
 let providersInitialized = false;
@@ -1897,6 +1904,20 @@ messageBus.register(MessageType.OBSERVABILITY_PAGE_EXIT, async (message, sender)
     reason: message.payload?.reason || message.payload?.trigger || 'page_exit'
   });
 });
+messageBus.register(MessageType.LIVE_MONITORING_STATUS_GET, async () => {
+  const detected = await liveTelemetrySdk.detectActiveContest();
+  const state = await liveTelemetrySdk.getState();
+  return { ...state, detected };
+});
+messageBus.register(MessageType.LIVE_MONITORING_START, async (message) => {
+  return liveTelemetrySdk.start({ handle: message.payload?.handle });
+});
+messageBus.register(MessageType.LIVE_MONITORING_STOP, async (message) => {
+  return liveTelemetrySdk.stop(message.payload?.reason || 'manual_stop');
+});
+messageBus.register(MessageType.LIVE_MONITORING_RECONNECT, async () => {
+  return liveTelemetrySdk.reconnect();
+});
 
 messageBus.listenRuntime();
 bootstrapLogger.info('Runtime.onMessage listener registered');
@@ -1928,6 +1949,11 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.url) {
+    liveTelemetrySdk.handlePageUrl(changeInfo.url).catch((error) => {
+      bootstrapLogger.error(`Live monitoring page URL handling failed: ${error?.message || 'Unknown error'}`);
+    });
+  }
   if (changeInfo.url && !observabilitySdk.registry.findForUrl(changeInfo.url)) {
     observabilitySdk.handlePageExit({
       tabId,
@@ -1958,6 +1984,18 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
       bootstrapLogger.error(`Leave-LeetCode cancellation failed: ${error?.message || 'Unknown error'}`);
     });
   }
+});
+
+chrome.tabs.onActivated.addListener(() => {
+  liveTelemetrySdk.handleWindowFocusChanged(true).catch((error) => {
+    bootstrapLogger.error(`Live monitoring tab activation handling failed: ${error?.message || 'Unknown error'}`);
+  });
+});
+
+chrome.windows.onFocusChanged.addListener((windowId) => {
+  liveTelemetrySdk.handleWindowFocusChanged(windowId !== chrome.windows.WINDOW_ID_NONE).catch((error) => {
+    bootstrapLogger.error(`Live monitoring window focus handling failed: ${error?.message || 'Unknown error'}`);
+  });
 });
 
 chrome.runtime.onSuspend.addListener(() => {

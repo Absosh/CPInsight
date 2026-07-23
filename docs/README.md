@@ -38,6 +38,7 @@ Implemented:
 - AI Quality Layer for response normalization, schema validation, grounding, citation checks, recommendation support, quality scoring, reflection memory, and human feedback.
 - AI Design System for reusable evidence-first React components, semantic tokens, themes, accessibility patterns, and Storybook review.
 - AI Coach Workspace for the flagship three-panel evidence-first coaching experience.
+- Live Contest Monitoring for Codeforces contest telemetry, backend live sessions, realtime dashboard updates, and contest review job creation.
 - Codeforces and CodeChef contest-session collector plugins.
 
 Planned:
@@ -93,6 +94,9 @@ flowchart LR
   Runtime --> Quality["AI Quality Layer"]
   Quality --> DesignSystem["AI Design System"]
   DesignSystem --> CoachWorkspace["AI Coach Workspace"]
+  SDK --> LiveMonitoring["Live Contest Monitoring"]
+  LiveMonitoring --> API
+  RedisStreams --> LiveDashboard["Live Contest Dashboard"]
   Extension["Chrome extension"] --> API
   Extension --> SDK["Observability SDK"]
   SDK --> Store["chrome.storage.local"]
@@ -160,6 +164,10 @@ Architecture:
 - [AI Coach Session Lifecycle](frontend/session-lifecycle.md)
 - [AI Coach Workspace Layout](frontend/workspace-layout.md)
 - [AI Coach Interaction Patterns](frontend/interaction-patterns.md)
+- [Extension Live Monitoring](extension/live-monitoring.md)
+- [Live Telemetry Session API](backend/telemetry-session.md)
+- [Submission Diff Engine](backend/submission-diff-engine.md)
+- [Live Contest Dashboard](frontend/live-dashboard.md)
 - [RAG Roadmap](architecture/rag-roadmap.md)
 - [Future Roadmap](architecture/future-roadmap.md)
 - [Deployment](architecture/deployment.md)
@@ -238,6 +246,7 @@ Architecture Decision Records:
 - [ADR-0025 Response Validation and Grounding Layer](decisions/ADR-0025-response-validation.md)
 - [ADR-0026 AI Design System](decisions/ADR-0026-ai-design-system.md)
 - [ADR-0027 AI Coach Workspace](decisions/ADR-0027-ai-coach-workspace.md)
+- [ADR-0028 Live Contest Monitoring](decisions/ADR-0028-live-monitoring.md)
 
 Existing operational document:
 

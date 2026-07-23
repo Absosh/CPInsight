@@ -34,6 +34,18 @@ export const AppConfig = Object.freeze({
     lowStorageWarningThreshold: 1800,
     sdkVersion: 'observability-sdk-v1'
   },
+  liveMonitoring: {
+    enabled: true,
+    heartbeatPeriodMinutes: 0.5,
+    fastPollMs: 10000,
+    idlePollMs: 45000,
+    uploadPath: '/telemetry/events',
+    startPath: '/telemetry/session/start',
+    heartbeatPath: '/telemetry/session/heartbeat',
+    stopPath: '/telemetry/session/stop',
+    maxEventsPerUpload: 50,
+    codeforcesApiBaseUrl: 'https://codeforces.com/api'
+  },
   messaging: {
     requestTimeoutMs: 10000,
     pageCommandMaxAgeMs: 30000
