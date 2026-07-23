@@ -40,6 +40,16 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Runtime verification harness for retrieval planning, ambiguity, unknown intents, evidence requests, deterministic output, and 1000 mixed questions.
 - Hybrid Retrieval Engine with source adapters, parallel execution, cache support, evidence fusion, ranking, contradiction detection, immutable Evidence Packages, and protected APIs.
 - Runtime verification harness for hybrid retrieval, cache hits, partial failures, timeouts, contradiction detection, deterministic packages, and 1000 mixed retrieval plans.
+- Reasoning Context Engine with behavior ontology, finding extraction, causal chains, evidence compression, token budgeting, prompt orchestration, provider metadata, and protected APIs.
+- Runtime verification harness for ontology mapping, context generation, prompt determinism, provider independence, 4k token budgeting, and 1000 Evidence Packages.
+- AI Task Orchestrator with task registry, prompt strategy engine, output schema registry, safety policies, evaluation policies, task chaining, execution plans, and protected APIs.
+- Runtime verification harness for task routing, multi-task routing, chaining, strategies, schemas, policies, unknown tasks, determinism, and 1000 mixed questions.
+- LLM Runtime Engine with provider registry, model registry, request builder, model selection, streaming collection, retry, failover, rate limiting, token accounting, cost accounting, and protected APIs.
+- Runtime verification harness for non-streaming, streaming, retries, failover, manual overrides, rate limits, cancellation, model selection, accounting, and 1000 execution plans.
+- AI Quality Layer with response normalization, schema validation, grounding validation, citation validation, recommendation validation, confidence validation, consistency checks, quality scoring, reflection memory, human feedback, and protected APIs.
+- Runtime verification harness for malformed responses, grounding failures, citation failures, recommendation failures, confidence clamping, reflection creation, human feedback, regeneration requests, deterministic validation, and 1000 raw responses.
+- AI Design System with semantic tokens, dark/light/high-contrast themes, core AI components, composite components, layout primitives, animation classes, Storybook configuration, and accessibility guidance.
+- Static AI Design System verification harness for token coverage, presentational boundaries, reduced motion, focus styling, and Storybook coverage.
 - User authentication with registration, login, refresh-token rotation, and logout.
 - JWT access token and refresh token infrastructure.
 - PostgreSQL schema for users, profiles, platform accounts, contests, submissions, analytics cache, refresh tokens, and LeetCode extension uploads.
@@ -57,7 +67,7 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Durable local telemetry queue for Observability SDK events.
 - Runtime verification harness for observability session lifecycle behavior.
 - Architecture documentation suite under `docs/`.
-- Architecture Decision Records ADR-0001 through ADR-0021.
+- Architecture Decision Records ADR-0001 through ADR-0026.
 - Operations, testing, security, contributing, changelog, and glossary documentation.
 
 ### Security

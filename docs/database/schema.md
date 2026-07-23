@@ -419,3 +419,203 @@ Stores per-source retrieval metrics, including source name, status, latency, evi
 ## `fusion_metrics`
 
 Stores evidence fusion observability, including raw, normalized, ranked, resolved, and contradictory evidence counts.
+
+## `ontology_versions`
+
+Stores behavior ontology versions and concept payloads.
+
+## `prompt_templates`
+
+Stores future prompt template versions as JSON. The current prompt orchestrator uses code-defined provider-independent components.
+
+## `reasoning_contexts`
+
+Stores deterministic Reasoning Contexts built from Evidence Packages.
+
+Important columns:
+
+- `context_id`
+- `evidence_package_id`
+- `plan_id`
+- `question_hash`
+- `context_version`
+- `ontology_version`
+- `primary_findings JSONB`
+- `secondary_findings JSONB`
+- `causal_chains JSONB`
+- `contradictions JSONB`
+- `missing_evidence JSONB`
+- `confidence`
+- `token_budget JSONB`
+- `reasoning_metadata JSONB`
+- `context_payload JSONB`
+
+## `prompt_packages`
+
+Stores provider-independent Prompt Packages.
+
+Important columns:
+
+- `prompt_package_id`
+- `reasoning_context_id`
+- `prompt_package_version`
+- `provider_independent`
+- `system_prompt`
+- `developer_instructions JSONB`
+- `evidence_block JSONB`
+- `output_schema JSONB`
+- `grounding_rules JSONB`
+- `citation_rules JSONB`
+- `safety_rules JSONB`
+- `response_constraints JSONB`
+- `audit JSONB`
+- `prompt_payload JSONB`
+
+## `reasoning_metrics`
+
+Stores reasoning latency, finding counts, evidence counts, ontology usage, budget reductions, context size, prompt size, confidence, status, and error message.
+
+## `compression_metrics`
+
+Stores evidence compression counts and compression ratio.
+
+## `ai_tasks`
+
+Stores task plugin identity, version, reasoning mode, schema name, strategy name, and metadata.
+
+## `prompt_strategies`
+
+Stores prompt strategy identity, version, supported tasks, and metadata.
+
+## `output_schemas`
+
+Stores structured output schemas by name and version.
+
+## `evaluation_policies`
+
+Stores evaluation policy names, versions, and quality checks.
+
+## `safety_policies`
+
+Stores safety policy names, versions, and rule lists.
+
+## `execution_plans`
+
+Stores immutable AI Execution Plans.
+
+Important columns:
+
+- `execution_plan_id`
+- `execution_plan_version`
+- `question_hash`
+- `reasoning_context_id`
+- `prompt_package_id`
+- `primary_task`
+- `task_chain JSONB`
+- `reasoning_modes JSONB`
+- `prompt_strategies JSONB`
+- `output_schemas JSONB`
+- `evaluation_rules JSONB`
+- `safety_constraints JSONB`
+- `execution_metadata JSONB`
+- `plan_payload JSONB`
+
+## `execution_metrics`
+
+Stores task distribution, strategy distribution, reasoning mode usage, routing latency, plan latency, unknown task count, policy violation count, complexity, status, and error message.
+
+## `llm_providers`
+
+Stores provider metadata and status.
+
+## `llm_models`
+
+Stores provider-independent model metadata, including context window, capability flags, max output tokens, pricing, and status.
+
+## `llm_requests`
+
+Stores LLM runtime request metadata without raw prompts or raw completions.
+
+Important columns:
+
+- `runtime_request_id`
+- `execution_plan_id`
+- `prompt_package_id`
+- `provider_name`
+- `model_name`
+- `request_mode`
+- `status`
+- `latency_ms`
+- `retries`
+- `fallbacks`
+- `cancelled`
+- `request_metadata JSONB`
+- `response_metadata JSONB`
+- `error_message`
+
+## `llm_usage`
+
+Stores token and cost accounting by user, provider, model, and runtime request.
+
+## `provider_metrics`
+
+Stores provider-level latency, retry, failure, fallback, circuit breaker, and status observations.
+
+## `runtime_metrics`
+
+Stores runtime latency, streaming latency, retry count, fallback count, token usage, cost usage, cancellation count, queue length, status, and error message.
+
+## `validated_responses`
+
+Stores canonical AI Coach responses after response normalization, schema validation, grounding validation, citation validation, recommendation validation, confidence validation, consistency validation, and quality evaluation.
+
+Important columns:
+
+- `validation_id`
+- `execution_plan_id`
+- `reasoning_context_id`
+- `evidence_package_id`
+- `validated_response JSONB`
+- `validation_report JSONB`
+- `quality_report JSONB`
+- `response_version`
+
+## `response_quality`
+
+Stores decomposed quality scores for a validation run, including grounding coverage, citation quality, recommendation support, actionability, readability, completeness, conciseness, contradiction count, and overall quality score.
+
+## `reflection_versions`
+
+Stores reflection type and version metadata for validated behavioral reflection objects.
+
+## `reflection_memory`
+
+Stores validated, evidence-backed behavioral reflections per user.
+
+Important columns:
+
+- `reflection_id`
+- `validation_id`
+- `reflection_type`
+- `behavior_finding`
+- `confidence`
+- `importance`
+- `expires_at`
+- `version`
+- `payload JSONB`
+
+## `reflection_links`
+
+Stores evidence identifiers that support each reflection.
+
+## `human_feedback`
+
+Stores asynchronous user feedback for validated responses. Feedback does not mutate Evidence Packages, Reasoning Contexts, or behavior knowledge records.
+
+## `feedback_metrics`
+
+Stores aggregate feedback counters by feedback type.
+
+## `validation_metrics`
+
+Stores AI quality observability, including validation latency, grounding failures, citation failures, confidence mismatch, recommendation rejections, reflection count, regeneration count, status, and error message.

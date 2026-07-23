@@ -1,0 +1,23 @@
+{
+  "name": "cpinsight-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CPInsight frontend and AI design system workspace.",
+  "scripts": {
+    "verify:ai-design-system": "node scripts/verify-ai-design-system.js",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@storybook/addon-a11y": "^8.6.14",
+    "@storybook/addon-essentials": "^8.6.14",
+    "@storybook/addon-interactions": "^8.6.14",
+    "@storybook/react-vite": "^8.6.14",
+    "storybook": "^8.6.14",
+    "vite": "^6.0.0"
+  }
+}

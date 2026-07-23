@@ -33,6 +33,14 @@ The [Transactional Outbox](transactional-outbox.md) is the reliability boundary 
 
 [Hybrid Retrieval](hybrid-retrieval.md) executes retrieval plans through source adapters and emits immutable Evidence Packages. Evidence normalization, ranking, and contradiction handling are documented in [Evidence Fusion](evidence-fusion.md).
 
+[Reasoning Context Engine](reasoning-context-engine.md) transforms Evidence Packages into ontology-backed Reasoning Contexts. [Prompt Orchestration](prompt-orchestration.md) emits provider-independent Prompt Packages without invoking LLMs.
+
+[AI Task Orchestrator](task-orchestrator.md) routes prepared questions to task plugins and emits immutable AI Execution Plans with strategies, schemas, safety policies, and evaluation rules.
+
+[LLM Runtime](llm-runtime.md) executes AI Execution Plans through provider adapters with model selection, retries, failover, streaming collection, token accounting, cost accounting, and runtime observability.
+
+[Response Validation](response-validation.md) converts raw runtime output into validated AI Coach responses. It normalizes provider output, validates grounding and citations, checks recommendation support, evaluates quality, creates validated reflections, and records feedback.
+
 ## Module Responsibilities
 
 | Layer | Location | Responsibility |
@@ -71,6 +79,10 @@ The [Transactional Outbox](transactional-outbox.md) is the reliability boundary 
 
 `telemetryService` accepts authenticated Observability SDK upload batches and delegates telemetry semantics to the processing pipeline. The pipeline validates schema version, timestamp sanity, ordering, and idempotency; enriches and classifies events; stores raw events and processed metadata; records metrics; and returns acknowledged event ids. It does not compute analytics.
 
+### AI Quality
+
+`qualityService` accepts raw runtime responses together with the execution plan, reasoning context, and evidence package. It delegates deterministic checks to the quality pipeline and persists validated responses, quality reports, reflection memory, human feedback, and validation metrics. It does not call model providers or mutate deterministic evidence.
+
 ## Error Handling
 
 Controllers are wrapped with `asyncHandler`. Domain errors use `HttpError`. The global error handler serializes errors into HTTP responses. Validation uses Joi schemas and rejects invalid request shapes before service execution.
@@ -85,5 +97,6 @@ Controllers are wrapped with `asyncHandler`. Domain errors use `HttpError`. The 
 - Password hashes are never returned.
 - Refresh tokens are stored as SHA-256 hashes.
 - Extension upload endpoints require the same bearer authentication model as the frontend.
+- AI quality endpoints require bearer authentication; reflection retrieval is restricted to the authenticated user's own reflection memory.
 
 See [Authentication](authentication.md) for token flow and threat model.

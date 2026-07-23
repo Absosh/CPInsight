@@ -2,7 +2,7 @@
 
 CPInsight is a layered analytics system for competitive programming data. It uses a web frontend for user interaction, an Express API for authenticated business operations, PostgreSQL for durable domain data, Redis for cache acceleration, and a Chrome extension for authenticated browser-side collection and contest-session detection.
 
-The design separates data acquisition from analytics. Platform clients and extension collectors gather facts. Backend services normalize and persist facts. Analytics services read persisted facts and produce views. The Observability SDK provides a newer platform-agnostic foundation for telemetry events without coupling collectors to storage or transport. The backend [Transactional Outbox](transactional-outbox.md), [Domain Event Bus](domain-event-bus.md), [Redis Event Distribution](redis-event-distribution.md), [WebSocket Gateway](websocket-gateway.md), [Behavior Intelligence](behavior-intelligence.md), [Behavior Knowledge Layer](behavior-knowledge.md), [Retrieval Planner](retrieval-planner.md), and [Hybrid Retrieval Engine](hybrid-retrieval.md) decouple committed facts from downstream consumers.
+The design separates data acquisition from analytics. Platform clients and extension collectors gather facts. Backend services normalize and persist facts. Analytics services read persisted facts and produce views. The Observability SDK provides a newer platform-agnostic foundation for telemetry events without coupling collectors to storage or transport. The backend [Transactional Outbox](transactional-outbox.md), [Domain Event Bus](domain-event-bus.md), [Redis Event Distribution](redis-event-distribution.md), [WebSocket Gateway](websocket-gateway.md), [Behavior Intelligence](behavior-intelligence.md), [Behavior Knowledge Layer](behavior-knowledge.md), [Retrieval Planner](retrieval-planner.md), [Hybrid Retrieval Engine](hybrid-retrieval.md), [Reasoning Context Engine](reasoning-context-engine.md), [AI Task Orchestrator](task-orchestrator.md), [LLM Runtime](llm-runtime.md), and [AI Quality Layer](response-validation.md) decouple committed facts from downstream consumers.
 
 ## Runtime Architecture
 
@@ -34,6 +34,10 @@ flowchart TB
     Knowledge["Behavior Knowledge"]
     Planner["Retrieval Planner"]
     Retrieval["Hybrid Retrieval"]
+    Reasoning["Reasoning Context"]
+    TaskPlan["AI Task Orchestrator"]
+    Runtime["LLM Runtime"]
+    Quality["AI Quality Layer"]
     Repositories["Repositories"]
     Middleware["Auth, validation,\nrate limit, errors"]
   end
@@ -63,6 +67,14 @@ flowchart TB
   Behavior --> Knowledge
   Knowledge --> Planner
   Planner --> Retrieval
+  Retrieval --> Reasoning
+  Reasoning --> TaskPlan
+  TaskPlan --> Runtime
+  Runtime --> Quality
+  Quality --> Repositories
+  Runtime --> Repositories
+  TaskPlan --> Repositories
+  Reasoning --> Repositories
   Retrieval --> Repositories
   Planner --> Repositories
   Knowledge --> Repositories
@@ -87,6 +99,10 @@ flowchart TB
 | Behavior Knowledge | `backend/src/knowledge`, `backend/src/services/knowledgeService.js` | Rule-based insight inference, knowledge graph persistence, behavior patterns, evidence records |
 | Retrieval Planner | `backend/src/ai/planner`, `backend/src/services/plannerService.js` | Intent classification and retrieval planning without retrieval or LLM calls |
 | Hybrid Retrieval | `backend/src/ai/retrieval`, `backend/src/services/retrievalService.js` | Source adapter execution, evidence fusion, ranking, contradiction detection, immutable evidence packages |
+| Reasoning Context | `backend/src/ai/reasoning`, `backend/src/services/reasoningService.js` | Ontology-backed findings, causal chains, compression, token budgeting, provider-independent prompt packages |
+| AI Task Orchestrator | `backend/src/ai/tasks`, `backend/src/services/taskService.js` | Task routing, prompt strategies, schemas, policies, immutable AI execution plans |
+| LLM Runtime | `backend/src/ai/runtime`, `backend/src/services/runtimeService.js` | Provider-agnostic LLM invocation, model selection, streaming collection, retries, failover, token and cost accounting |
+| AI Quality Layer | `backend/src/ai/quality`, `backend/src/services/qualityService.js` | Response normalization, grounding validation, citation checks, quality evaluation, reflection memory, human feedback |
 | Persistence | `backend/src/database`, `repositories` | PostgreSQL tables and SQL access |
 | Cache | `backend/src/redis`, `analyticsService` | Redis read-through cache for analytics where safe |
 | Chrome extension | `extension/` | Manifest V3 extension, popup, background orchestration, content scripts, LeetCode provider sync, observability bridge |

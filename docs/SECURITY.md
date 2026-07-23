@@ -38,6 +38,7 @@ Primary threats:
 | CORS | Centralized CORS configuration. |
 | Extension permissions | Host permissions limited to implemented platform and API domains. |
 | Telemetry boundary | Observability collectors do not read cookies, passwords, clipboard, or browser history. |
+| AI quality boundary | Raw model output is normalized and validated before it becomes an AI Coach response. |
 | Secrets | `.env.deploy` is ignored by Git. |
 
 ## Authentication and Authorization
@@ -139,6 +140,14 @@ The Retrieval Planner stores question hashes, classifications, plans, and metric
 
 The Hybrid Retrieval Engine stores Evidence Packages assembled from existing canonical backend data. It must not add secrets, cookies, access tokens, refresh tokens, prompt text, generated answers, embeddings, or raw question text to package payloads.
 
+The Reasoning Context Engine and Prompt Orchestrator persist prepared contexts and prompt packages only. They must not invoke providers, store raw LLM responses, add secrets, include access tokens, or preserve prompt-injection text as trusted instructions.
+
+The AI Task Orchestrator stores execution plans and policy metadata only. It must not invoke providers, stream responses, store model outputs, or weaken grounding and citation policies selected by earlier layers.
+
+The LLM Runtime Engine reads provider credentials from environment variables at invocation time. Provider keys must not be logged, persisted, returned through health endpoints, or included in request metadata. Runtime persistence stores request metadata, usage, and accounting only; raw prompts and raw completions are not stored.
+
+The AI Quality Layer validates raw runtime output before response acceptance. Grounding, citation, recommendation, confidence, and consistency validators prevent unsupported claims from silently becoming trusted AI Coach output. Reflection memory stores only validated, evidence-backed behavioral reflections and does not store conversation transcripts. Human feedback records user judgments about responses and must not mutate Evidence Packages, Reasoning Contexts, Behavior Knowledge rows, or telemetry.
+
 ## Dependency Security
 
 Run backend production audit:
@@ -192,4 +201,6 @@ A mature public release should add:
 - [Authentication](architecture/authentication.md)
 - [Chrome Extension](architecture/chrome-extension.md)
 - [Telemetry](architecture/telemetry.md)
+- [Response Validation](architecture/response-validation.md)
+- [Grounding Engine](architecture/grounding-engine.md)
 - [Operations](OPERATIONS.md)

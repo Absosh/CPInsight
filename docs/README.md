@@ -32,6 +32,11 @@ Implemented:
 - Behavior Knowledge Layer for rule-based insights, persistent graph relationships, and evidence-backed behavior patterns.
 - Intent Classification and Retrieval Planner for planning future evidence retrieval without executing retrieval or invoking an LLM.
 - Hybrid Retrieval Engine for executing retrieval plans and producing ranked, contradiction-aware Evidence Packages without LLM calls.
+- Reasoning Context Engine and Prompt Orchestrator for ontology-backed contexts and provider-independent Prompt Packages without LLM invocation.
+- AI Task Orchestrator for deterministic task routing, prompt strategy selection, schemas, policies, and AI Execution Plans without LLM invocation.
+- LLM Runtime Engine for provider-agnostic model invocation, streaming, retries, failover, and token/cost accounting.
+- AI Quality Layer for response normalization, schema validation, grounding, citation checks, recommendation support, quality scoring, reflection memory, and human feedback.
+- AI Design System for reusable evidence-first React components, semantic tokens, themes, accessibility patterns, and Storybook review.
 - Codeforces and CodeChef contest-session collector plugins.
 
 Planned:
@@ -63,6 +68,7 @@ CP-INSIGHT/
   ops/           Nginx, PostgreSQL init, backup scripts
   pages/         Static frontend pages
   script/        Frontend browser JavaScript
+  src/           React AI Design System module
 ```
 
 ## Quick Architecture
@@ -80,6 +86,11 @@ flowchart LR
   Behavior --> Knowledge["Behavior Knowledge Graph"]
   Knowledge --> Planner["Retrieval Planner"]
   Planner --> Retrieval["Hybrid Retrieval"]
+  Retrieval --> Reasoning["Reasoning Context"]
+  Reasoning --> TaskPlan["AI Execution Plan"]
+  TaskPlan --> Runtime["LLM Runtime"]
+  Runtime --> Quality["AI Quality Layer"]
+  Quality --> DesignSystem["AI Design System"]
   Extension["Chrome extension"] --> API
   Extension --> SDK["Observability SDK"]
   SDK --> Store["chrome.storage.local"]
@@ -120,6 +131,29 @@ Architecture:
 - [Retrieval Planner](architecture/retrieval-planner.md)
 - [Hybrid Retrieval](architecture/hybrid-retrieval.md)
 - [Evidence Fusion](architecture/evidence-fusion.md)
+- [Behavior Ontology](architecture/behavior-ontology.md)
+- [Reasoning Context Engine](architecture/reasoning-context-engine.md)
+- [Prompt Orchestration](architecture/prompt-orchestration.md)
+- [AI Task Orchestrator](architecture/task-orchestrator.md)
+- [Prompt Strategy Engine](architecture/prompt-strategy-engine.md)
+- [Output Schema Registry](architecture/output-schema-registry.md)
+- [Safety Policy Engine](architecture/safety-policy-engine.md)
+- [LLM Runtime](architecture/llm-runtime.md)
+- [Provider Registry](architecture/provider-registry.md)
+- [Model Selection](architecture/model-selection.md)
+- [Runtime Observability](architecture/runtime-observability.md)
+- [Response Validation](architecture/response-validation.md)
+- [Grounding Engine](architecture/grounding-engine.md)
+- [Quality Evaluation](architecture/quality-evaluation.md)
+- [Reflection Memory](architecture/reflection-memory.md)
+- [Human Feedback](architecture/human-feedback.md)
+- [AI Design System](frontend/ai-design-system.md)
+- [AI Design Tokens](frontend/design-tokens.md)
+- [AI Component Library](frontend/component-library.md)
+- [AI Component Composition](frontend/component-composition.md)
+- [AI Animation System](frontend/animation-system.md)
+- [AI Accessibility](frontend/accessibility.md)
+- [Storybook](frontend/storybook.md)
 - [RAG Roadmap](architecture/rag-roadmap.md)
 - [Future Roadmap](architecture/future-roadmap.md)
 - [Deployment](architecture/deployment.md)
@@ -156,6 +190,15 @@ Sequences:
 - [Retrieval Plan Generation](sequence/retrieval-plan-generation.md)
 - [Retrieval Execution](sequence/retrieval-execution.md)
 - [Evidence Fusion](sequence/evidence-fusion.md)
+- [Reasoning Pipeline](sequence/reasoning-pipeline.md)
+- [Prompt Generation](sequence/prompt-generation.md)
+- [Task Routing](sequence/task-routing.md)
+- [Execution Plan Generation](sequence/execution-plan-generation.md)
+- [Runtime Execution](sequence/runtime-execution.md)
+- [Provider Failover](sequence/provider-failover.md)
+- [Validation Pipeline](sequence/validation-pipeline.md)
+- [Reflection Generation](sequence/reflection-generation.md)
+- [Feedback Processing](sequence/feedback-processing.md)
 - [Extension Upload](sequence/extension-upload.md)
 - [Analytics Refresh](sequence/analytics-refresh.md)
 - [Future Live Telemetry](sequence/future-live-telemetry.md)
@@ -183,6 +226,11 @@ Architecture Decision Records:
 - [ADR-0019 Behavior Knowledge Layer](decisions/ADR-0019-behavior-knowledge-layer.md)
 - [ADR-0020 Intent Classification and Retrieval Planner](decisions/ADR-0020-intent-classification-and-retrieval-planner.md)
 - [ADR-0021 Hybrid Retrieval Engine](decisions/ADR-0021-hybrid-retrieval-engine.md)
+- [ADR-0022 Reasoning Context Engine](decisions/ADR-0022-reasoning-context-engine.md)
+- [ADR-0023 AI Task Orchestrator](decisions/ADR-0023-ai-task-orchestrator.md)
+- [ADR-0024 LLM Runtime Engine](decisions/ADR-0024-llm-runtime-engine.md)
+- [ADR-0025 Response Validation and Grounding Layer](decisions/ADR-0025-response-validation.md)
+- [ADR-0026 AI Design System](decisions/ADR-0026-ai-design-system.md)
 
 Existing operational document:
 

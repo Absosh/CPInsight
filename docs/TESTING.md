@@ -183,6 +183,40 @@ cd backend
 node scripts/verify-hybrid-retrieval.js
 ```
 
+Run reasoning context verification:
+
+```powershell
+cd backend
+node scripts/verify-reasoning-context.js
+```
+
+Run AI task orchestration verification:
+
+```powershell
+cd backend
+node scripts/verify-ai-task-orchestrator.js
+```
+
+Run LLM runtime verification:
+
+```powershell
+cd backend
+node scripts/verify-llm-runtime.js
+```
+
+Run AI quality layer verification:
+
+```powershell
+cd backend
+node scripts/verify-ai-quality.js
+```
+
+Run AI design system verification:
+
+```powershell
+npm run verify:ai-design-system
+```
+
 Expected output includes:
 
 ```json
@@ -347,6 +381,72 @@ The Hybrid Retrieval verification covers:
 - Deterministic evidence packages.
 - 1000 mixed retrieval plans and latency bounds.
 
+The Reasoning Context verification covers:
+
+- 1000 Evidence Packages.
+- Ontology mapping.
+- Finding extraction.
+- Causal chain construction.
+- Contradiction handling.
+- Evidence compression.
+- Token budgeting for 4k and larger contexts.
+- Provider-independent prompt generation.
+- Prompt determinism.
+- Large Evidence Packages.
+
+The AI Task Orchestrator verification covers:
+
+- 1000 mixed questions.
+- Task routing.
+- Multi-task routing.
+- Task chaining.
+- Strategy selection.
+- Output schema selection.
+- Safety and evaluation policy attachment.
+- Unknown task fallback.
+- Deterministic routing.
+- Latency bounds.
+
+The LLM Runtime verification covers:
+
+- 1000 execution plans.
+- Non-streaming invocation.
+- Streaming chunk buffering.
+- Retry handling.
+- Provider failover.
+- Manual model overrides.
+- Rate limit rejection.
+- Cancellation.
+- Model selection.
+- Token accounting.
+- Cost accounting.
+- Mixed providers.
+
+The AI Quality Layer verification covers:
+
+- 1000 raw responses.
+- Malformed response deterministic repair.
+- Schema validation.
+- Grounding failure detection.
+- Citation fabrication detection.
+- Recommendation support validation.
+- Confidence clamping.
+- Consistency checks.
+- Reflection creation.
+- Human feedback normalization.
+- Regeneration request policy.
+- Deterministic validation for identical inputs.
+
+The AI Design System verification covers:
+
+- Required component, token, theme, layout, story, and animation files.
+- Design token group coverage.
+- Reduced motion CSS.
+- Keyboard focus styling.
+- Skeleton and streaming animation classes.
+- Storybook story exports.
+- Presentational boundary checks for no API calls, storage reads, or backend coupling.
+
 ## Recovery Testing
 
 ### Browser Restart
@@ -433,5 +533,25 @@ Future work should add:
 - [Retrieval Planner](architecture/retrieval-planner.md)
 - [Hybrid Retrieval](architecture/hybrid-retrieval.md)
 - [Evidence Fusion](architecture/evidence-fusion.md)
+- [Behavior Ontology](architecture/behavior-ontology.md)
+- [Reasoning Context Engine](architecture/reasoning-context-engine.md)
+- [Prompt Orchestration](architecture/prompt-orchestration.md)
+- [AI Task Orchestrator](architecture/task-orchestrator.md)
+- [Prompt Strategy Engine](architecture/prompt-strategy-engine.md)
+- [Output Schema Registry](architecture/output-schema-registry.md)
+- [Safety Policy Engine](architecture/safety-policy-engine.md)
+- [LLM Runtime](architecture/llm-runtime.md)
+- [Provider Registry](architecture/provider-registry.md)
+- [Model Selection](architecture/model-selection.md)
+- [Runtime Observability](architecture/runtime-observability.md)
+- [Response Validation](architecture/response-validation.md)
+- [Grounding Engine](architecture/grounding-engine.md)
+- [Quality Evaluation](architecture/quality-evaluation.md)
+- [Reflection Memory](architecture/reflection-memory.md)
+- [Human Feedback](architecture/human-feedback.md)
+- [AI Design System](frontend/ai-design-system.md)
+- [AI Design Tokens](frontend/design-tokens.md)
+- [AI Component Library](frontend/component-library.md)
+- [AI Accessibility](frontend/accessibility.md)
 - [Operations](OPERATIONS.md)
 - [Security](SECURITY.md)

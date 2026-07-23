@@ -18,6 +18,10 @@ Migrations are SQL files in `backend/src/database/migrations`. They are executed
 | `010_behavior_knowledge_graph.sql` | Adds behavior knowledge graph nodes, edges, insights, patterns, evidence, and inference metrics |
 | `011_intent_retrieval_planner.sql` | Adds intent classification, retrieval plan, planner rule version, and planner metric storage |
 | `012_hybrid_retrieval_engine.sql` | Adds retrieval cache, evidence package, retrieval metrics, source metrics, and fusion metrics storage |
+| `013_reasoning_context_engine.sql` | Adds reasoning contexts, prompt packages, ontology versions, prompt templates, reasoning metrics, and compression metrics |
+| `014_ai_task_orchestrator.sql` | Adds AI tasks, prompt strategies, output schemas, policies, execution plans, and execution metrics |
+| `015_llm_runtime_engine.sql` | Adds LLM providers, models, requests, usage, provider metrics, and runtime metrics |
+| `016_ai_quality_layer.sql` | Adds validated responses, quality reports, reflection memory, feedback, and validation metrics |
 
 ## Migration Principles
 
@@ -77,3 +81,58 @@ Adds the Hybrid Retrieval Engine schema:
 - `fusion_metrics`
 
 The migration stores evidence packages and retrieval observability. It does not duplicate canonical behavior, knowledge, contest, or submission tables.
+
+## `013_reasoning_context_engine.sql`
+
+Adds deterministic reasoning and prompt orchestration storage:
+
+- `ontology_versions`
+- `prompt_templates`
+- `reasoning_contexts`
+- `prompt_packages`
+- `reasoning_metrics`
+- `compression_metrics`
+
+The migration stores reasoning contexts and prompt packages only. It does not store raw LLM responses because no LLM is invoked in this phase.
+
+## `014_ai_task_orchestrator.sql`
+
+Adds AI task orchestration storage:
+
+- `ai_tasks`
+- `prompt_strategies`
+- `output_schemas`
+- `evaluation_policies`
+- `safety_policies`
+- `execution_plans`
+- `execution_metrics`
+
+The migration stores execution plans and orchestration metadata. It does not store model responses because no model is invoked.
+
+## `015_llm_runtime_engine.sql`
+
+Adds LLM runtime storage:
+
+- `llm_providers`
+- `llm_models`
+- `llm_requests`
+- `llm_usage`
+- `provider_metrics`
+- `runtime_metrics`
+
+The migration stores runtime metadata, accounting, and observability. It does not store raw prompts or raw completions.
+
+## `016_ai_quality_layer.sql`
+
+Adds AI quality storage:
+
+- `validated_responses`
+- `response_quality`
+- `reflection_versions`
+- `reflection_memory`
+- `reflection_links`
+- `human_feedback`
+- `feedback_metrics`
+- `validation_metrics`
+
+The migration stores validated response structures, reports, reflections, and feedback. It does not store provider secrets and does not modify deterministic evidence tables.

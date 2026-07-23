@@ -1,0 +1,101 @@
+:root {
+  color-scheme: dark;
+}
+
+.ai-theme-root {
+  --ai-space-xs: 4px;
+  --ai-space-sm: 8px;
+  --ai-space-md: 12px;
+  --ai-space-lg: 16px;
+  --ai-space-xl: 24px;
+  --ai-radius-sm: 4px;
+  --ai-radius-md: 6px;
+  --ai-radius-lg: 8px;
+  --ai-font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ai-motion-fast: 120ms;
+  --ai-motion-normal: 220ms;
+  --ai-motion-slow: 360ms;
+  --ai-motion-curve: cubic-bezier(0.2, 0, 0, 1);
+  background: var(--ai-surface);
+  color: var(--ai-text);
+  font-family: var(--ai-font);
+}
+
+.ai-theme-root *,
+.ai-theme-root *::before,
+.ai-theme-root *::after {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+
+.ai-card {
+  background: var(--ai-surface-raised);
+  border: 1px solid var(--ai-border);
+  border-radius: var(--ai-radius-lg);
+  color: var(--ai-text);
+}
+
+.ai-card[data-interactive="true"] {
+  transition: border-color var(--ai-motion-normal) var(--ai-motion-curve), box-shadow var(--ai-motion-normal) var(--ai-motion-curve), transform var(--ai-motion-normal) var(--ai-motion-curve);
+}
+
+@media (hover: hover) {
+  .ai-card[data-interactive="true"]:hover {
+    border-color: var(--ai-border-strong);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    transform: translateY(-1px);
+  }
+}
+
+.ai-focusable:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ai-focus-ring);
+}
+
+.ai-skeleton {
+  min-height: 1rem;
+  border-radius: var(--ai-radius-md);
+  background: linear-gradient(90deg, var(--ai-border), var(--ai-border-strong), var(--ai-border));
+  background-size: 200% 100%;
+  animation: ai-skeleton 1.4s var(--ai-motion-curve) infinite;
+}
+
+@keyframes ai-skeleton {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.ai-streaming-cursor::after {
+  content: "";
+  display: inline-block;
+  width: 0.5ch;
+  height: 1em;
+  margin-left: 2px;
+  background: var(--ai-info);
+  vertical-align: -0.15em;
+  animation: ai-cursor 900ms steps(2, end) infinite;
+}
+
+@keyframes ai-cursor {
+  50% { opacity: 0; }
+}
+
+.ai-reveal {
+  animation: ai-reveal var(--ai-motion-slow) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ai-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-theme-root *,
+  .ai-theme-root *::before,
+  .ai-theme-root *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}

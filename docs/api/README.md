@@ -71,6 +71,33 @@ The WebSocket Gateway upgrades authenticated clients at `/realtime` by default. 
 | `GET` | `/api/ai/retrieval/metrics` | Yes | Fetch retrieval metrics |
 | `GET` | `/api/ai/retrieval/sources` | Yes | Inspect retrieval source adapter health |
 | `GET` | `/api/ai/retrieval/health` | Yes | Inspect retrieval engine health |
+| `POST` | `/api/ai/reasoning/context` | Yes | Build and persist a Reasoning Context from an Evidence Package |
+| `POST` | `/api/ai/reasoning/prompt` | Yes | Build and persist a provider-independent Prompt Package |
+| `GET` | `/api/ai/reasoning/ontology` | Yes | Return behavior ontology concepts |
+| `GET` | `/api/ai/reasoning/context/:id` | Yes | Fetch a persisted Reasoning Context |
+| `GET` | `/api/ai/reasoning/prompt/:id` | Yes | Fetch a persisted Prompt Package |
+| `GET` | `/api/ai/reasoning/metrics` | Yes | Fetch reasoning metrics |
+| `POST` | `/api/ai/tasks/route` | Yes | Route question and reasoning context to AI task candidates |
+| `POST` | `/api/ai/tasks/plan` | Yes | Produce and persist an immutable AI Execution Plan |
+| `GET` | `/api/ai/tasks` | Yes | List AI task plugins |
+| `GET` | `/api/ai/strategies` | Yes | List prompt strategies |
+| `GET` | `/api/ai/schemas` | Yes | List output schemas |
+| `GET` | `/api/ai/policies` | Yes | List safety and evaluation policies |
+| `GET` | `/api/ai/execution/:id` | Yes | Fetch a persisted AI Execution Plan |
+| `POST` | `/api/ai/runtime/execute` | Yes | Execute an AI Execution Plan with non-streaming provider invocation |
+| `POST` | `/api/ai/runtime/stream` | Yes | Execute an AI Execution Plan with provider-independent streaming |
+| `GET` | `/api/ai/runtime/providers` | Yes | List runtime provider health |
+| `GET` | `/api/ai/runtime/models` | Yes | List model registry metadata |
+| `GET` | `/api/ai/runtime/metrics` | Yes | Fetch runtime metrics |
+| `GET` | `/api/ai/runtime/health` | Yes | Fetch runtime health |
+| `POST` | `/api/ai/runtime/cancel` | Yes | Cancel a runtime request |
+| `POST` | `/api/ai/validate` | Yes | Validate raw LLM output into a grounded AI Coach response |
+| `POST` | `/api/ai/reflections` | Yes | Store validated reflection objects |
+| `POST` | `/api/ai/feedback` | Yes | Record human feedback for a validated response |
+| `GET` | `/api/ai/quality/:id` | Yes | Fetch a validated response and quality report |
+| `GET` | `/api/ai/reflections/:user` | Yes | Fetch authenticated user's reflection memory |
+| `GET` | `/api/ai/feedback/metrics` | Yes | Fetch aggregate feedback metrics |
+| `GET` | `/api/ai/validation/metrics` | Yes | Fetch validation metrics for the authenticated user |
 | `GET` | `/api/debug/submissions/:platform` | Yes | Debug submission inspection |
 | `GET` | `/api/debug/user-accounts` | Yes | Debug account inspection |
 
@@ -258,6 +285,228 @@ Response: retrieval adapter health and reliability metadata.
 Authentication: bearer token.
 
 Response: aggregate retrieval health, source health, and cache stats.
+
+## AI Reasoning
+
+Reasoning endpoints are internal authenticated APIs. They build deterministic Reasoning Contexts and Prompt Packages only. They do not invoke LLMs, stream responses, create embeddings, or generate chat output.
+
+### `POST /api/ai/reasoning/context`
+
+Authentication: bearer token.
+
+Body:
+
+```json
+{
+  "evidencePackage": {
+    "packageId": "uuid",
+    "evidence": []
+  },
+  "options": {
+    "budget": "8k"
+  }
+}
+```
+
+Response status: `202`.
+
+Response: ontology-backed Reasoning Context.
+
+### `POST /api/ai/reasoning/prompt`
+
+Authentication: bearer token.
+
+Body:
+
+```json
+{
+  "reasoningContext": {
+    "contextId": "uuid"
+  },
+  "options": {}
+}
+```
+
+Response status: `202`.
+
+Response: provider-independent Prompt Package.
+
+### `GET /api/ai/reasoning/ontology`
+
+Authentication: bearer token.
+
+Response: ontology version and concepts.
+
+### `GET /api/ai/reasoning/context/:id`
+
+Authentication: bearer token.
+
+Response: persisted reasoning context row.
+
+### `GET /api/ai/reasoning/prompt/:id`
+
+Authentication: bearer token.
+
+Response: persisted prompt package row.
+
+### `GET /api/ai/reasoning/metrics`
+
+Authentication: bearer token.
+
+Response: reasoning metric rows.
+
+## AI Tasks
+
+Task endpoints are internal authenticated APIs. They route tasks and create AI Execution Plans only. They do not invoke providers, stream output, generate responses, use embeddings, or implement chat.
+
+### `POST /api/ai/tasks/route`
+
+Authentication: bearer token.
+
+Body:
+
+```json
+{
+  "question": "Why did my rating drop?",
+  "intent": { "primary": "diagnostic" },
+  "reasoningContext": {}
+}
+```
+
+Response: ordered task candidates.
+
+### `POST /api/ai/tasks/plan`
+
+Authentication: bearer token.
+
+Body:
+
+```json
+{
+  "question": "Why did my rating drop?",
+  "intent": { "primary": "diagnostic" },
+  "reasoningContext": {},
+  "promptPackage": {}
+}
+```
+
+Response status: `202`.
+
+Response: immutable AI Execution Plan with task chain, reasoning modes, prompt strategies, output schemas, evaluation rules, safety constraints, and execution metadata.
+
+### Metadata Endpoints
+
+- `GET /api/ai/tasks`
+- `GET /api/ai/strategies`
+- `GET /api/ai/schemas`
+- `GET /api/ai/policies`
+- `GET /api/ai/execution/:id`
+
+## AI Runtime
+
+Runtime endpoints are internal authenticated APIs. They invoke providers and return raw responses. They do not validate responses, inject citations, detect hallucinations, manage conversation memory, call tools, or run agents.
+
+### `POST /api/ai/runtime/execute`
+
+Authentication: bearer token.
+
+Body:
+
+```json
+{
+  "executionPlan": {},
+  "promptPackage": {},
+  "override": {
+    "provider": "openai",
+    "model": "gpt-4.1-mini"
+  }
+}
+```
+
+Response status: `202`.
+
+Response: raw runtime result with provider, model, raw response, retries, fallbacks, tokens, cost, and latency.
+
+### `POST /api/ai/runtime/stream`
+
+Authentication: bearer token.
+
+Body: same as `/execute`.
+
+Response status: `202`.
+
+Response: buffered streaming result. Provider-independent streaming callbacks are implemented in the runtime engine; HTTP streaming transport is future work.
+
+### Runtime Metadata
+
+- `GET /api/ai/runtime/providers`
+- `GET /api/ai/runtime/models`
+- `GET /api/ai/runtime/metrics`
+- `GET /api/ai/runtime/health`
+- `POST /api/ai/runtime/cancel`
+
+## AI Quality
+
+Quality endpoints are internal authenticated APIs. They normalize and validate raw provider output, persist quality reports, store validated reflections, and record human feedback. They do not call LLM providers, perform retrieval, redesign prompts, or mutate evidence.
+
+### `POST /api/ai/validate`
+
+Authentication: bearer token.
+
+Body:
+
+```json
+{
+  "executionPlan": {},
+  "reasoningContext": {},
+  "evidencePackage": {},
+  "rawResponse": {}
+}
+```
+
+Response status: `202`.
+
+Response: validated AI Coach response, validation report, quality report, behavior reflections, and regeneration request metadata.
+
+### `POST /api/ai/reflections`
+
+Authentication: bearer token.
+
+Body:
+
+```json
+{
+  "validationId": "uuid",
+  "reflections": []
+}
+```
+
+Response status: `201`.
+
+Response: persisted reflection records.
+
+### `POST /api/ai/feedback`
+
+Authentication: bearer token.
+
+Body:
+
+```json
+{
+  "responseId": "uuid",
+  "feedbackType": "helpful",
+  "metadata": {}
+}
+```
+
+Valid feedback types are `helpful`, `not_helpful`, `incorrect`, `too_generic`, `too_long`, `too_short`, and `needs_more_evidence`.
+
+### Quality Metadata
+
+- `GET /api/ai/quality/:id`
+- `GET /api/ai/reflections/:user`
+- `GET /api/ai/feedback/metrics`
+- `GET /api/ai/validation/metrics`
 
 ## Health
 
