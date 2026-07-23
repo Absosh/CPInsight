@@ -66,6 +66,18 @@ Authenticated realtime delivery service that consumes Redis Streams and routes s
 
 Logical realtime subscription target such as `telemetry:{userId}`, `analytics:{userId}`, `contest:{contestId}`, or `system`.
 
+## Behavior Intelligence
+
+Backend subsystem that reconstructs telemetry sessions and extracts behavioral features. See [Behavior Intelligence](architecture/behavior-intelligence.md).
+
+## Feature Store
+
+Immutable database-backed collection of behavioral feature rows with value, confidence, source session, window, extractor id, and version.
+
+## Behavior Profile
+
+Aggregated behavioral view derived from feature rows across dimensions such as reading style, decision style, attention, persistence, and time management.
+
 ## Lease
 
 Temporary ownership marker that allows one relay worker to process an outbox row while allowing automatic recovery after expiration.

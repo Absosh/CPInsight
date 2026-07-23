@@ -2,7 +2,7 @@
 
 CPInsight is a layered analytics system for competitive programming data. It uses a web frontend for user interaction, an Express API for authenticated business operations, PostgreSQL for durable domain data, Redis for cache acceleration, and a Chrome extension for authenticated browser-side collection and contest-session detection.
 
-The design separates data acquisition from analytics. Platform clients and extension collectors gather facts. Backend services normalize and persist facts. Analytics services read persisted facts and produce views. The Observability SDK provides a newer platform-agnostic foundation for telemetry events without coupling collectors to storage or transport. The backend [Transactional Outbox](transactional-outbox.md), [Domain Event Bus](domain-event-bus.md), [Redis Event Distribution](redis-event-distribution.md), and [WebSocket Gateway](websocket-gateway.md) decouple committed facts from downstream consumers.
+The design separates data acquisition from analytics. Platform clients and extension collectors gather facts. Backend services normalize and persist facts. Analytics services read persisted facts and produce views. The Observability SDK provides a newer platform-agnostic foundation for telemetry events without coupling collectors to storage or transport. The backend [Transactional Outbox](transactional-outbox.md), [Domain Event Bus](domain-event-bus.md), [Redis Event Distribution](redis-event-distribution.md), [WebSocket Gateway](websocket-gateway.md), and [Behavior Intelligence](behavior-intelligence.md) decouple committed facts from downstream consumers.
 
 ## Runtime Architecture
 
@@ -30,6 +30,7 @@ flowchart TB
     DomainBus["Domain Event Bus"]
     RedisEvents["Redis Streams"]
     Realtime["WebSocket Gateway"]
+    Behavior["Behavior Intelligence"]
     Repositories["Repositories"]
     Middleware["Auth, validation,\nrate limit, errors"]
   end
@@ -55,6 +56,7 @@ flowchart TB
   Outbox --> DomainBus
   DomainBus --> RedisEvents
   RedisEvents --> Realtime
+  Services --> Behavior
   DomainBus --> Repositories
   Services --> Repositories
   Repositories --> Postgres
@@ -72,6 +74,7 @@ flowchart TB
 | Domain Event Bus | `backend/src/domain-events` | Generic publish/subscribe backbone for processed backend facts |
 | Redis Event Distribution | `backend/src/redis/events` | Redis Streams publisher and consumer framework for distributed domain event delivery |
 | WebSocket Gateway | `backend/src/realtime` | Authenticated realtime event delivery from Redis Streams to subscribed clients |
+| Behavior Intelligence | `backend/src/behavior`, `backend/src/services/behaviorService.js` | Session reconstruction, feature extraction, behavior profiles |
 | Persistence | `backend/src/database`, `repositories` | PostgreSQL tables and SQL access |
 | Cache | `backend/src/redis`, `analyticsService` | Redis read-through cache for analytics where safe |
 | Chrome extension | `extension/` | Manifest V3 extension, popup, background orchestration, content scripts, LeetCode provider sync, observability bridge |

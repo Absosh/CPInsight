@@ -48,6 +48,11 @@ The WebSocket Gateway upgrades authenticated clients at `/realtime` by default. 
 | `POST` | `/api/platforms/sync` | Yes | Sync all accounts |
 | `POST` | `/api/platforms/sync/:platform` | Yes | Sync one account |
 | `POST` | `/api/telemetry/upload` | Yes | Observability SDK telemetry batch ingestion |
+| `POST` | `/api/behavior/extract` | Yes | Run behavior reconstruction and feature extraction |
+| `GET` | `/api/behavior/sessions` | Yes | List reconstructed behavior sessions |
+| `GET` | `/api/behavior/profile` | Yes | Latest behavior profile |
+| `GET` | `/api/behavior/features` | Yes | Behavior feature rows |
+| `GET` | `/api/behavior/trends` | Yes | Historical feature trends |
 | `GET` | `/api/debug/submissions/:platform` | Yes | Debug submission inspection |
 | `GET` | `/api/debug/user-accounts` | Yes | Debug account inspection |
 

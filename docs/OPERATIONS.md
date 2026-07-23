@@ -257,6 +257,16 @@ The gateway consumes Redis Streams and serves `/realtime` by default. If clients
 4. Check dropped message and heartbeat failure metrics.
 5. Confirm the load balancer supports WebSocket upgrades.
 
+### Behavior Extraction Backlog
+
+Behavior extraction reads accepted telemetry and writes immutable feature rows. If extraction slows:
+
+1. Check `feature_extraction_metrics` for latency and failures.
+2. Limit extraction windows for backfills.
+3. Inspect confidence distributions for low-signal telemetry.
+4. Run `node scripts/verify-behavior-intelligence.js`.
+5. Add future workers before running large career-wide recomputations continuously.
+
 ### Extension Session Corruption
 
 The Observability SDK validates local storage shapes and resets corrupted observability keys to safe defaults. If local extension behavior remains inconsistent, remove extension storage from Chrome and reload the unpacked extension.
@@ -272,6 +282,7 @@ The Observability SDK validates local storage shapes and resets corrupted observ
 | Domain events are not reaching subscribers | Outbox relay disabled, stuck lease, or repeated subscriber failure | Inspect `domain_event_outbox`, `domain_event_subscriber_failures`, and relay environment variables. |
 | Redis consumers stop progressing | Consumer crash, pending entries, or poison message | Check Redis pending entries, dead-letter streams, and worker logs. |
 | WebSocket clients disconnect under load | Slow client or full outbound queue | Inspect dropped message metrics and increase `REALTIME_GATEWAY_MAX_QUEUE_SIZE` only after checking client behavior. |
+| Behavior profile is empty | Extraction has not run or telemetry is missing | Run `/api/behavior/extract` and inspect `feature_extraction_metrics`. |
 | Extension collector does not run | Host permission or content script match issue | Check `extension/manifest.json` and service worker console. |
 | Duplicate contest tabs behave unexpectedly | Local extension state issue | Inspect `observability.sessions` and `observability.tabIndex` in Chrome storage. |
 
@@ -297,4 +308,6 @@ The Observability SDK validates local storage shapes and resets corrupted observ
 - [Transactional Outbox](architecture/transactional-outbox.md)
 - [Redis Event Distribution](architecture/redis-event-distribution.md)
 - [WebSocket Gateway](architecture/websocket-gateway.md)
+- [Behavior Intelligence](architecture/behavior-intelligence.md)
+- [Feature Extraction](architecture/feature-extraction.md)
 - [API Reference](api/README.md)

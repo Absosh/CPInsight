@@ -155,6 +155,13 @@ cd backend
 node scripts/verify-realtime-gateway.js
 ```
 
+Run behavior intelligence verification:
+
+```powershell
+cd backend
+node scripts/verify-behavior-intelligence.js
+```
+
 Expected output includes:
 
 ```json
@@ -272,6 +279,17 @@ The Realtime Gateway verification covers:
 - Heartbeat cleanup.
 - Graceful shutdown.
 
+The Behavior Intelligence verification covers:
+
+- Contest reconstruction.
+- Interrupted sessions.
+- Duplicate telemetry.
+- Feature extractor plugin registration.
+- Confidence validation.
+- Historical aggregation.
+- Behavior profile aggregation.
+- 100k telemetry event reconstruction.
+
 ## Recovery Testing
 
 ### Browser Restart
@@ -350,5 +368,7 @@ Future work should add:
 - [Transactional Outbox](architecture/transactional-outbox.md)
 - [Redis Event Distribution](architecture/redis-event-distribution.md)
 - [WebSocket Gateway](architecture/websocket-gateway.md)
+- [Behavior Intelligence](architecture/behavior-intelligence.md)
+- [Feature Extraction](architecture/feature-extraction.md)
 - [Operations](OPERATIONS.md)
 - [Security](SECURITY.md)

@@ -25,6 +25,8 @@ The [Transactional Outbox](transactional-outbox.md) is the reliability boundary 
 
 [WebSocket Gateway](websocket-gateway.md) consumes Redis Streams and delivers authorized realtime messages to authenticated clients.
 
+[Behavior Intelligence](behavior-intelligence.md) reconstructs telemetry sessions and persists behavior features and profiles for future analytics, recommendations, and AI systems.
+
 ## Module Responsibilities
 
 | Layer | Location | Responsibility |

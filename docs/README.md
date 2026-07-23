@@ -28,6 +28,7 @@ Implemented:
 - Transactional Outbox and relay worker for reliable post-commit domain event publication.
 - Redis Streams event distribution layer for cross-process domain event consumers.
 - Authenticated Redis-backed WebSocket Gateway for realtime event delivery.
+- Behavior Intelligence Engine for session reconstruction, feature extraction, and behavior profiles.
 - Codeforces and CodeChef contest-session collector plugins.
 
 Planned:
@@ -72,6 +73,7 @@ flowchart LR
   API --> Outbox["Transactional Outbox"]
   DomainBus --> RedisStreams["Redis Streams"]
   RedisStreams --> Realtime["WebSocket Gateway"]
+  API --> Behavior["Behavior Intelligence"]
   Extension["Chrome extension"] --> API
   Extension --> SDK["Observability SDK"]
   SDK --> Store["chrome.storage.local"]
@@ -104,6 +106,8 @@ Architecture:
 - [Transactional Outbox](architecture/transactional-outbox.md)
 - [Redis Event Distribution](architecture/redis-event-distribution.md)
 - [WebSocket Gateway](architecture/websocket-gateway.md)
+- [Behavior Intelligence](architecture/behavior-intelligence.md)
+- [Feature Extraction](architecture/feature-extraction.md)
 - [RAG Roadmap](architecture/rag-roadmap.md)
 - [Future Roadmap](architecture/future-roadmap.md)
 - [Deployment](architecture/deployment.md)
@@ -132,6 +136,8 @@ Sequences:
 - [Redis Event Distribution](sequence/redis-event-distribution.md)
 - [Realtime Event Flow](sequence/realtime-event-flow.md)
 - [Client Reconnect](sequence/client-reconnect.md)
+- [Behavior Reconstruction](sequence/behavior-reconstruction.md)
+- [Feature Extraction](sequence/feature-extraction.md)
 - [Extension Upload](sequence/extension-upload.md)
 - [Analytics Refresh](sequence/analytics-refresh.md)
 - [Future Live Telemetry](sequence/future-live-telemetry.md)
@@ -155,6 +161,7 @@ Architecture Decision Records:
 - [ADR-0015 Transactional Outbox Pattern](decisions/ADR-0015-transactional-outbox.md)
 - [ADR-0016 Redis Event Distribution Layer](decisions/ADR-0016-redis-event-distribution-layer.md)
 - [ADR-0017 Realtime Event Gateway](decisions/ADR-0017-realtime-event-gateway.md)
+- [ADR-0018 Behavior Intelligence Engine](decisions/ADR-0018-behavior-intelligence-engine.md)
 
 Existing operational document:
 

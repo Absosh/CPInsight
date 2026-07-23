@@ -7,6 +7,7 @@ const healthRoutes = require('./healthRoutes');
 const debugRoutes = require('./debugRoutes');
 const extensionRoutes = require('./extensionRoutes');
 const telemetryRoutes = require('./telemetryRoutes');
+const behaviorRoutes = require('./behaviorRoutes');
 
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.use('/api/analytics', analyticsRoutes);
 router.use('/api/debug', debugRoutes);
 router.use('/api/extension', extensionRoutes);
 router.use('/api/telemetry', telemetryRoutes);
+router.use('/api/behavior', behaviorRoutes);
 
 module.exports = router;

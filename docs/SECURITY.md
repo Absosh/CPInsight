@@ -131,6 +131,8 @@ Redis event payloads carry the same immutable domain event contract. Consumers m
 
 WebSocket clients authenticate with JWT access tokens during upgrade. The gateway never trusts client-supplied identity and authorizes every channel subscription before routing events.
 
+Behavior features are derived from telemetry metadata only. The engine must not introduce sensitive DOM, cookies, tokens, clipboard data, or private messages into feature values or profiles.
+
 ## Dependency Security
 
 Run backend production audit:

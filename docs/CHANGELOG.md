@@ -32,6 +32,8 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Runtime verification harness for Redis event distribution behavior.
 - Authenticated WebSocket Gateway for Redis-backed realtime domain event delivery.
 - Runtime verification harness for realtime gateway connection, routing, backpressure, heartbeat, and Redis consumption behavior.
+- Behavior Intelligence Engine with session reconstruction, contest reconstruction, plugin feature extractors, immutable feature store, profiles, metrics, and protected APIs.
+- Runtime verification harness for behavior reconstruction, confidence, plugin registration, historical aggregation, and 100k-event processing.
 - User authentication with registration, login, refresh-token rotation, and logout.
 - JWT access token and refresh token infrastructure.
 - PostgreSQL schema for users, profiles, platform accounts, contests, submissions, analytics cache, refresh tokens, and LeetCode extension uploads.
@@ -49,7 +51,7 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Durable local telemetry queue for Observability SDK events.
 - Runtime verification harness for observability session lifecycle behavior.
 - Architecture documentation suite under `docs/`.
-- Architecture Decision Records ADR-0001 through ADR-0017.
+- Architecture Decision Records ADR-0001 through ADR-0018.
 - Operations, testing, security, contributing, changelog, and glossary documentation.
 
 ### Security

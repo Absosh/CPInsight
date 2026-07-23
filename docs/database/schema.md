@@ -269,3 +269,23 @@ Indexes support status polling, due retries, aggregate ordering by monotonic out
 ## `domain_event_replay_log`
 
 Stores administrative replay attempts for published or dead-letter outbox events. It records the outbox row, event id, requesting user, reason, status, and replay timestamp.
+
+## `feature_versions`
+
+Stores feature-family version metadata and extractor version mappings.
+
+## `behavior_sessions`
+
+Stores reconstructed practice and contest sessions derived from telemetry. Timelines are stored as JSONB arrays for problem, focus, submission, and navigation reconstruction.
+
+## `behavior_features`
+
+Stores immutable feature rows with feature name, group, JSON value, confidence, window key, source session, extractor id, and feature version.
+
+## `behavior_profiles`
+
+Stores aggregated behavior profiles across reading style, decision style, attention, contest strategy, persistence, risk, stress, learning style, and time management.
+
+## `feature_extraction_metrics`
+
+Stores reconstruction and extraction observability, including session counts, feature counts, latency, confidence distribution, incomplete sessions, failed reconstructions, and status.

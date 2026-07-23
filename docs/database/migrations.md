@@ -14,6 +14,7 @@ Migrations are SQL files in `backend/src/database/migrations`. They are executed
 | `006_telemetry_processing_pipeline.sql` | Adds processed telemetry events, pipeline metrics, and dead-letter storage |
 | `007_domain_event_bus.sql` | Adds domain event persistence, audit log, subscriber failure, and dispatch metric storage |
 | `008_transactional_outbox.sql` | Adds transactional outbox, replay log, outbox indexes, and subscriber idempotency constraints |
+| `009_behavior_intelligence.sql` | Adds behavior sessions, immutable features, profiles, feature versions, and extraction metrics |
 
 ## Migration Principles
 
