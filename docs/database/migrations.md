@@ -15,6 +15,9 @@ Migrations are SQL files in `backend/src/database/migrations`. They are executed
 | `007_domain_event_bus.sql` | Adds domain event persistence, audit log, subscriber failure, and dispatch metric storage |
 | `008_transactional_outbox.sql` | Adds transactional outbox, replay log, outbox indexes, and subscriber idempotency constraints |
 | `009_behavior_intelligence.sql` | Adds behavior sessions, immutable features, profiles, feature versions, and extraction metrics |
+| `010_behavior_knowledge_graph.sql` | Adds behavior knowledge graph nodes, edges, insights, patterns, evidence, and inference metrics |
+| `011_intent_retrieval_planner.sql` | Adds intent classification, retrieval plan, planner rule version, and planner metric storage |
+| `012_hybrid_retrieval_engine.sql` | Adds retrieval cache, evidence package, retrieval metrics, source metrics, and fusion metrics storage |
 
 ## Migration Principles
 
@@ -37,3 +40,40 @@ docker compose --profile tools run --rm migrate
 ```
 
 The backend should be deployed only after required migrations have succeeded.
+
+## `010_behavior_knowledge_graph.sql`
+
+Adds the Behavior Knowledge Layer schema:
+
+- `insight_versions`
+- `knowledge_nodes`
+- `knowledge_edges`
+- `behavior_insights`
+- `behavior_patterns`
+- `insight_evidence`
+- `insight_inference_metrics`
+
+This migration depends on `users`, `behavior_sessions`, and `behavior_features`. It keeps behavior knowledge separate from raw telemetry and feature extraction rows while preserving evidence links back to source features and reconstructed sessions.
+
+## `011_intent_retrieval_planner.sql`
+
+Adds planning-only AI infrastructure:
+
+- `planner_rule_versions`
+- `intent_classifications`
+- `retrieval_plans`
+- `planner_metrics`
+
+The migration stores question hashes, intent classifications, selected sources, selected strategies, confidence plans, token budgets, estimates, and planner metrics. It does not store raw question text.
+
+## `012_hybrid_retrieval_engine.sql`
+
+Adds the Hybrid Retrieval Engine schema:
+
+- `retrieval_cache`
+- `evidence_packages`
+- `retrieval_execution_metrics`
+- `retrieval_source_metrics`
+- `fusion_metrics`
+
+The migration stores evidence packages and retrieval observability. It does not duplicate canonical behavior, knowledge, contest, or submission tables.

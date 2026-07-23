@@ -78,6 +78,58 @@ Immutable database-backed collection of behavioral feature rows with value, conf
 
 Aggregated behavioral view derived from feature rows across dimensions such as reading style, decision style, attention, persistence, and time management.
 
+## Behavior Knowledge Graph
+
+A persisted graph of versioned nodes and edges that represents evidence-backed behavioral strengths, weaknesses, and patterns. See [Behavior Knowledge](architecture/behavior-knowledge.md).
+
+## Insight Engine
+
+The rule-based subsystem that converts behavior features into semantic insights, graph relationships, evidence records, patterns, and inference metrics. See [Insight Engine](architecture/insight-engine.md).
+
+## Insight Rule
+
+A plugin implementing the knowledge inference contract. Each rule inspects behavior features and may emit immutable insights with confidence and evidence.
+
+## Knowledge Node
+
+A versioned graph vertex such as a user, strength, weakness, or behavior pattern.
+
+## Knowledge Edge
+
+A directed relationship between two knowledge nodes, with relationship type, confidence, evidence, and version.
+
+## Intent Classification
+
+Deterministic planner step that maps a natural-language question to one or more supported intents without calling an LLM. See [Intent Classification](architecture/intent-classification.md).
+
+## Retrieval Planner
+
+Planning-only backend subsystem that selects required evidence, retrieval sources, strategies, confidence requirements, token budget, and execution priority. It does not retrieve data. See [Retrieval Planner](architecture/retrieval-planner.md).
+
+## Retrieval Source
+
+Registered metadata describing a future retrievable evidence source, including supported intents, estimated cost, latency, confidence requirement, and context estimate.
+
+## Retrieval Strategy
+
+Registered metadata describing how a future retrieval engine should query selected sources, such as graph traversal, evidence-chain retrieval, historical window retrieval, or SQL retrieval.
+
+## Hybrid Retrieval Engine
+
+Backend subsystem that executes retrieval plans across registered source adapters and emits immutable Evidence Packages. See [Hybrid Retrieval](architecture/hybrid-retrieval.md).
+
+## Evidence Package
+
+Immutable retrieval output containing retrieved source summaries, ranked evidence, contradictions, confidence summary, missing evidence, and retrieval statistics.
+
+## Evidence Fusion
+
+Pipeline that normalizes, deduplicates, ranks, and contradiction-checks retrieved source evidence. See [Evidence Fusion](architecture/evidence-fusion.md).
+
+## Source Adapter
+
+Retrieval component that knows how to query one evidence source behind a common adapter contract.
+
 ## Lease
 
 Temporary ownership marker that allows one relay worker to process an outbox row while allowing automatic recovery after expiration.

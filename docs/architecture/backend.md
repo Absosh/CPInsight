@@ -27,6 +27,12 @@ The [Transactional Outbox](transactional-outbox.md) is the reliability boundary 
 
 [Behavior Intelligence](behavior-intelligence.md) reconstructs telemetry sessions and persists behavior features and profiles for future analytics, recommendations, and AI systems.
 
+[Behavior Knowledge](behavior-knowledge.md) consumes behavior features and persists semantic insights, graph nodes, graph edges, evidence rows, recurring patterns, and inference metrics. Its rule execution model is documented in [Insight Engine](insight-engine.md).
+
+[Retrieval Planner](retrieval-planner.md) classifies natural-language questions and produces retrieval plans for future AI systems. It does not retrieve data, build prompts, or call LLMs. Intent classification is documented in [Intent Classification](intent-classification.md).
+
+[Hybrid Retrieval](hybrid-retrieval.md) executes retrieval plans through source adapters and emits immutable Evidence Packages. Evidence normalization, ranking, and contradiction handling are documented in [Evidence Fusion](evidence-fusion.md).
+
 ## Module Responsibilities
 
 | Layer | Location | Responsibility |

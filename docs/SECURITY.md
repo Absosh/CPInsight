@@ -133,6 +133,12 @@ WebSocket clients authenticate with JWT access tokens during upgrade. The gatewa
 
 Behavior features are derived from telemetry metadata only. The engine must not introduce sensitive DOM, cookies, tokens, clipboard data, or private messages into feature values or profiles.
 
+Behavior knowledge consumes persisted behavior features only. It stores inferred strengths, weaknesses, patterns, confidence, and evidence references; it must not copy raw DOM, cookies, tokens, clipboard contents, or unrelated browser history into graph properties or insight evidence payloads.
+
+The Retrieval Planner stores question hashes, classifications, plans, and metrics. It must not persist raw natural-language questions, prompt text, generated answers, embeddings, or retrieved context in Phase 3.4A.
+
+The Hybrid Retrieval Engine stores Evidence Packages assembled from existing canonical backend data. It must not add secrets, cookies, access tokens, refresh tokens, prompt text, generated answers, embeddings, or raw question text to package payloads.
+
 ## Dependency Security
 
 Run backend production audit:

@@ -29,6 +29,9 @@ Implemented:
 - Redis Streams event distribution layer for cross-process domain event consumers.
 - Authenticated Redis-backed WebSocket Gateway for realtime event delivery.
 - Behavior Intelligence Engine for session reconstruction, feature extraction, and behavior profiles.
+- Behavior Knowledge Layer for rule-based insights, persistent graph relationships, and evidence-backed behavior patterns.
+- Intent Classification and Retrieval Planner for planning future evidence retrieval without executing retrieval or invoking an LLM.
+- Hybrid Retrieval Engine for executing retrieval plans and producing ranked, contradiction-aware Evidence Packages without LLM calls.
 - Codeforces and CodeChef contest-session collector plugins.
 
 Planned:
@@ -74,6 +77,9 @@ flowchart LR
   DomainBus --> RedisStreams["Redis Streams"]
   RedisStreams --> Realtime["WebSocket Gateway"]
   API --> Behavior["Behavior Intelligence"]
+  Behavior --> Knowledge["Behavior Knowledge Graph"]
+  Knowledge --> Planner["Retrieval Planner"]
+  Planner --> Retrieval["Hybrid Retrieval"]
   Extension["Chrome extension"] --> API
   Extension --> SDK["Observability SDK"]
   SDK --> Store["chrome.storage.local"]
@@ -108,6 +114,12 @@ Architecture:
 - [WebSocket Gateway](architecture/websocket-gateway.md)
 - [Behavior Intelligence](architecture/behavior-intelligence.md)
 - [Feature Extraction](architecture/feature-extraction.md)
+- [Behavior Knowledge](architecture/behavior-knowledge.md)
+- [Insight Engine](architecture/insight-engine.md)
+- [Intent Classification](architecture/intent-classification.md)
+- [Retrieval Planner](architecture/retrieval-planner.md)
+- [Hybrid Retrieval](architecture/hybrid-retrieval.md)
+- [Evidence Fusion](architecture/evidence-fusion.md)
 - [RAG Roadmap](architecture/rag-roadmap.md)
 - [Future Roadmap](architecture/future-roadmap.md)
 - [Deployment](architecture/deployment.md)
@@ -138,6 +150,12 @@ Sequences:
 - [Client Reconnect](sequence/client-reconnect.md)
 - [Behavior Reconstruction](sequence/behavior-reconstruction.md)
 - [Feature Extraction](sequence/feature-extraction.md)
+- [Knowledge Inference](sequence/knowledge-inference.md)
+- [Insight Generation](sequence/insight-generation.md)
+- [Question Planning](sequence/question-planning.md)
+- [Retrieval Plan Generation](sequence/retrieval-plan-generation.md)
+- [Retrieval Execution](sequence/retrieval-execution.md)
+- [Evidence Fusion](sequence/evidence-fusion.md)
 - [Extension Upload](sequence/extension-upload.md)
 - [Analytics Refresh](sequence/analytics-refresh.md)
 - [Future Live Telemetry](sequence/future-live-telemetry.md)
@@ -162,6 +180,9 @@ Architecture Decision Records:
 - [ADR-0016 Redis Event Distribution Layer](decisions/ADR-0016-redis-event-distribution-layer.md)
 - [ADR-0017 Realtime Event Gateway](decisions/ADR-0017-realtime-event-gateway.md)
 - [ADR-0018 Behavior Intelligence Engine](decisions/ADR-0018-behavior-intelligence-engine.md)
+- [ADR-0019 Behavior Knowledge Layer](decisions/ADR-0019-behavior-knowledge-layer.md)
+- [ADR-0020 Intent Classification and Retrieval Planner](decisions/ADR-0020-intent-classification-and-retrieval-planner.md)
+- [ADR-0021 Hybrid Retrieval Engine](decisions/ADR-0021-hybrid-retrieval-engine.md)
 
 Existing operational document:
 

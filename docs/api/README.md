@@ -53,10 +53,211 @@ The WebSocket Gateway upgrades authenticated clients at `/realtime` by default. 
 | `GET` | `/api/behavior/profile` | Yes | Latest behavior profile |
 | `GET` | `/api/behavior/features` | Yes | Behavior feature rows |
 | `GET` | `/api/behavior/trends` | Yes | Historical feature trends |
+| `POST` | `/api/knowledge/infer` | Yes | Run behavior knowledge inference from existing feature rows |
+| `GET` | `/api/knowledge/graph` | Yes | Retrieve persisted knowledge nodes and edges |
+| `GET` | `/api/knowledge/strengths` | Yes | Retrieve strength insights |
+| `GET` | `/api/knowledge/weaknesses` | Yes | Retrieve weakness insights |
+| `GET` | `/api/knowledge/patterns` | Yes | Retrieve recurring behavior patterns |
+| `GET` | `/api/knowledge/evolution` | Yes | Retrieve historical insight rows |
+| `GET` | `/api/knowledge/insights/:insightId/evidence` | Yes | Retrieve evidence rows for one insight |
+| `POST` | `/api/ai/planner/classify` | Yes | Classify a question into planner intents |
+| `POST` | `/api/ai/planner/plan` | Yes | Produce and persist a retrieval plan without retrieval |
+| `GET` | `/api/ai/planner/intents` | Yes | List intent taxonomy |
+| `GET` | `/api/ai/planner/sources` | Yes | List retrieval source metadata |
+| `GET` | `/api/ai/planner/strategies` | Yes | List retrieval strategy metadata |
+| `POST` | `/api/ai/retrieval/execute` | Yes | Execute a retrieval plan and persist an evidence package |
+| `GET` | `/api/ai/retrieval/package/:id` | Yes | Fetch an evidence package |
+| `GET` | `/api/ai/retrieval/cache` | Yes | Inspect retrieval cache statistics |
+| `GET` | `/api/ai/retrieval/metrics` | Yes | Fetch retrieval metrics |
+| `GET` | `/api/ai/retrieval/sources` | Yes | Inspect retrieval source adapter health |
+| `GET` | `/api/ai/retrieval/health` | Yes | Inspect retrieval engine health |
 | `GET` | `/api/debug/submissions/:platform` | Yes | Debug submission inspection |
 | `GET` | `/api/debug/user-accounts` | Yes | Debug account inspection |
 
 Debug endpoints are implemented and authenticated, but should not be treated as stable product APIs.
+
+## Behavior Knowledge
+
+Behavior knowledge endpoints are internal authenticated APIs. They expose graph and insight records produced from behavior features; they do not perform AI generation or recommendation.
+
+### `POST /api/knowledge/infer`
+
+Authentication: bearer token.
+
+Body:
+
+```json
+{
+  "windowKey": "all",
+  "limit": 1000
+}
+```
+
+Response status: `202`.
+
+Response:
+
+```json
+{
+  "runId": "uuid",
+  "insightsGenerated": 7,
+  "graphNodes": 8,
+  "graphEdges": 7,
+  "patternCount": 2,
+  "metrics": {}
+}
+```
+
+### `GET /api/knowledge/graph`
+
+Authentication: bearer token.
+
+Response:
+
+```json
+{
+  "nodes": [],
+  "edges": []
+}
+```
+
+### `GET /api/knowledge/strengths`
+
+Authentication: bearer token.
+
+Response: strength rows from `behavior_insights`.
+
+### `GET /api/knowledge/weaknesses`
+
+Authentication: bearer token.
+
+Response: weakness rows from `behavior_insights`.
+
+### `GET /api/knowledge/patterns`
+
+Authentication: bearer token.
+
+Response: rows from `behavior_patterns`.
+
+### `GET /api/knowledge/evolution`
+
+Authentication: bearer token.
+
+Response: all insight rows ordered by creation time.
+
+### `GET /api/knowledge/insights/:insightId/evidence`
+
+Authentication: bearer token.
+
+Response: evidence rows joined through the authenticated user's insight ownership.
+
+## AI Planner
+
+Planner endpoints are internal authenticated APIs. They classify questions and create retrieval plans only. They do not retrieve data, build prompts, call an LLM, generate recommendations, or use embeddings.
+
+### `POST /api/ai/planner/classify`
+
+Authentication: bearer token.
+
+Body:
+
+```json
+{
+  "question": "Why did my rating drop?"
+}
+```
+
+Response: intent classification with primary intent, secondary intents, confidence, ambiguity flag, and question hash.
+
+### `POST /api/ai/planner/plan`
+
+Authentication: bearer token.
+
+Body:
+
+```json
+{
+  "question": "What should I practice?",
+  "options": {}
+}
+```
+
+Response status: `202`.
+
+Response: retrieval plan containing required evidence, selected sources, strategies, confidence plan, token budget, estimates, and execution priority.
+
+### `GET /api/ai/planner/intents`
+
+Authentication: bearer token.
+
+Response: supported intent taxonomy.
+
+### `GET /api/ai/planner/sources`
+
+Authentication: bearer token.
+
+Response: retrieval source metadata.
+
+### `GET /api/ai/planner/strategies`
+
+Authentication: bearer token.
+
+Response: retrieval strategy metadata.
+
+## AI Retrieval
+
+Retrieval endpoints are internal authenticated APIs. They execute planner output and produce Evidence Packages only. They do not build prompts, invoke LLMs, generate recommendations, or use embeddings.
+
+### `POST /api/ai/retrieval/execute`
+
+Authentication: bearer token.
+
+Body:
+
+```json
+{
+  "plan": {
+    "planId": "uuid",
+    "questionHash": "sha256",
+    "retrievalSources": []
+  },
+  "options": {}
+}
+```
+
+Response status: `202`.
+
+Response: immutable evidence package with metadata, retrieved source summaries, evidence, contradictions, confidence summary, missing evidence, and retrieval statistics.
+
+### `GET /api/ai/retrieval/package/:id`
+
+Authentication: bearer token.
+
+Response: persisted evidence package row for the authenticated user.
+
+### `GET /api/ai/retrieval/cache`
+
+Authentication: bearer token.
+
+Response: current process cache entry count, hits, misses, hit rate, and TTL.
+
+### `GET /api/ai/retrieval/metrics`
+
+Authentication: bearer token.
+
+Response: retrieval execution metric rows.
+
+### `GET /api/ai/retrieval/sources`
+
+Authentication: bearer token.
+
+Response: retrieval adapter health and reliability metadata.
+
+### `GET /api/ai/retrieval/health`
+
+Authentication: bearer token.
+
+Response: aggregate retrieval health, source health, and cache stats.
 
 ## Health
 

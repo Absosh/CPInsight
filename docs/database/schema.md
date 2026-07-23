@@ -289,3 +289,133 @@ Stores aggregated behavior profiles across reading style, decision style, attent
 ## `feature_extraction_metrics`
 
 Stores reconstruction and extraction observability, including session counts, feature counts, latency, confidence distribution, incomplete sessions, failed reconstructions, and status.
+
+## `insight_versions`
+
+Stores insight-family version metadata and rule-version mappings for behavior knowledge inference.
+
+## `knowledge_nodes`
+
+Stores versioned behavior knowledge graph nodes.
+
+Important columns:
+
+- `user_id`
+- `node_type`
+- `node_key`
+- `label`
+- `properties JSONB`
+- `version`
+
+Uniqueness: `(user_id, node_type, node_key, version)`.
+
+## `knowledge_edges`
+
+Stores directed relationships between knowledge nodes.
+
+Important columns:
+
+- `source_node_id`
+- `target_node_id`
+- `relationship_type`
+- `confidence`
+- `evidence JSONB`
+- `version`
+
+Indexes support user relationship lookup and source-node traversal.
+
+## `behavior_insights`
+
+Stores immutable inferred behavior insights.
+
+Important columns:
+
+- `insight_type`
+- `insight_key`
+- `category`
+- `confidence`
+- `supporting_features UUID[]`
+- `evidence_sessions UUID[]`
+- `time_window`
+- `version`
+- `properties JSONB`
+
+## `behavior_patterns`
+
+Stores recurring behavior patterns detected from inferred insights. Rows include recurrence count, first and last seen timestamps, trend, supporting insight IDs, evidence, and version.
+
+## `insight_evidence`
+
+Stores evidence links between insights, behavior features, and reconstructed sessions.
+
+## `insight_inference_metrics`
+
+Stores inference-run observability, including generated insight count, rules fired, latency, confidence distribution, graph size, pattern count, status, and error message.
+
+## `planner_rule_versions`
+
+Stores planner rule identity, supported intents, rule version, and metadata.
+
+## `intent_classifications`
+
+Stores hashed natural-language question identity, primary intent, secondary intents, classifier confidence, ambiguity flag, and classified intent details.
+
+## `retrieval_plans`
+
+Stores structured retrieval plans without executing retrieval.
+
+Important columns:
+
+- `plan_id`
+- `question_hash`
+- `primary_intent`
+- `secondary_intents`
+- `selected_sources JSONB`
+- `selected_strategies JSONB`
+- `required_evidence JSONB`
+- `confidence_plan JSONB`
+- `token_budget JSONB`
+- `estimated_context_tokens`
+- `estimated_latency_ms`
+- `estimated_cost`
+- `execution_priority JSONB`
+
+## `planner_metrics`
+
+Stores planner observability, including latency, intent distribution, selected source count, source selection frequency, estimated cost, estimated confidence, planning failures, and unknown intent count.
+
+## `retrieval_cache`
+
+Stores future durable retrieval cache entries with cache key, source name, source version, payload, expiry, and user scope.
+
+The current engine uses a process-local TTL cache and keeps this table available for future cross-process cache invalidation.
+
+## `evidence_packages`
+
+Stores immutable Evidence Packages emitted by the Hybrid Retrieval Engine.
+
+Important columns:
+
+- `package_id`
+- `plan_id`
+- `question_hash`
+- `retrieval_metadata JSONB`
+- `retrieved_sources JSONB`
+- `evidence JSONB`
+- `ignored_evidence JSONB`
+- `contradictions JSONB`
+- `confidence_summary JSONB`
+- `missing_evidence JSONB`
+- `retrieval_statistics JSONB`
+
+## `retrieval_execution_metrics`
+
+Stores retrieval execution latency, evidence counts, contradiction counts, missing evidence counts, cache hit rate, source failures, partial-failure status, and completion status.
+
+## `retrieval_source_metrics`
+
+Stores per-source retrieval metrics, including source name, status, latency, evidence count, cache hit flag, and error message.
+
+## `fusion_metrics`
+
+Stores evidence fusion observability, including raw, normalized, ranked, resolved, and contradictory evidence counts.

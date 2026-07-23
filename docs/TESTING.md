@@ -162,6 +162,27 @@ cd backend
 node scripts/verify-behavior-intelligence.js
 ```
 
+Run behavior knowledge verification:
+
+```powershell
+cd backend
+node scripts/verify-behavior-knowledge.js
+```
+
+Run retrieval planner verification:
+
+```powershell
+cd backend
+node scripts/verify-retrieval-planner.js
+```
+
+Run hybrid retrieval verification:
+
+```powershell
+cd backend
+node scripts/verify-hybrid-retrieval.js
+```
+
 Expected output includes:
 
 ```json
@@ -290,6 +311,42 @@ The Behavior Intelligence verification covers:
 - Behavior profile aggregation.
 - 100k telemetry event reconstruction.
 
+The Behavior Knowledge verification covers:
+
+- Rule plugin registration and duplicate-rule rejection.
+- Strength, weakness, and pattern insight generation.
+- Confidence bounds.
+- Knowledge graph node and edge construction.
+- Pattern detection.
+- Contradictory feature handling.
+- Historical consistency.
+- 50k-feature synthetic inference performance.
+
+The Retrieval Planner verification covers:
+
+- Single-intent classification.
+- Multi-intent classification.
+- Unknown question handling.
+- Ambiguous question handling.
+- Evidence request planning.
+- Trend and goal-planning questions.
+- Planner rule registration and duplicate rejection.
+- Deterministic planning.
+- 1000 mixed questions and latency bounds.
+
+The Hybrid Retrieval verification covers:
+
+- Parallel source execution.
+- Knowledge graph and evidence source retrieval through adapters.
+- Cache effectiveness.
+- Partial source failure tolerance.
+- Timeout handling.
+- Contradiction detection.
+- Fusion correctness.
+- Ranking stability.
+- Deterministic evidence packages.
+- 1000 mixed retrieval plans and latency bounds.
+
 ## Recovery Testing
 
 ### Browser Restart
@@ -370,5 +427,11 @@ Future work should add:
 - [WebSocket Gateway](architecture/websocket-gateway.md)
 - [Behavior Intelligence](architecture/behavior-intelligence.md)
 - [Feature Extraction](architecture/feature-extraction.md)
+- [Behavior Knowledge](architecture/behavior-knowledge.md)
+- [Insight Engine](architecture/insight-engine.md)
+- [Intent Classification](architecture/intent-classification.md)
+- [Retrieval Planner](architecture/retrieval-planner.md)
+- [Hybrid Retrieval](architecture/hybrid-retrieval.md)
+- [Evidence Fusion](architecture/evidence-fusion.md)
 - [Operations](OPERATIONS.md)
 - [Security](SECURITY.md)

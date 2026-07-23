@@ -2,7 +2,7 @@
 
 CPInsight is a layered analytics system for competitive programming data. It uses a web frontend for user interaction, an Express API for authenticated business operations, PostgreSQL for durable domain data, Redis for cache acceleration, and a Chrome extension for authenticated browser-side collection and contest-session detection.
 
-The design separates data acquisition from analytics. Platform clients and extension collectors gather facts. Backend services normalize and persist facts. Analytics services read persisted facts and produce views. The Observability SDK provides a newer platform-agnostic foundation for telemetry events without coupling collectors to storage or transport. The backend [Transactional Outbox](transactional-outbox.md), [Domain Event Bus](domain-event-bus.md), [Redis Event Distribution](redis-event-distribution.md), [WebSocket Gateway](websocket-gateway.md), and [Behavior Intelligence](behavior-intelligence.md) decouple committed facts from downstream consumers.
+The design separates data acquisition from analytics. Platform clients and extension collectors gather facts. Backend services normalize and persist facts. Analytics services read persisted facts and produce views. The Observability SDK provides a newer platform-agnostic foundation for telemetry events without coupling collectors to storage or transport. The backend [Transactional Outbox](transactional-outbox.md), [Domain Event Bus](domain-event-bus.md), [Redis Event Distribution](redis-event-distribution.md), [WebSocket Gateway](websocket-gateway.md), [Behavior Intelligence](behavior-intelligence.md), [Behavior Knowledge Layer](behavior-knowledge.md), [Retrieval Planner](retrieval-planner.md), and [Hybrid Retrieval Engine](hybrid-retrieval.md) decouple committed facts from downstream consumers.
 
 ## Runtime Architecture
 
@@ -31,6 +31,9 @@ flowchart TB
     RedisEvents["Redis Streams"]
     Realtime["WebSocket Gateway"]
     Behavior["Behavior Intelligence"]
+    Knowledge["Behavior Knowledge"]
+    Planner["Retrieval Planner"]
+    Retrieval["Hybrid Retrieval"]
     Repositories["Repositories"]
     Middleware["Auth, validation,\nrate limit, errors"]
   end
@@ -57,6 +60,12 @@ flowchart TB
   DomainBus --> RedisEvents
   RedisEvents --> Realtime
   Services --> Behavior
+  Behavior --> Knowledge
+  Knowledge --> Planner
+  Planner --> Retrieval
+  Retrieval --> Repositories
+  Planner --> Repositories
+  Knowledge --> Repositories
   DomainBus --> Repositories
   Services --> Repositories
   Repositories --> Postgres
@@ -75,6 +84,9 @@ flowchart TB
 | Redis Event Distribution | `backend/src/redis/events` | Redis Streams publisher and consumer framework for distributed domain event delivery |
 | WebSocket Gateway | `backend/src/realtime` | Authenticated realtime event delivery from Redis Streams to subscribed clients |
 | Behavior Intelligence | `backend/src/behavior`, `backend/src/services/behaviorService.js` | Session reconstruction, feature extraction, behavior profiles |
+| Behavior Knowledge | `backend/src/knowledge`, `backend/src/services/knowledgeService.js` | Rule-based insight inference, knowledge graph persistence, behavior patterns, evidence records |
+| Retrieval Planner | `backend/src/ai/planner`, `backend/src/services/plannerService.js` | Intent classification and retrieval planning without retrieval or LLM calls |
+| Hybrid Retrieval | `backend/src/ai/retrieval`, `backend/src/services/retrievalService.js` | Source adapter execution, evidence fusion, ranking, contradiction detection, immutable evidence packages |
 | Persistence | `backend/src/database`, `repositories` | PostgreSQL tables and SQL access |
 | Cache | `backend/src/redis`, `analyticsService` | Redis read-through cache for analytics where safe |
 | Chrome extension | `extension/` | Manifest V3 extension, popup, background orchestration, content scripts, LeetCode provider sync, observability bridge |

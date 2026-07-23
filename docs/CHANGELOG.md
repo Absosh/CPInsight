@@ -34,6 +34,12 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Runtime verification harness for realtime gateway connection, routing, backpressure, heartbeat, and Redis consumption behavior.
 - Behavior Intelligence Engine with session reconstruction, contest reconstruction, plugin feature extractors, immutable feature store, profiles, metrics, and protected APIs.
 - Runtime verification harness for behavior reconstruction, confidence, plugin registration, historical aggregation, and 100k-event processing.
+- Behavior Knowledge Layer with rule-based insight inference, knowledge graph persistence, pattern detection, evidence records, and protected APIs.
+- Runtime verification harness for behavior knowledge inference, graph construction, pattern detection, confidence validation, and 50k-feature processing.
+- Intent Classification and Retrieval Planner with deterministic multi-intent classification, source registry, strategy registry, plugin planning rules, confidence planning, token budgeting, and protected APIs.
+- Runtime verification harness for retrieval planning, ambiguity, unknown intents, evidence requests, deterministic output, and 1000 mixed questions.
+- Hybrid Retrieval Engine with source adapters, parallel execution, cache support, evidence fusion, ranking, contradiction detection, immutable Evidence Packages, and protected APIs.
+- Runtime verification harness for hybrid retrieval, cache hits, partial failures, timeouts, contradiction detection, deterministic packages, and 1000 mixed retrieval plans.
 - User authentication with registration, login, refresh-token rotation, and logout.
 - JWT access token and refresh token infrastructure.
 - PostgreSQL schema for users, profiles, platform accounts, contests, submissions, analytics cache, refresh tokens, and LeetCode extension uploads.
@@ -51,7 +57,7 @@ This changelog follows the structure of [Keep a Changelog](https://keepachangelo
 - Durable local telemetry queue for Observability SDK events.
 - Runtime verification harness for observability session lifecycle behavior.
 - Architecture documentation suite under `docs/`.
-- Architecture Decision Records ADR-0001 through ADR-0018.
+- Architecture Decision Records ADR-0001 through ADR-0021.
 - Operations, testing, security, contributing, changelog, and glossary documentation.
 
 ### Security
