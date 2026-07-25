@@ -24,6 +24,7 @@ class RedisStreamConsumer {
     this.deadLetterStream = deadLetterStream;
     this.logger = logger;
     this.running = false;
+    this.blockingClient = null;
     this.metrics = {
       consumedEvents: 0,
       acknowledgedEvents: 0,
@@ -54,7 +55,7 @@ class RedisStreamConsumer {
 
   async consumeOnce(handler) {
     await this.recoverPending(handler);
-    const client = await this.connectionManager.connect();
+    const client = await this.blockingReadClient();
     const result = await client.xreadgroup(
       'GROUP',
       this.group,
@@ -69,6 +70,21 @@ class RedisStreamConsumer {
     );
     if (!result) return [];
     return this.processReadResult(result, handler);
+  }
+
+  async blockingReadClient() {
+    if (this.blockingClient && this.blockingClient.status === 'ready') {
+      return this.blockingClient;
+    }
+
+    const baseClient = await this.connectionManager.connect();
+    this.blockingClient = baseClient.duplicate({
+      lazyConnect: true,
+      maxRetriesPerRequest: 3,
+      enableOfflineQueue: true
+    });
+    await this.blockingClient.connect();
+    return this.blockingClient;
   }
 
   async recoverPending(handler) {
@@ -167,6 +183,10 @@ class RedisStreamConsumer {
 
   async shutdown() {
     this.running = false;
+    if (this.blockingClient) {
+      await this.blockingClient.quit().catch(() => this.blockingClient.disconnect());
+      this.blockingClient = null;
+    }
   }
 
   fieldsToObject(fields) {

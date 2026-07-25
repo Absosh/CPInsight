@@ -14,7 +14,7 @@ function signRefreshToken(user, familyId = crypto.randomUUID()) {
   return {
     familyId,
     token: jwt.sign(
-      { sub: user.id, familyId },
+      { sub: user.id, familyId, jti: crypto.randomUUID() },
       env.jwt.refreshSecret,
       { expiresIn: `${env.jwt.refreshTtlDays}d`, issuer: 'cpinsight-api' }
     )

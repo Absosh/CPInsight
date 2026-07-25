@@ -156,10 +156,10 @@ class StateManager {
         && selectedPlatforms.length === accountPlatforms.length
         && accountPlatforms.every(platform => selectedSet.has(platform));
 
-      if (selectedPlatforms.length === 0 || allConnectedPlatformsSelected) {
-        data = await analyticsService.getCombinedAnalytics();
-      } else if (selectedPlatforms.length === 1) {
+      if (selectedPlatforms.length === 1) {
         data = await analyticsService.getAnalytics(selectedPlatforms[0]);
+      } else if (selectedPlatforms.length === 0 || allConnectedPlatformsSelected) {
+        data = await analyticsService.getCombinedAnalytics();
       } else {
         data = await analyticsService.getMultiplePlatforms(selectedPlatforms);
       }
