@@ -117,14 +117,225 @@
       gap: 0.75rem;
     }
 
+    .review-tabs,
+    .replay-controls,
+    .replay-filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .review-tab {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #d1d5db;
+      font-weight: 800;
+      padding: 0.55rem 0.9rem;
+    }
+
+    .review-tab[aria-selected="true"] {
+      border-color: rgba(16, 185, 129, 0.55);
+      background: rgba(16, 185, 129, 0.14);
+      color: #6ee7b7;
+    }
+
+    .replay-layout {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .replay-header {
+      display: grid;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .replay-header h2 {
+      color: #fff;
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    .replay-header-metrics {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .replay-header-metrics dt {
+      color: #9ca3af;
+      font-size: 0.75rem;
+    }
+
+    .replay-header-metrics dd {
+      color: #fff;
+      font-weight: 800;
+      margin: 0.1rem 0 0;
+    }
+
+    .replay-scrubber-card,
+    .replay-controls {
+      padding: 1rem;
+    }
+
+    .replay-scrubber-labels {
+      display: flex;
+      justify-content: space-between;
+      color: #9ca3af;
+      font-size: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .replay-scrubber {
+      inline-size: 100%;
+      accent-color: #10b981;
+    }
+
+    .replay-markers {
+      position: relative;
+      block-size: 1rem;
+      margin-top: 0.35rem;
+    }
+
+    .replay-markers button {
+      position: absolute;
+      inline-size: 0.65rem;
+      block-size: 0.65rem;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 999px;
+      background: #10b981;
+      cursor: pointer;
+      transform: translateX(-50%);
+    }
+
+    .replay-progress-track {
+      overflow: hidden;
+      block-size: 0.4rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      margin-top: 0.5rem;
+    }
+
+    .replay-progress-track span {
+      display: block;
+      block-size: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #10b981, #60a5fa);
+      transition: inline-size 180ms cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .replay-controls {
+      align-items: center;
+    }
+
+    .replay-controls label,
+    .replay-filter {
+      align-items: center;
+      color: #d1d5db;
+      display: inline-flex;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+    }
+
+    .replay-speed-select {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 0.5rem;
+      color: #fff;
+      padding: 0.35rem 0.5rem;
+    }
+
+    .replay-main {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .replay-sidebar {
+      padding: 1rem;
+      position: sticky;
+      top: 1rem;
+    }
+
+    .replay-sidebar h3,
+    .replay-event-detail h3 {
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .replay-event-list {
+      display: grid;
+      gap: 0.5rem;
+      list-style: none;
+      margin: 1rem 0 0;
+      max-height: 420px;
+      overflow: auto;
+      padding: 0;
+    }
+
+    .replay-event-button {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0.5rem;
+      background: rgba(255, 255, 255, 0.04);
+      color: #d1d5db;
+      display: grid;
+      gap: 0.15rem;
+      inline-size: 100%;
+      padding: 0.65rem;
+      text-align: left;
+    }
+
+    .replay-event-button span {
+      color: #10b981;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .replay-event-button[aria-current="true"] {
+      border-color: rgba(16, 185, 129, 0.55);
+      background: rgba(16, 185, 129, 0.12);
+      color: #fff;
+    }
+
+    .replay-panels {
+      display: grid;
+      gap: 1rem;
+      min-width: 0;
+    }
+
+    .replay-comparison > div {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 1rem;
+    }
+
+    .replay-comparison h4 {
+      color: #fff;
+      font-weight: 800;
+    }
+
     .ai-theme-root {
       background: transparent;
     }
 
     @media (max-width: 1100px) {
       .contest-shell,
-      .review-grid {
+      .review-grid,
+      .replay-main,
+      .replay-comparison > div {
         grid-template-columns: 1fr;
+      }
+
+      .replay-header-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .replay-sidebar {
+        position: static;
       }
     }
 
@@ -212,7 +423,7 @@
     </main>
   </div>
 
-  <script src="../script/contests.js?v=1"></script>
+  <script src="../script/contests.js?v=2"></script>
   <div id="notificationContainer"></div>
 </body>
 

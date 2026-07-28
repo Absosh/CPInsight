@@ -5,6 +5,25 @@ let contestsState = {
   reviewStatus: null,
   reviewStatuses: {},
   statusSocket: null,
+  reviewTab: 'overview',
+  replay: {
+    events: [],
+    activeIndex: 0,
+    playing: false,
+    speed: 1,
+    timer: null,
+    comparisonMode: false,
+    filters: {
+      accepted: true,
+      wrong_answer: true,
+      compilation_error: true,
+      runtime_error: true,
+      behavior: true,
+      recommendations: true,
+      evidence: true,
+      reasoning: true
+    }
+  },
   loadingReview: false,
   filter: 'all'
 };
@@ -47,6 +66,21 @@ function formatSignedContestNumber(value) {
   return number > 0 ? `+${number}` : `${number}`;
 }
 
+function formatContestClock(seconds) {
+  const value = Math.max(0, Math.floor(Number(seconds) || 0));
+  const hours = Math.floor(value / 3600);
+  const minutes = Math.floor((value % 3600) / 60);
+  const secs = value % 60;
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
+
+function clampNumber(value, min, max) {
+  return Math.max(min, Math.min(max, Number(value) || 0));
+}
+
 function confidencePercent(value) {
   const number = Number(value);
   const normalized = Number.isFinite(number) ? (number > 1 ? number / 100 : number) : 0;
@@ -75,6 +109,11 @@ function safeList(value) {
   if (Array.isArray(value)) return value;
   if (!value) return [];
   return [value];
+}
+
+function firstText(...values) {
+  const found = values.find((value) => typeof value === 'string' && value.trim());
+  return found ? found.trim() : '';
 }
 
 function reviewStatusKey(contest) {
@@ -362,6 +401,221 @@ function normalizeReview(review) {
   };
 }
 
+function inferReplayType(item = {}, fallback = 'review') {
+  const text = [
+    item.eventType,
+    item.type,
+    item.verdict,
+    item.title,
+    item.label,
+    item.category,
+    item.description,
+    item.summary
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  if (/accepted|\bac\b|solved/.test(text)) return 'accepted';
+  if (/wrong answer|\bwa\b/.test(text)) return 'wrong_answer';
+  if (/compilation/.test(text)) return 'compilation_error';
+  if (/runtime/.test(text)) return 'runtime_error';
+  if (/idle|panic|focus|reading|behavior|hesitation|pressure|burst/.test(text)) return 'behavior';
+  if (/recommend|practice|checkpoint|action/.test(text)) return 'recommendations';
+  if (/evidence|submission|telemetry|citation/.test(text)) return 'evidence';
+  if (/reason|because|chain|finding/.test(text)) return 'reasoning';
+  return fallback;
+}
+
+function eventOffset(item = {}, index, total, durationSeconds) {
+  const rawSeconds = item.contestTimeSeconds ?? item.offsetSeconds ?? item.elapsedSeconds ?? item.contestTime;
+  if (Number.isFinite(Number(rawSeconds))) {
+    return clampNumber(rawSeconds, 0, durationSeconds);
+  }
+
+  const timestamp = item.timestamp || item.occurredAt || item.submittedAt || item.createdAt;
+  const contestStart = contestsState.selectedContest?.participatedAt;
+  if (timestamp && contestStart) {
+    const offset = Math.floor((new Date(timestamp).getTime() - new Date(contestStart).getTime()) / 1000);
+    if (Number.isFinite(offset)) return clampNumber(offset, 0, durationSeconds);
+  }
+
+  const slots = Math.max(1, total + 1);
+  return Math.round(((index + 1) / slots) * durationSeconds);
+}
+
+function replayRefs(item = {}, fallbackId) {
+  return safeList(item.citations || item.evidenceIds || item.supportingEvidence || item.references || item.evidence)
+    .map((ref) => (typeof ref === 'string' ? ref : ref.id || ref.eventId || ref.title || fallbackId))
+    .filter(Boolean);
+}
+
+function normalizeReplayEvent(item, index, total, durationSeconds, sourceType) {
+  const eventType = inferReplayType(item, sourceType);
+  const title = firstText(
+    item.title,
+    item.label,
+    item.eventType,
+    item.category,
+    item.finding,
+    item.behaviorFinding,
+    item.recommendation,
+    item.problem,
+    `${capitalizeContest(eventType)} event`
+  );
+  const id = item.eventId || item.id || item.submissionId || `${sourceType}-${index}`;
+  return {
+    id,
+    index,
+    eventType,
+    offsetSeconds: eventOffset(item, index, total, durationSeconds),
+    title,
+    problem: item.problem || item.problemId || item.problemName || item.problemCode || null,
+    verdict: item.verdict || item.status || null,
+    language: item.language || item.programmingLanguage || null,
+    submissionId: item.submissionId || item.externalSubmissionId || null,
+    summary: firstText(item.summary, item.description, item.supportingData, item.reason, item.nextAction, title),
+    commentary: firstText(item.explanation, item.description, item.summary, item.reason, item.nextAction, title),
+    confidence: item.confidence || item.score || item.expectedImpact || 0.72,
+    behaviorRefs: replayRefs(item, id).filter((ref) => /behavior|panic|focus|reading|finding/i.test(ref)),
+    evidenceRefs: replayRefs(item, id),
+    reasoningRefs: replayRefs(item, id).filter((ref) => /reason|chain|finding/i.test(ref)),
+    recommendationRefs: replayRefs(item, id).filter((ref) => /recommend|action|practice/i.test(ref)),
+    sourceType,
+    metadata: item.metadata || {}
+  };
+}
+
+function buildReplayEvents(review) {
+  const contest = contestsState.selectedContest || {};
+  const durationSeconds = Math.max(60, Number(contest.duration || contest.durationSeconds || review.roadmap?.durationSeconds || 7200));
+  const rawTimeline = safeList(
+    review.evidencePackage?.eventTimeline ||
+    review.evidencePackage?.timeline ||
+    review.evidencePackage?.contestEvents ||
+    review.evidencePackage?.events ||
+    review.reasoning?.eventTimeline ||
+    []
+  );
+  const sourceItems = rawTimeline.length
+    ? rawTimeline.map((item) => ({ item, sourceType: inferReplayType(item, 'event') }))
+    : [
+        ...review.observations.map((item) => ({ item, sourceType: inferReplayType(item, 'evidence') })),
+        ...review.evidence.map((item) => ({ item, sourceType: 'evidence' })),
+        ...review.findings.map((item) => ({ item, sourceType: inferReplayType(item, 'behavior') })),
+        ...review.mistakes.map((item) => ({ item, sourceType: inferReplayType(item, 'wrong_answer') })),
+        ...review.recommendations.map((item) => ({ item, sourceType: 'recommendations' }))
+      ];
+
+  const middleEvents = sourceItems
+    .map(({ item, sourceType }, index) => normalizeReplayEvent(item, index, sourceItems.length, durationSeconds, sourceType))
+    .filter((event) => event.title);
+
+  const events = [
+    {
+      id: 'contest-started',
+      index: 0,
+      eventType: 'contest_started',
+      offsetSeconds: 0,
+      title: 'Contest Started',
+      problem: null,
+      verdict: null,
+      language: null,
+      submissionId: null,
+      summary: `${contest.contestName || review.title} started.`,
+      commentary: review.summary,
+      confidence: review.overallConfidence,
+      behaviorRefs: [],
+      evidenceRefs: [],
+      reasoningRefs: [],
+      recommendationRefs: [],
+      sourceType: 'contest',
+      metadata: {}
+    },
+    ...middleEvents,
+    {
+      id: 'contest-finished',
+      index: middleEvents.length + 1,
+      eventType: 'contest_finished',
+      offsetSeconds: durationSeconds,
+      title: 'Contest Finished',
+      problem: null,
+      verdict: contest.change,
+      language: null,
+      submissionId: null,
+      summary: `Contest finished with ${contest.solved ?? 'unknown'} solved and rating change ${formatSignedContestNumber(contest.change)}.`,
+      commentary: review.summary,
+      confidence: review.overallConfidence,
+      behaviorRefs: [],
+      evidenceRefs: [],
+      reasoningRefs: [],
+      recommendationRefs: [],
+      sourceType: 'contest',
+      metadata: {}
+    }
+  ]
+    .sort((a, b) => a.offsetSeconds - b.offsetSeconds)
+    .map((event, index) => ({ ...event, index }));
+
+  return events;
+}
+
+function activeReplayEvent() {
+  return contestsState.replay.events[contestsState.replay.activeIndex] || null;
+}
+
+function visibleReplayEvents() {
+  return contestsState.replay.events.filter((event) => contestsState.replay.filters[event.eventType] !== false && contestsState.replay.filters[event.sourceType] !== false);
+}
+
+function nearestReplayIndex(offsetSeconds) {
+  const visible = visibleReplayEvents();
+  const events = visible.length ? visible : contestsState.replay.events;
+  const nearest = events.reduce((best, event) => (
+    Math.abs(event.offsetSeconds - offsetSeconds) < Math.abs(best.offsetSeconds - offsetSeconds) ? event : best
+  ), events[0] || contestsState.replay.events[0]);
+  return nearest ? nearest.index : 0;
+}
+
+function setReplayIndex(index) {
+  contestsState.replay.activeIndex = clampNumber(index, 0, Math.max(0, contestsState.replay.events.length - 1));
+  if (contestsState.replay.activeIndex >= contestsState.replay.events.length - 1) {
+    stopReplay();
+  }
+  renderReview(contestsState.review);
+}
+
+function stepReplay(direction) {
+  const current = activeReplayEvent();
+  const visible = visibleReplayEvents();
+  if (!current || !visible.length) return;
+  const visibleIndex = Math.max(0, visible.findIndex((event) => event.index === current.index));
+  const next = visible[clampNumber(visibleIndex + direction, 0, visible.length - 1)];
+  if (next) setReplayIndex(next.index);
+}
+
+function stopReplay() {
+  if (contestsState.replay.timer) {
+    clearInterval(contestsState.replay.timer);
+    contestsState.replay.timer = null;
+  }
+  contestsState.replay.playing = false;
+}
+
+function startReplay() {
+  stopReplay();
+  contestsState.replay.playing = true;
+  const delay = Math.max(450, 1600 / contestsState.replay.speed);
+  contestsState.replay.timer = setInterval(() => stepReplay(1), delay);
+  renderReview(contestsState.review);
+}
+
+function resetReplayForReview(review) {
+  stopReplay();
+  contestsState.reviewTab = 'overview';
+  contestsState.replay.events = buildReplayEvents(review);
+  contestsState.replay.activeIndex = 0;
+  contestsState.replay.speed = 1;
+  contestsState.replay.comparisonMode = false;
+}
+
 function renderLoadingReview() {
   const panel = document.getElementById('contestReviewPanel');
   if (!panel) return;
@@ -540,10 +794,298 @@ function renderReflections(review) {
   `;
 }
 
+function renderReviewTabs() {
+  const tabs = [
+    ['overview', 'Overview'],
+    ['replay', 'Replay'],
+    ['evidence', 'Evidence'],
+    ['comparison', 'Comparison']
+  ];
+  return `
+    <nav class="review-tabs" role="tablist" aria-label="Contest review sections">
+      ${tabs.map(([id, label]) => `
+        <button
+          class="review-tab ai-focusable"
+          type="button"
+          role="tab"
+          aria-selected="${contestsState.reviewTab === id}"
+          data-review-tab="${id}"
+        >${label}</button>
+      `).join('')}
+    </nav>
+  `;
+}
+
+function renderOverviewTab(review) {
+  return `
+    <div class="review-grid">
+      <section class="review-section">
+        <h2 class="text-xl font-bold text-white">Key Findings</h2>
+        ${renderFindingCards(review)}
+      </section>
+      <section class="review-section">
+        <h2 class="text-xl font-bold text-white">Behavior Analysis</h2>
+        <div class="ai-chip-row p-0">${renderBehavior(review)}</div>
+      </section>
+      <section class="review-section">
+        <h2 class="text-xl font-bold text-white">Mistake Analysis</h2>
+        ${renderMistakes(review)}
+      </section>
+      <section class="review-section">
+        <h2 class="text-xl font-bold text-white">Recommendations</h2>
+        ${renderRecommendations(review)}
+      </section>
+      <section class="review-section">
+        <h2 class="text-xl font-bold text-white">Improvement Plan</h2>
+        ${renderRoadmap(review)}
+      </section>
+      <section class="review-section">
+        <h2 class="text-xl font-bold text-white">Reflection</h2>
+        <article class="ai-card ai-reflection-timeline p-4">${renderReflections(review)}</article>
+      </section>
+    </div>
+  `;
+}
+
+function renderEventSidebar(events, active) {
+  if (!events.length) {
+    return '<p class="ai-muted">No replay events match the current filters.</p>';
+  }
+  return `
+    <ol class="replay-event-list" aria-label="Replay events">
+      ${events.map((event) => `
+        <li>
+          <button
+            type="button"
+            class="replay-event-button ai-focusable"
+            aria-current="${active?.index === event.index}"
+            data-replay-index="${event.index}"
+          >
+            <span>${escapeHtml(formatContestClock(event.offsetSeconds))}</span>
+            <strong>${escapeHtml(event.title)}</strong>
+          </button>
+        </li>
+      `).join('')}
+    </ol>
+  `;
+}
+
+function renderReplayFilters() {
+  const filterLabels = [
+    ['accepted', 'Accepted'],
+    ['wrong_answer', 'Wrong Answer'],
+    ['compilation_error', 'Compilation Error'],
+    ['runtime_error', 'Runtime Error'],
+    ['behavior', 'Behavior'],
+    ['recommendations', 'Recommendations'],
+    ['evidence', 'Evidence'],
+    ['reasoning', 'Reasoning']
+  ];
+  return filterLabels.map(([key, label]) => `
+    <label class="replay-filter">
+      <input type="checkbox" data-replay-filter="${key}" ${contestsState.replay.filters[key] ? 'checked' : ''}>
+      <span>${escapeHtml(label)}</span>
+    </label>
+  `).join('');
+}
+
+function renderReplayPanel(review) {
+  const events = contestsState.replay.events;
+  const active = activeReplayEvent();
+  const visible = visibleReplayEvents();
+  const durationSeconds = Math.max(60, ...events.map((event) => Number(event.offsetSeconds) || 0));
+  const progress = active ? Math.round((active.offsetSeconds / Math.max(1, durationSeconds)) * 100) : 0;
+  const relatedEvidence = review.evidence.filter((item, index) => {
+    const haystack = JSON.stringify(item).toLowerCase();
+    const refs = active?.evidenceRefs || [];
+    return refs.some((ref) => haystack.includes(String(ref).toLowerCase())) || (!refs.length && index === 0);
+  });
+  const relatedRecommendations = review.recommendations.filter((item, index) => {
+    const haystack = JSON.stringify(item).toLowerCase();
+    const refs = active?.recommendationRefs || [];
+    return refs.some((ref) => haystack.includes(String(ref).toLowerCase())) || (active?.sourceType === 'recommendations' && index === 0);
+  });
+
+  if (!events.length || !active) {
+    return '<section class="ai-card p-8"><h2 class="text-xl font-bold text-white">Empty Replay</h2><p class="text-gray-400 mt-2">This review does not contain enough stored data to build a replay.</p></section>';
+  }
+
+  return `
+    <section class="replay-layout" data-replay-state="${contestsState.replay.playing ? 'playing' : 'paused'}">
+      <header class="ai-card replay-header">
+        <div>
+          <p class="ai-muted">Contest Replay</p>
+          <h2>${escapeHtml(contestsState.selectedContest?.contestName || review.title)}</h2>
+        </div>
+        <dl class="replay-header-metrics">
+          <div><dt>Platform</dt><dd>${escapeHtml(capitalizeContest(contestsState.selectedContest?.platform))}</dd></div>
+          <div><dt>Duration</dt><dd>${escapeHtml(formatContestClock(durationSeconds))}</dd></div>
+          <div><dt>Rating</dt><dd>${escapeHtml(formatSignedContestNumber(contestsState.selectedContest?.change))}</dd></div>
+          <div><dt>Solved</dt><dd>${escapeHtml(contestsState.selectedContest?.solved ?? '--')}</dd></div>
+          <div><dt>Progress</dt><dd>${progress}%</dd></div>
+          <div><dt>Replay time</dt><dd>${escapeHtml(formatContestClock(active.offsetSeconds))}</dd></div>
+        </dl>
+      </header>
+
+      <section class="ai-card replay-scrubber-card">
+        <label for="replayScrubber" class="sr-only">Timeline scrubber</label>
+        <div class="replay-scrubber-labels">
+          <span>0:00</span>
+          <span>${escapeHtml(formatContestClock(durationSeconds))}</span>
+        </div>
+        <input id="replayScrubber" class="replay-scrubber" type="range" min="0" max="${durationSeconds}" value="${active.offsetSeconds}" step="1" aria-label="Replay timeline">
+        <div class="replay-markers" aria-hidden="true">
+          ${events.map((event) => `<button type="button" style="left:${Math.min(100, Math.max(0, (event.offsetSeconds / durationSeconds) * 100))}%" data-replay-index="${event.index}" title="${escapeHtml(formatContestClock(event.offsetSeconds))} ${escapeHtml(event.title)}"></button>`).join('')}
+        </div>
+        <div class="replay-progress-track"><span style="inline-size:${progress}%"></span></div>
+      </section>
+
+      <section class="ai-card replay-controls" aria-label="Replay controls">
+        <button class="ai-button ai-focusable" type="button" data-replay-action="${contestsState.replay.playing ? 'pause' : 'play'}">${contestsState.replay.playing ? 'Pause' : 'Play'}</button>
+        <button class="ai-button ai-focusable" type="button" data-replay-action="previous">Previous Event</button>
+        <button class="ai-button ai-focusable" type="button" data-replay-action="next">Next Event</button>
+        <button class="ai-button ai-focusable" type="button" data-replay-action="restart">Restart</button>
+        <label>Speed
+          <select class="replay-speed-select" data-replay-speed aria-label="Playback speed">
+            ${[0.5, 1, 2, 4].map((speed) => `<option value="${speed}" ${contestsState.replay.speed === speed ? 'selected' : ''}>${speed}x</option>`).join('')}
+          </select>
+        </label>
+        <label class="replay-filter">
+          <input type="checkbox" data-replay-comparison ${contestsState.replay.comparisonMode ? 'checked' : ''}>
+          <span>Comparison mode</span>
+        </label>
+      </section>
+
+      <section class="replay-main">
+        <aside class="ai-card replay-sidebar">
+          <h3>Events</h3>
+          ${renderEventSidebar(visible, active)}
+        </aside>
+        <div class="replay-panels">
+          <article class="ai-card replay-event-detail" data-active-event="${escapeHtml(active.eventType)}">
+            <div class="ai-card-header">
+              <span class="ai-icon ai-icon-md" aria-label="Replay event">EV</span>
+              <div>
+                <h3>${escapeHtml(active.title)}</h3>
+                <p>${escapeHtml(formatContestClock(active.offsetSeconds))} - ${escapeHtml(capitalizeContest(active.eventType))}</p>
+              </div>
+              ${badge(active.confidence, 'Event confidence')}
+            </div>
+            <dl class="ai-meta-grid">
+              <dt>Problem</dt><dd>${escapeHtml(active.problem || 'Not linked')}</dd>
+              <dt>Verdict</dt><dd>${escapeHtml(active.verdict || 'Not available')}</dd>
+              <dt>Language</dt><dd>${escapeHtml(active.language || 'Not available')}</dd>
+              <dt>Submission ID</dt><dd>${escapeHtml(active.submissionId || 'Not available')}</dd>
+            </dl>
+            <p class="ai-muted px-4 pb-4">${escapeHtml(active.summary)}</p>
+          </article>
+
+          <article class="ai-card p-4">
+            <h3 class="font-bold text-white">AI Commentary</h3>
+            <p class="text-gray-300 mt-2">${escapeHtml(active.commentary)}</p>
+          </article>
+
+          <article class="ai-card p-4">
+            <h3 class="font-bold text-white">Behavior Overlay</h3>
+            <div class="ai-chip-row p-0 mt-3">${renderBehavior(review)}</div>
+          </article>
+
+          <section class="review-grid">
+            <div class="review-section">
+              <h3 class="font-bold text-white">Synchronized Evidence</h3>
+              ${renderEvidenceCards({ ...review, evidence: relatedEvidence.length ? relatedEvidence : review.evidence.slice(0, 1) })}
+            </div>
+            <div class="review-section">
+              <h3 class="font-bold text-white">Recommendation Highlight</h3>
+              ${renderRecommendations({ ...review, recommendations: relatedRecommendations.length ? relatedRecommendations : review.recommendations.slice(0, 1) })}
+            </div>
+          </section>
+
+          ${renderReasoning({ ...review, reasoning: {
+            ...review.reasoning,
+            reasoningChain: safeList(review.reasoning.reasoningChain || review.reasoning.causalChains).slice(0, Math.max(1, active.index + 1))
+          } })}
+
+          ${contestsState.replay.comparisonMode ? `
+            <article class="ai-card p-4 replay-comparison">
+              <h3 class="font-bold text-white">Split Comparison</h3>
+              <div>
+                <section>
+                  <h4>Current Contest</h4>
+                  <p>${escapeHtml(active.title)} at ${escapeHtml(formatContestClock(active.offsetSeconds))}</p>
+                </section>
+                <section>
+                  <h4>Previous Contest</h4>
+                  <p>${escapeHtml(review.comparison.previousContest || review.comparison.baseline || 'No previous contest baseline stored.')}</p>
+                </section>
+              </div>
+            </article>
+          ` : ''}
+        </div>
+      </section>
+
+      <section class="ai-card p-4">
+        <h3 class="font-bold text-white mb-3">Filters</h3>
+        <div class="replay-filter-row">${renderReplayFilters()}</div>
+      </section>
+    </section>
+  `;
+}
+
+function renderEvidenceTab(review) {
+  return `
+    <div class="review-grid">
+      <section class="review-section">
+        <h2 class="text-xl font-bold text-white">Evidence</h2>
+        ${renderEvidenceCards(review)}
+      </section>
+      <section class="review-section">
+        <h2 class="text-xl font-bold text-white">Reasoning</h2>
+        ${renderReasoning(review)}
+      </section>
+    </div>
+  `;
+}
+
+function renderComparisonTab(review) {
+  return `
+    <section class="review-grid">
+      <article class="ai-card p-4">
+        <h2 class="text-xl font-bold text-white">Current Contest</h2>
+        <dl class="ai-meta-grid p-0 mt-4">
+          <dt>Contest</dt><dd>${escapeHtml(contestsState.selectedContest?.contestName || 'Selected contest')}</dd>
+          <dt>Rating change</dt><dd>${escapeHtml(formatSignedContestNumber(contestsState.selectedContest?.change))}</dd>
+          <dt>Solved</dt><dd>${escapeHtml(contestsState.selectedContest?.solved ?? '--')}</dd>
+          <dt>Behavior</dt><dd>${escapeHtml(review.behavior[0]?.label || review.behavior[0]?.conceptId || 'Not stored')}</dd>
+        </dl>
+      </article>
+      <article class="ai-card p-4">
+        <h2 class="text-xl font-bold text-white">Previous Contest</h2>
+        <dl class="ai-meta-grid p-0 mt-4">
+          <dt>Baseline</dt><dd>${escapeHtml(review.comparison.previousContest || review.comparison.baseline || 'Not stored')}</dd>
+          <dt>Improvement</dt><dd>${escapeHtml(review.comparison.improvement || review.comparison.summary || 'Not stored')}</dd>
+          <dt>Confidence</dt><dd>${escapeHtml(confidencePercent(review.overallConfidence))}</dd>
+        </dl>
+      </article>
+    </section>
+  `;
+}
+
 function renderReview(reviewRecord) {
   const panel = document.getElementById('contestReviewPanel');
   if (!panel) return;
   const review = normalizeReview(reviewRecord);
+  if (!contestsState.replay.events.length) {
+    contestsState.replay.events = buildReplayEvents(review);
+    contestsState.replay.activeIndex = 0;
+  }
+  const tabContent = {
+    overview: renderOverviewTab(review),
+    replay: renderReplayPanel(review),
+    evidence: renderEvidenceTab(review),
+    comparison: renderComparisonTab(review)
+  }[contestsState.reviewTab] || renderOverviewTab(review);
+
   panel.innerHTML = `
     <section id="aiContestReview" class="review-section">
       <header class="ai-card overflow-hidden">
@@ -565,59 +1107,18 @@ function renderReview(reviewRecord) {
         </dl>
       </header>
 
-      <div class="review-grid">
-        <section class="review-section">
-          <h2 class="text-xl font-bold text-white">Key Findings</h2>
-          ${renderFindingCards(review)}
-        </section>
-        <section class="review-section">
-          <h2 class="text-xl font-bold text-white">Evidence</h2>
-          ${renderEvidenceCards(review)}
-        </section>
-        <section class="review-section-wide">
-          ${renderReasoning(review)}
-        </section>
-        <section class="review-section">
-          <h2 class="text-xl font-bold text-white">Behavior Analysis</h2>
-          <div class="ai-chip-row p-0">${renderBehavior(review)}</div>
-        </section>
-        <section class="review-section">
-          <h2 class="text-xl font-bold text-white">Mistake Analysis</h2>
-          ${renderMistakes(review)}
-        </section>
-        <section class="review-section">
-          <h2 class="text-xl font-bold text-white">Recommendations</h2>
-          ${renderRecommendations(review)}
-        </section>
-        <section class="review-section">
-          <h2 class="text-xl font-bold text-white">Improvement Plan</h2>
-          ${renderRoadmap(review)}
-        </section>
-        <section class="review-section">
-          <h2 class="text-xl font-bold text-white">Reflection</h2>
-          <article class="ai-card ai-reflection-timeline p-4">${renderReflections(review)}</article>
-        </section>
-        <section class="review-section">
-          <h2 class="text-xl font-bold text-white">Comparison</h2>
-          <article class="ai-card p-4">
-            <dl class="ai-meta-grid p-0">
-              <dt>Current contest</dt><dd>${escapeHtml(contestsState.selectedContest?.contestName || 'Selected contest')}</dd>
-              <dt>Previous baseline</dt><dd>${escapeHtml(review.comparison.previousContest || review.comparison.baseline || 'Not stored')}</dd>
-              <dt>Improvement</dt><dd>${escapeHtml(review.comparison.improvement || review.comparison.summary || 'Not stored')}</dd>
-            </dl>
-          </article>
-        </section>
-        <section class="review-section-wide">
-          <h2 class="text-xl font-bold text-white">Export</h2>
-          <div class="review-export-row">
-            <button class="ai-button ai-focusable" type="button" data-export="pdf">Export PDF</button>
-            <button class="ai-button ai-focusable" type="button" data-export="markdown">Export Markdown</button>
-            <button class="ai-button ai-focusable" type="button" data-export="json">Export JSON</button>
-            <button class="ai-button ai-focusable" type="button" data-export="copy">Copy Summary</button>
-            <button class="ai-button ai-focusable" type="button" data-export="print">Print</button>
-          </div>
-        </section>
-      </div>
+      ${renderReviewTabs()}
+      ${tabContent}
+      <section class="review-section-wide">
+        <h2 class="text-xl font-bold text-white">Export</h2>
+        <div class="review-export-row">
+          <button class="ai-button ai-focusable" type="button" data-export="pdf">Export PDF</button>
+          <button class="ai-button ai-focusable" type="button" data-export="markdown">Export Markdown</button>
+          <button class="ai-button ai-focusable" type="button" data-export="json">Export JSON</button>
+          <button class="ai-button ai-focusable" type="button" data-export="copy">Copy Summary</button>
+          <button class="ai-button ai-focusable" type="button" data-export="print">Print</button>
+        </div>
+      </section>
     </section>
   `;
 }
@@ -784,6 +1285,7 @@ async function loadReviewForContest(contest) {
     contestsState.loadingReview = false;
     renderContestDetail();
     if (contestsState.review) {
+      resetReplayForReview(normalizeReview(contestsState.review));
       renderReview(contestsState.review);
     } else {
       renderPendingReview();
@@ -794,6 +1296,7 @@ async function loadReviewForContest(contest) {
 function selectContest(contestId) {
   const contest = contestsState.contests.find((item) => item.id === contestId);
   if (!contest) return;
+  stopReplay();
   contestsState.selectedContest = contest;
   const params = new URLSearchParams(window.location.search);
   params.set('contest', contest.id);
@@ -870,6 +1373,33 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.addEventListener('click', (event) => {
+    const tabButton = event.target.closest('[data-review-tab]');
+    if (tabButton && contestsState.review) {
+      contestsState.reviewTab = tabButton.dataset.reviewTab;
+      renderReview(contestsState.review);
+      return;
+    }
+
+    const replayMarker = event.target.closest('.replay-markers [data-replay-index], .replay-event-button[data-replay-index]');
+    if (replayMarker && contestsState.review) {
+      setReplayIndex(Number(replayMarker.dataset.replayIndex));
+      return;
+    }
+
+    const replayAction = event.target.closest('[data-replay-action]');
+    if (replayAction && contestsState.review) {
+      const action = replayAction.dataset.replayAction;
+      if (action === 'play') startReplay();
+      if (action === 'pause') {
+        stopReplay();
+        renderReview(contestsState.review);
+      }
+      if (action === 'previous') stepReplay(-1);
+      if (action === 'next') stepReplay(1);
+      if (action === 'restart') setReplayIndex(0);
+      return;
+    }
+
     const reviewButton = event.target.closest('#viewAiReviewBtn');
     if (reviewButton && contestsState.selectedContest) {
       document.getElementById('aiContestReview')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -878,6 +1408,64 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportButton = event.target.closest('[data-export]');
     if (exportButton) {
       handleExport(exportButton.dataset.export);
+    }
+  });
+
+  document.addEventListener('input', (event) => {
+    const scrubber = event.target.closest('#replayScrubber');
+    if (scrubber && contestsState.review) {
+      setReplayIndex(nearestReplayIndex(Number(scrubber.value)));
+    }
+  });
+
+  document.addEventListener('change', (event) => {
+    const speed = event.target.closest('[data-replay-speed]');
+    if (speed && contestsState.review) {
+      contestsState.replay.speed = Number(speed.value) || 1;
+      if (contestsState.replay.playing) startReplay();
+      else renderReview(contestsState.review);
+      return;
+    }
+
+    const filter = event.target.closest('[data-replay-filter]');
+    if (filter && contestsState.review) {
+      contestsState.replay.filters[filter.dataset.replayFilter] = filter.checked;
+      const visible = visibleReplayEvents();
+      if (!visible.some((eventItem) => eventItem.index === contestsState.replay.activeIndex) && visible[0]) {
+        contestsState.replay.activeIndex = visible[0].index;
+      }
+      renderReview(contestsState.review);
+      return;
+    }
+
+    const comparison = event.target.closest('[data-replay-comparison]');
+    if (comparison && contestsState.review) {
+      contestsState.replay.comparisonMode = comparison.checked;
+      renderReview(contestsState.review);
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (contestsState.reviewTab !== 'replay' || !contestsState.review) return;
+    const tag = event.target.tagName?.toLowerCase();
+    if (['input', 'select', 'textarea'].includes(tag)) return;
+
+    if (event.code === 'Space') {
+      event.preventDefault();
+      contestsState.replay.playing ? stopReplay() : startReplay();
+      renderReview(contestsState.review);
+    } else if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      stepReplay(-1);
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      stepReplay(1);
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      setReplayIndex(0);
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      setReplayIndex(contestsState.replay.events.length - 1);
     }
   });
 
