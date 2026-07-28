@@ -3,6 +3,8 @@ let contestsState = {
   selectedContest: null,
   review: null,
   reviewStatus: null,
+  reviewStatuses: {},
+  statusSocket: null,
   loadingReview: false,
   filter: 'all'
 };
@@ -73,6 +75,115 @@ function safeList(value) {
   if (Array.isArray(value)) return value;
   if (!value) return [];
   return [value];
+}
+
+function reviewStatusKey(contest) {
+  return `${contest.platform || 'unknown'}:${contest.contestId || contest.id}`;
+}
+
+function normalizeReviewStatus(status) {
+  if (!status) {
+    return {
+      state: 'not_generated',
+      label: 'Not Generated',
+      tone: 'neutral',
+      icon: '⚪',
+      progress: 0,
+      failedReason: null,
+      ready: false
+    };
+  }
+
+  const raw = (status.status || status.last_stage || '').toString().toLowerCase();
+  if (raw === 'completed' || status.persisted_review_id || status.persistedReviewId) {
+    return {
+      ...status,
+      state: 'ready',
+      label: 'Ready',
+      tone: 'ready',
+      icon: '🟢',
+      progress: 100,
+      failedReason: null,
+      ready: true
+    };
+  }
+
+  if (['failed', 'dead_letter'].includes(raw)) {
+    return {
+      ...status,
+      state: 'failed',
+      label: 'Failed',
+      tone: 'failed',
+      icon: '🔴',
+      progress: Number(status.progress_percent || status.progressPercent || 0),
+      failedReason: status.error_message || status.errorMessage || 'Review processing failed.',
+      ready: false
+    };
+  }
+
+  if (['queued', 'claimed', 'running', 'behavior_processing', 'knowledge_graph_update', 'reasoning', 'ai_review', 'reflection', 'roadmap_update', 'persist', 'retrying'].includes(raw)) {
+    const progress = Number(status.progress_percent || status.progressPercent || 0);
+    return {
+      ...status,
+      state: 'processing',
+      label: progress > 0 ? `Processing ${progress}%` : 'Processing',
+      tone: 'processing',
+      icon: '🟡',
+      progress,
+      failedReason: null,
+      ready: false
+    };
+  }
+
+  return {
+    ...status,
+    state: 'not_generated',
+    label: 'Not Generated',
+    tone: 'neutral',
+    icon: '⚪',
+    progress: 0,
+    failedReason: null,
+    ready: false
+  };
+}
+
+function reviewStatusForContest(contest) {
+  return contestsState.reviewStatuses[reviewStatusKey(contest)] || normalizeReviewStatus(null);
+}
+
+function setReviewStatusForContest(contest, status) {
+  contestsState.reviewStatuses = {
+    ...contestsState.reviewStatuses,
+    [reviewStatusKey(contest)]: normalizeReviewStatus(status)
+  };
+}
+
+function renderReviewStatusBadge(contest) {
+  const status = reviewStatusForContest(contest);
+  const title = status.failedReason || `Review status: ${status.label}`;
+  const classes = `review-status-badge review-status-${status.tone} ai-focusable`;
+  const label = `${status.icon} ${status.label}`;
+
+  if (status.ready) {
+    return `
+      <button
+        type="button"
+        class="${classes}"
+        data-review-action="open"
+        data-contest-id="${escapeHtml(contest.id)}"
+        title="${escapeHtml(title)}"
+        aria-label="Open AI review for ${escapeHtml(contest.contestName)}"
+      >${escapeHtml(label)}</button>
+    `;
+  }
+
+  return `
+    <span
+      class="${classes}"
+      title="${escapeHtml(title)}"
+      aria-label="Review status for ${escapeHtml(contest.contestName)}: ${escapeHtml(status.label)}"
+    >${escapeHtml(label)}</span>
+  `;
 }
 
 async function getReviewApi(endpoint) {
@@ -150,25 +261,30 @@ function renderContestList() {
   list.innerHTML = rows.map((contest) => {
     const selected = contestsState.selectedContest?.id === contest.id;
     return `
-      <button
-        type="button"
+      <article
         class="contest-list-row ai-card ai-focusable w-full text-left p-4 transition"
         aria-selected="${selected}"
         data-contest-id="${escapeHtml(contest.id)}"
       >
-        <div class="flex items-start justify-between gap-3">
-          <div class="min-w-0">
-            <h3 class="font-bold text-white truncate">${escapeHtml(contest.contestName)}</h3>
-            <p class="text-sm text-gray-400 mt-1">${escapeHtml(capitalizeContest(contest.platform))} - ${escapeHtml(formatDate(contest.participatedAt))}</p>
+        <button type="button" class="contest-list-main w-full text-left" data-contest-id="${escapeHtml(contest.id)}">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h3 class="font-bold text-white truncate">${escapeHtml(contest.contestName)}</h3>
+              <p class="text-sm text-gray-400 mt-1">${escapeHtml(capitalizeContest(contest.platform))} - ${escapeHtml(formatDate(contest.participatedAt))}</p>
+            </div>
+            <span class="${contest.change >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${escapeHtml(formatSignedContestNumber(contest.change))}</span>
           </div>
-          <span class="${contest.change >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${escapeHtml(formatSignedContestNumber(contest.change))}</span>
-        </div>
-        <div class="grid grid-cols-3 gap-3 mt-4 text-sm">
+        </button>
+        <div class="grid grid-cols-4 gap-3 mt-4 text-sm">
           <span><span class="text-gray-500">Rank</span><br>${escapeHtml(contest.rank ?? '--')}</span>
           <span><span class="text-gray-500">Rating</span><br>${escapeHtml(contest.newRating ?? '--')}</span>
           <span><span class="text-gray-500">Solved</span><br>${escapeHtml(contest.solved ?? '--')}</span>
+          <div class="min-w-0">
+            <span class="text-gray-500">Review</span><br>
+            ${renderReviewStatusBadge(contest)}
+          </div>
         </div>
-      </button>
+      </article>
     `;
   }).join('');
 }
@@ -189,6 +305,8 @@ function renderContestDetail() {
   }
 
   const status = contestsState.reviewStatus?.status || contestsState.reviewStatus?.last_stage || (contestsState.review ? 'completed' : 'no_review');
+  const listStatus = reviewStatusForContest(contest);
+  const statusLabel = listStatus.state === 'not_generated' ? status : listStatus.label;
   detail.innerHTML = `
     <header class="ai-card overflow-hidden">
       <div class="ai-card-header">
@@ -197,7 +315,7 @@ function renderContestDetail() {
           <p class="ai-muted">Contest Details</p>
           <h2 class="text-xl font-bold text-white truncate">${escapeHtml(contest.contestName)}</h2>
         </div>
-        <span class="ml-auto rounded-full border border-white/10 px-3 py-1 text-xs font-bold text-emerald-300">${escapeHtml(capitalizeContest(status))}</span>
+        <span class="ml-auto rounded-full border border-white/10 px-3 py-1 text-xs font-bold text-emerald-300">${escapeHtml(capitalizeContest(statusLabel))}</span>
       </div>
       <dl class="ai-meta-grid">
         <dt>Platform</dt><dd>${escapeHtml(capitalizeContest(contest.platform))}</dd>
@@ -556,6 +674,91 @@ async function handleExport(type) {
   }
 }
 
+async function loadReviewStatusesForContests(contests = contestsState.contests) {
+  const unique = [];
+  const seen = new Set();
+  contests.forEach((contest) => {
+    const key = reviewStatusKey(contest);
+    if (seen.has(key)) return;
+    seen.add(key);
+    unique.push(contest);
+  });
+
+  for (let index = 0; index < unique.length; index += 6) {
+    const batch = unique.slice(index, index + 6);
+    const results = await Promise.all(batch.map(async (contest) => {
+      const contestId = encodeURIComponent(contest.contestId);
+      const platformQuery = contest.platform ? `?platform=${encodeURIComponent(contest.platform)}` : '';
+      const response = await getReviewApi(`/reviews/status/${contestId}${platformQuery}`).catch(() => null);
+      return { contest, status: response?.status || null };
+    }));
+
+    results.forEach(({ contest, status }) => setReviewStatusForContest(contest, status));
+    renderContestList();
+    renderContestDetail();
+  }
+}
+
+function updateStatusFromReviewEvent(event) {
+  const eventType = event?.metadata?.domainEventType || event?.messageType || event?.type;
+  if (!eventType || !eventType.startsWith('review.')) return;
+
+  const payload = event.payload || {};
+  const matchingContest = contestsState.contests.find((contest) => {
+    const status = reviewStatusForContest(contest);
+    return status.id === payload.jobId || status.job_id === payload.jobId;
+  });
+
+  if (matchingContest && eventType === 'review.progress') {
+    setReviewStatusForContest(matchingContest, {
+      ...reviewStatusForContest(matchingContest),
+      status: payload.status || 'running',
+      progress_percent: payload.progressPercent
+    });
+    renderContestList();
+    return;
+  }
+
+  if (['review.completed', 'review.ready', 'review.failed', 'review.retrying', 'review.processing'].includes(eventType)) {
+    loadReviewStatusesForContests(matchingContest ? [matchingContest] : contestsState.contests);
+  }
+}
+
+function connectReviewStatusSocket() {
+  if (contestsState.statusSocket || !window.WebSocket || !localStorage.getItem('accessToken')) return;
+
+  const realtimeUrl = new URL(httpClient.baseURL.replace(/\/api$/, '').replace(/^http/, 'ws'));
+  realtimeUrl.pathname = '/realtime';
+  realtimeUrl.searchParams.set('token', localStorage.getItem('accessToken'));
+
+  try {
+    const socket = new WebSocket(realtimeUrl.toString());
+    contestsState.statusSocket = socket;
+
+    socket.addEventListener('open', () => {
+      const userId = stateManager.getState().profile.data?.id || stateManager.getState().profile.data?.user?.id;
+      if (userId) {
+        socket.send(JSON.stringify({ messageType: 'SUBSCRIBE', payload: { channel: `user:${userId}` } }));
+      }
+      socket.send(JSON.stringify({ messageType: 'SUBSCRIBE', payload: { channel: 'system' } }));
+    });
+
+    socket.addEventListener('message', (message) => {
+      try {
+        updateStatusFromReviewEvent(JSON.parse(message.data));
+      } catch {
+        // Ignore malformed realtime frames; the status API remains the source of truth.
+      }
+    });
+
+    socket.addEventListener('close', () => {
+      contestsState.statusSocket = null;
+    });
+  } catch {
+    contestsState.statusSocket = null;
+  }
+}
+
 async function loadReviewForContest(contest) {
   contestsState.loadingReview = true;
   contestsState.review = null;
@@ -569,8 +772,12 @@ async function loadReviewForContest(contest) {
   try {
     const statusResponse = await getReviewApi(`/reviews/status/${contestId}${platformQuery}`);
     contestsState.reviewStatus = statusResponse?.status || null;
+    setReviewStatusForContest(contest, contestsState.reviewStatus);
     const reviewResponse = await getReviewApi(`/reviews/contest/${contestId}${platformQuery}`);
     contestsState.review = reviewResponse?.review || null;
+    if (contestsState.review && !contestsState.reviewStatus) {
+      setReviewStatusForContest(contest, { status: 'completed', persisted_review_id: contestsState.review.id });
+    }
   } catch (error) {
     contestsState.reviewStatus = { status: 'failed', error: error.message };
   } finally {
@@ -611,6 +818,8 @@ async function loadContestAnalytics() {
     renderContestFilters();
     renderContestList();
     contestText('contestPageStatus', contestsState.contests.length ? 'Completed contest history loaded.' : 'No completed contest history is available yet.');
+    loadReviewStatusesForContests();
+    connectReviewStatusSocket();
 
     const params = new URLSearchParams(window.location.search);
     const requested = params.get('contest');
@@ -631,6 +840,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const list = document.getElementById('contestList');
   list?.addEventListener('click', (event) => {
+    const reviewAction = event.target.closest('[data-review-action="open"]');
+    if (reviewAction) {
+      event.stopPropagation();
+      selectContest(reviewAction.dataset.contestId);
+      setTimeout(() => document.getElementById('aiContestReview')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+      return;
+    }
+
     const row = event.target.closest('[data-contest-id]');
     if (row) selectContest(row.dataset.contestId);
   });

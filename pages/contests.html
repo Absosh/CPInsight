@@ -32,6 +32,58 @@
       background: rgba(16, 185, 129, 0.1);
     }
 
+    .contest-list-main {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      font: inherit;
+      padding: 0;
+    }
+
+    .review-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      max-width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #d1d5db;
+      font-size: 0.75rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-top: 0.25rem;
+      padding: 0.35rem 0.6rem;
+      white-space: nowrap;
+    }
+
+    button.review-status-badge {
+      cursor: pointer;
+    }
+
+    .review-status-ready {
+      border-color: rgba(16, 185, 129, 0.45);
+      background: rgba(16, 185, 129, 0.1);
+      color: #6ee7b7;
+    }
+
+    .review-status-processing {
+      border-color: rgba(234, 179, 8, 0.45);
+      background: rgba(234, 179, 8, 0.1);
+      color: #fde68a;
+    }
+
+    .review-status-failed {
+      border-color: rgba(244, 63, 94, 0.45);
+      background: rgba(244, 63, 94, 0.1);
+      color: #fda4af;
+    }
+
+    .review-status-neutral {
+      color: #9ca3af;
+    }
+
     .review-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
