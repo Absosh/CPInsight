@@ -8,7 +8,7 @@
     "verify:ai-coach-workspace": "node scripts/verify-ai-coach-workspace.js",
     "verify:live-monitoring": "node scripts/verify-live-monitoring.js",
     "verify:review-worker": "node scripts/verify-review-worker.js",
-    "dev:ai-coach": "vite --host 0.0.0.0",
+    "dev:ai-coach": "vite",
     "build:frontend": "vite build",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
