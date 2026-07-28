@@ -275,7 +275,7 @@ function renderContestList() {
             <span class="${contest.change >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${escapeHtml(formatSignedContestNumber(contest.change))}</span>
           </div>
         </button>
-        <div class="grid grid-cols-4 gap-3 mt-4 text-sm">
+        <div class="contest-metrics-grid mt-4 text-sm">
           <span><span class="text-gray-500">Rank</span><br>${escapeHtml(contest.rank ?? '--')}</span>
           <span><span class="text-gray-500">Rating</span><br>${escapeHtml(contest.newRating ?? '--')}</span>
           <span><span class="text-gray-500">Solved</span><br>${escapeHtml(contest.solved ?? '--')}</span>
