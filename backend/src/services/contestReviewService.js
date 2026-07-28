@@ -25,8 +25,18 @@ class ContestReviewService {
     return review;
   }
 
-  async statusByContest(userId, contestId) {
-    const status = await this.repo.statusByContest(userId, contestId);
+  async byContest(userId, contestId, query = {}) {
+    const review = await this.repo.reviewByContest(userId, contestId, {
+      platform: query.platform || null
+    });
+    if (!review) throw new HttpError(404, 'Contest review not found', null, 'REVIEW_NOT_FOUND');
+    return review;
+  }
+
+  async statusByContest(userId, contestId, query = {}) {
+    const status = await this.repo.statusByContest(userId, contestId, {
+      platform: query.platform || null
+    });
     if (!status) throw new HttpError(404, 'Contest review status not found', null, 'REVIEW_STATUS_NOT_FOUND');
     return status;
   }

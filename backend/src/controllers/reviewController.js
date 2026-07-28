@@ -15,8 +15,13 @@ async function latest(req, res) {
   res.json({ review });
 }
 
+async function byContest(req, res) {
+  const review = await service.byContest(req.user.id, req.params.contestId, req.query);
+  res.json({ review });
+}
+
 async function status(req, res) {
-  const reviewStatus = await service.statusByContest(req.user.id, req.params.contestId);
+  const reviewStatus = await service.statusByContest(req.user.id, req.params.contestId, req.query);
   res.json({ status: reviewStatus });
 }
 
@@ -24,5 +29,6 @@ module.exports = {
   getJob,
   listJobs,
   latest,
+  byContest,
   status
 };

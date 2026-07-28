@@ -9,6 +9,7 @@ router.use(authenticate);
 router.get('/jobs/:id', asyncHandler(controller.getJob));
 router.get('/jobs', asyncHandler(controller.listJobs));
 router.get('/latest', asyncHandler(controller.latest));
+router.get('/contest/:contestId', asyncHandler(controller.byContest));
 router.get('/status/:contestId', asyncHandler(controller.status));
 
 module.exports = router;

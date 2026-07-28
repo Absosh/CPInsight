@@ -331,16 +331,44 @@ async function latestReview(userId, db = pool) {
   return result.rows[0] || null;
 }
 
-async function statusByContest(userId, contestId, db = pool) {
+async function reviewByContest(userId, contestId, { platform = null } = {}, db = pool) {
+  const values = [userId, contestId];
+  const clauses = ['user_id = $1', 'contest_id = $2'];
+
+  if (platform) {
+    values.push(platform);
+    clauses.push(`platform = $${values.length}`);
+  }
+
+  const result = await db.query(
+    `SELECT *
+     FROM contest_reviews
+     WHERE ${clauses.join(' AND ')}
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    values
+  );
+  return result.rows[0] || null;
+}
+
+async function statusByContest(userId, contestId, { platform = null } = {}, db = pool) {
+  const values = [userId, contestId];
+  const clauses = ['job.user_id = $1', 'session.contest_id = $2'];
+
+  if (platform) {
+    values.push(platform);
+    clauses.push(`session.platform = $${values.length}`);
+  }
+
   const result = await db.query(
     `SELECT job.*, session.platform, session.contest_id, session.contest_name, review.id AS persisted_review_id
      FROM contest_review_jobs job
      JOIN telemetry_live_sessions session ON session.live_session_id = job.live_session_id
      LEFT JOIN contest_reviews review ON review.live_session_id = job.live_session_id
-     WHERE job.user_id = $1 AND session.contest_id = $2
+     WHERE ${clauses.join(' AND ')}
      ORDER BY job.requested_at DESC
      LIMIT 1`,
-    [userId, contestId]
+    values
   );
   return result.rows[0] || null;
 }
@@ -369,6 +397,7 @@ module.exports = {
   getJob,
   listJobs,
   latestReview,
+  reviewByContest,
   statusByContest,
   getLiveSessionByJob
 };

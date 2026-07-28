@@ -6,7 +6,7 @@ const HttpError = require('../utils/httpError');
 
 const PLATFORM_TTL_MINUTES = 30;
 const COMBINED_TTL_MINUTES = 15;
-const ANALYTICS_PAYLOAD_VERSION = 2;
+const ANALYTICS_PAYLOAD_VERSION = 3;
 const SKIPPABLE_COMBINED_ANALYTICS_CODES = new Set([
   'SYNC_FAILED',
   'PLATFORM_UNAVAILABLE',
@@ -191,11 +191,14 @@ function platformAnalytics(platform, facts) {
   }
 
   const ratingProgression = facts.contests.map((contest) => ({
+    contestId: contest.external_contest_id,
     contestName: contest.contest_name,
     rating: contest.rating_after,
     delta: contest.rating_delta,
     rank: contest.rank,
-    participatedAt: contest.participated_at
+    participatedAt: contest.participated_at,
+    solved: contest.metadata?.solved ?? contest.metadata?.solvedCount ?? null,
+    durationSeconds: contest.metadata?.durationSeconds ?? null
   }));
 
   let acceptedSubmissions = accepted.length;
