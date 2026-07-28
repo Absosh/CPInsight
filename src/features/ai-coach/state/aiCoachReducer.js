@@ -23,6 +23,9 @@ export function createInitialAiCoachState(now = new Date().toISOString()) {
       messages: []
     }],
     contextualInsights: {
+      loading: false,
+      loadedAt: null,
+      error: null,
       currentRating: null,
       targetRating: null,
       currentGoal: 'Build consistent contest execution',
@@ -31,7 +34,11 @@ export function createInitialAiCoachState(now = new Date().toISOString()) {
       recentReflections: [],
       weakestTopics: [],
       strongestTopics: [],
-      todaysRecommendations: []
+      todaysRecommendations: [],
+      analytics: null,
+      latestReview: null,
+      behaviorProfile: null,
+      behaviorFeatures: []
     },
     recommendationActions: {},
     savedReports: [],
@@ -160,7 +167,7 @@ export function aiCoachReducer(state, action) {
         savedReports: [{
           reportId: createWorkspaceId('report'),
           messageId: action.messageId,
-          title: action.title || 'AI Coach report',
+          title: action.title || 'AI Assistant report',
           payload: action.payload,
           createdAt: action.now || new Date().toISOString()
         }, ...state.savedReports]
@@ -176,8 +183,14 @@ export function aiCoachReducer(state, action) {
           }
         }
       };
+    case 'insights/loading':
+      return { ...state, contextualInsights: { ...state.contextualInsights, loading: true, error: null } };
+    case 'insights/failed':
+      return { ...state, contextualInsights: { ...state.contextualInsights, loading: false, error: action.error } };
     case 'insights/loaded':
-      return { ...state, contextualInsights: { ...state.contextualInsights, ...action.insights } };
+      return { ...state, contextualInsights: { ...state.contextualInsights, ...action.insights, loading: false, loadedAt: action.now || new Date().toISOString(), error: null } };
+    case 'studyPlanner/targetChanged':
+      return { ...state, contextualInsights: { ...state.contextualInsights, targetRating: action.targetRating } };
     default:
       return state;
   }

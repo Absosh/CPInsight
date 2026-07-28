@@ -6,7 +6,7 @@ import { SessionList } from './SessionList.jsx';
 const navItems = [
   ['conversation', 'New Session'],
   ['contestReviews', 'Contest Reviews'],
-  ['studyPlans', 'Study Plans'],
+  ['studyPlans', 'Study Planner'],
   ['reflections', 'Reflection Timeline'],
   ['savedReports', 'Saved Reports'],
   ['settings', 'Settings']
@@ -17,9 +17,9 @@ export function LeftSidebar({ searchInputRef }) {
   const localSearchRef = useRef(null);
   const ref = searchInputRef || localSearchRef;
   return (
-    <aside className="coach-left-sidebar" aria-label="AI Coach workspace navigation">
+    <aside className="coach-left-sidebar" aria-label="AI Assistant workspace navigation">
       <header>
-        <h1>AI Coach</h1>
+        <h1>AI Assistant</h1>
         <button type="button" onClick={() => dispatch({ type: 'sessions/created' })}>New Session</button>
       </header>
       <label className="coach-search">

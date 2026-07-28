@@ -62,6 +62,21 @@ export function createAiCoachApiClient({ baseUrl = '/api', getAccessToken = () =
     getReflections(userId) {
       return request(`/ai/reflections/${userId}`);
     },
+    getUserProfile() {
+      return request('/user/profile');
+    },
+    getCombinedAnalytics() {
+      return request('/analytics/combined');
+    },
+    getLatestReview() {
+      return request('/reviews/latest');
+    },
+    getBehaviorProfile() {
+      return request('/behavior/profile');
+    },
+    getBehaviorFeatures(limit = 100) {
+      return request(`/behavior/features?limit=${encodeURIComponent(limit)}`);
+    },
     submitFeedback(feedback) {
       return request('/ai/feedback', { method: 'POST', body: feedback });
     }

@@ -37,7 +37,7 @@ function MessageActions({ message }) {
     dispatch({ type: 'messages/copied', messageId: message.messageId });
   }
   function exportResponse() {
-    dispatch({ type: 'messages/exported', messageId: message.messageId, title: 'AI Coach response', payload: { content, sections: message.sections, metadata: message.metadata } });
+    dispatch({ type: 'messages/exported', messageId: message.messageId, title: 'AI Assistant response', payload: { content, sections: message.sections, metadata: message.metadata } });
   }
   function regenerate() {
     submitQuestion(message.metadata?.question || 'Regenerate the previous response with the same evidence requirements.');
