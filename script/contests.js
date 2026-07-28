@@ -1340,6 +1340,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initRevealAnimations();
   const mainApp = document.getElementById('mainApp');
   mainApp?.classList.remove('blur-md', 'pointer-events-none');
+  if (typeof loadUserProfile === 'function') loadUserProfile();
 
   const list = document.getElementById('contestList');
   list?.addEventListener('click', (event) => {
