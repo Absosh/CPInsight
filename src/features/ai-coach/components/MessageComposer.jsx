@@ -18,15 +18,19 @@ export function MessageComposer() {
     <form className="coach-composer" onSubmit={handleSubmit}>
       <label>
         <span>Ask CPInsight</span>
-        <textarea
-          value={question}
-          onChange={(event) => setQuestion(event.target.value)}
-          placeholder="Ask why your rating changed, what to practice, or how a contest went."
-          rows={3}
-          disabled={busy}
-        />
+        <div className="coach-input-shell">
+          <button className="coach-attach-button" type="button" aria-label="Attachment placeholder" disabled>+</button>
+          <textarea
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            placeholder="Ask why your rating changed, what to practice, or how a contest went."
+            rows={3}
+            disabled={busy}
+          />
+        </div>
       </label>
       <div>
+        <span className="coach-shortcut-hint">Enter to send after typing</span>
         <button type="submit" disabled={busy || !question.trim()}>{busy ? 'Generating' : 'Ask Coach'}</button>
         <button type="button" disabled={!busy} onClick={abortGeneration}>Abort</button>
       </div>

@@ -9,6 +9,13 @@ import { ReflectionWorkspace } from './ReflectionWorkspace.jsx';
 import { RoadmapWorkspace } from './RoadmapWorkspace.jsx';
 import { StudyPlannerWorkspace } from './StudyPlannerWorkspace.jsx';
 
+const suggestedPrompts = [
+  'Analyze my last contest',
+  "Build today's study plan",
+  'Review my weakest topic',
+  'Show my improvement'
+];
+
 function PrimaryTabs({ activeView, onChange }) {
   const tabs = [
     ['conversation', 'Chat'],
@@ -43,8 +50,13 @@ export function CenterPanel() {
       <ConversationView composer={<MessageComposer />}>
         {messages.length ? messages.map((message) => <CoachMessageRenderer key={message.messageId} message={message} />) : (
           <section className="coach-empty-state">
+            <div className="coach-empty-orb" aria-hidden="true">AI</div>
+            <p className="coach-empty-kicker">Evidence-first coaching</p>
             <h2>Start with a question that needs evidence.</h2>
-            <p>Try asking why a contest went poorly, whether you are improving, or what to practice next.</p>
+            <p>Ask CPInsight to explain contests, surface behavior patterns, or turn validated recommendations into a focused practice plan.</p>
+            <div className="coach-suggestion-grid" aria-label="Suggested prompts">
+              {suggestedPrompts.map((prompt) => <button key={prompt} type="button">{prompt}</button>)}
+            </div>
           </section>
         )}
       </ConversationView>

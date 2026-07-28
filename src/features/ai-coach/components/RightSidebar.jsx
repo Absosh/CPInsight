@@ -5,6 +5,7 @@ import { useAiCoachWorkspace } from '../state/AiCoachWorkspaceProvider.jsx';
 function Metric({ label, value }) {
   return (
     <div className="coach-context-metric">
+      <i aria-hidden="true" />
       <span>{label}</span>
       <strong>{value ?? 'Not available'}</strong>
     </div>
@@ -17,7 +18,7 @@ export function RightSidebar() {
   return (
     <aside className="coach-right-sidebar" aria-label="Contextual AI insights">
       <section className="coach-context-card">
-        <h2>Context</h2>
+        <h2><span aria-hidden="true">CX</span> Context</h2>
         <Metric label="Current Rating" value={insights.currentRating} />
         <Metric label="Target Rating" value={insights.targetRating} />
         <Metric label="Current Goal" value={insights.currentGoal} />

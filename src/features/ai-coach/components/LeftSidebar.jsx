@@ -4,12 +4,12 @@ import { useAiCoachWorkspace } from '../state/AiCoachWorkspaceProvider.jsx';
 import { SessionList } from './SessionList.jsx';
 
 const navItems = [
-  ['conversation', 'New Session'],
-  ['contestReviews', 'Contest Reviews'],
-  ['studyPlans', 'Study Planner'],
-  ['reflections', 'Reflection Timeline'],
-  ['savedReports', 'Saved Reports'],
-  ['settings', 'Settings']
+  ['conversation', 'Sessions', 'Continue coaching threads', 'CH'],
+  ['contestReviews', 'Contest Reviews', 'Review completed contests', 'CR'],
+  ['studyPlans', 'Study Planner', 'Prioritized practice plan', 'SP'],
+  ['reflections', 'Reflection Timeline', 'Validated behavior memory', 'RT'],
+  ['savedReports', 'Reports', 'Exported coach outputs', 'RP'],
+  ['settings', 'Settings', 'Workspace preferences', 'ST']
 ];
 
 export function LeftSidebar({ searchInputRef }) {
@@ -19,8 +19,11 @@ export function LeftSidebar({ searchInputRef }) {
   return (
     <aside className="coach-left-sidebar" aria-label="AI Assistant workspace navigation">
       <header>
-        <h1>AI Assistant</h1>
-        <button type="button" onClick={() => dispatch({ type: 'sessions/created' })}>New Session</button>
+        <div>
+          <span className="coach-brand-mark">AI</span>
+          <h1>AI Assistant</h1>
+        </div>
+        <button type="button" onClick={() => dispatch({ type: 'sessions/created' })}>New</button>
       </header>
       <label className="coach-search">
         <span>Search</span>
@@ -45,9 +48,13 @@ export function LeftSidebar({ searchInputRef }) {
         </select>
       </div>
       <nav className="coach-nav">
-        {navItems.map(([view, label]) => (
+        {navItems.map(([view, label, subtitle, icon]) => (
           <button key={view} type="button" aria-current={state.activeView === view ? 'page' : undefined} onClick={() => view === AiCoachView.conversation ? dispatch({ type: 'sessions/created' }) : dispatch({ type: 'workspace/viewChanged', view })}>
-            {label}
+            <span className="coach-nav-icon" aria-hidden="true">{icon}</span>
+            <span>
+              <strong>{label}</strong>
+              <small>{subtitle}</small>
+            </span>
           </button>
         ))}
       </nav>

@@ -5,8 +5,9 @@
   place-items: center;
   flex: 0 0 auto;
   border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-sm);
-  color: var(--ai-text);
+  border-radius: var(--ai-radius-md);
+  background: var(--ai-surface-active);
+  color: var(--ai-highlight);
   font-size: 0.55rem;
   font-weight: 700;
   line-height: 1;
@@ -46,12 +47,21 @@
 .ai-button,
 .ai-icon-button {
   border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-md);
-  background: var(--ai-surface-overlay);
+  border-radius: var(--ai-radius-lg);
+  background: var(--ai-gradient-surface);
   color: var(--ai-text);
   cursor: pointer;
   font: inherit;
   min-block-size: 36px;
+  transition: border-color var(--ai-transition-normal), box-shadow var(--ai-transition-normal), transform var(--ai-transition-normal), background var(--ai-transition-normal);
+}
+
+.ai-button:hover,
+.ai-icon-button:hover {
+  border-color: var(--ai-border-strong);
+  background: var(--ai-surface-hover);
+  box-shadow: var(--ai-shadow-sm);
+  transform: translateY(-1px);
 }
 
 .ai-button {
@@ -70,7 +80,8 @@
   align-items: center;
   gap: var(--ai-space-xs);
   border: 1px solid var(--ai-border);
-  border-radius: 999px;
+  border-radius: var(--ai-radius-pill, 999px);
+  background: var(--ai-surface-overlay);
   color: var(--ai-text);
   font-size: 0.75rem;
   font-weight: 700;
@@ -110,6 +121,7 @@
 .ai-insight-summary {
   padding: 0;
   overflow: hidden;
+  box-shadow: var(--ai-shadow-sm);
 }
 
 .ai-coach-message > div,
@@ -162,7 +174,7 @@
 .ai-confidence-scale {
   overflow: hidden;
   block-size: 8px;
-  border-radius: 999px;
+  border-radius: var(--ai-radius-pill, 999px);
   background: var(--ai-border);
 }
 
@@ -184,9 +196,16 @@
   align-items: center;
   gap: var(--ai-space-xs);
   border: 1px solid var(--ai-border);
-  border-radius: 999px;
+  border-radius: var(--ai-radius-pill, 999px);
+  background: var(--ai-surface-overlay);
   color: var(--ai-text);
   padding: 5px 10px;
+  transition: border-color var(--ai-transition-normal), background var(--ai-transition-normal), transform var(--ai-transition-normal);
+}
+
+.ai-behavior-chip:hover {
+  background: var(--ai-surface-hover);
+  transform: translateY(-1px);
 }
 
 .ai-behavior-chip[data-kind="strength"] { border-color: var(--ai-success); }
@@ -215,8 +234,8 @@
   align-items: center;
   gap: var(--ai-space-sm);
   border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-lg);
-  background: var(--ai-surface-raised);
+  border-radius: var(--ai-radius-xl);
+  background: var(--ai-gradient-surface);
   color: var(--ai-text);
   cursor: pointer;
   padding: var(--ai-space-sm);
@@ -245,7 +264,7 @@
 
 .ai-status-pill {
   border: 1px solid var(--ai-success);
-  border-radius: 999px;
+  border-radius: var(--ai-radius-pill, 999px);
   color: var(--ai-success);
   font-size: 0.75rem;
   padding: 3px 8px;
@@ -260,8 +279,8 @@
 
 .ai-segmented-control button {
   border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-md);
-  background: transparent;
+  border-radius: var(--ai-radius-lg);
+  background: var(--ai-surface-overlay);
   color: var(--ai-text-muted);
   cursor: pointer;
   font: inherit;
@@ -270,6 +289,7 @@
 
 .ai-segmented-control button[aria-selected="true"] {
   border-color: var(--ai-evidence);
+  background: var(--ai-surface-active);
   color: var(--ai-text);
 }
 
@@ -291,7 +311,7 @@
   margin-block-start: 4px;
   inline-size: 12px;
   block-size: 12px;
-  border-radius: 999px;
+  border-radius: var(--ai-radius-pill, 999px);
   background: var(--ai-reflection);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--ai-reflection) 18%, transparent);
 }
@@ -351,7 +371,7 @@
   align-content: start;
   gap: var(--ai-space-lg);
   overflow: auto;
-  padding: var(--ai-space-lg);
+  padding: var(--ai-space-xl);
 }
 
 .ai-conversation-composer {

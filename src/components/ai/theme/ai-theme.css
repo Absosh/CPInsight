@@ -11,10 +11,21 @@
   --ai-radius-sm: 4px;
   --ai-radius-md: 6px;
   --ai-radius-lg: 8px;
+  --ai-radius-xl: 18px;
+  --ai-radius-pill: 999px;
   --ai-font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ai-shadow-sm: 0 8px 22px rgba(0, 0, 0, 0.16);
+  --ai-shadow-md: 0 18px 48px rgba(0, 0, 0, 0.26);
+  --ai-shadow-lg: 0 28px 80px rgba(0, 0, 0, 0.34);
+  --ai-glow-shadow: 0 0 34px var(--ai-glow);
+  --ai-gradient-primary: linear-gradient(135deg, var(--ai-primary), var(--ai-secondary));
+  --ai-gradient-surface: linear-gradient(145deg, var(--ai-surface-raised), var(--ai-surface-overlay));
   --ai-motion-fast: 120ms;
   --ai-motion-normal: 220ms;
   --ai-motion-slow: 360ms;
+  --ai-transition-fast: var(--ai-motion-fast) var(--ai-motion-curve);
+  --ai-transition-normal: var(--ai-motion-normal) var(--ai-motion-curve);
+  --ai-transition-slow: var(--ai-motion-slow) var(--ai-motion-curve);
   --ai-motion-curve: cubic-bezier(0.2, 0, 0, 1);
   background: var(--ai-surface);
   color: var(--ai-text);
@@ -29,9 +40,10 @@
 }
 
 .ai-card {
-  background: var(--ai-surface-raised);
+  background: var(--ai-gradient-surface);
   border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-lg);
+  border-radius: var(--ai-radius-xl);
+  box-shadow: var(--ai-shadow-sm);
   color: var(--ai-text);
 }
 
@@ -42,7 +54,7 @@
 @media (hover: hover) {
   .ai-card[data-interactive="true"]:hover {
     border-color: var(--ai-border-strong);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    box-shadow: var(--ai-shadow-md), var(--ai-glow-shadow);
     transform: translateY(-1px);
   }
 }
