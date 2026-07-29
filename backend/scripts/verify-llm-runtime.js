@@ -92,21 +92,37 @@ async function run() {
     rateLimiter: new RuntimeRateLimiter({ perUser: 10000, perProvider: 10000, perModel: 10000 })
   });
   const normal = await engine.execute({ userId, executionPlan: executionPlan(), promptPackage: promptPackage() });
-  assert.equal(normal.provider, 'openai');
+  assert.equal(normal.provider, 'gemini');
   assert.equal(normal.streaming, false);
   assert.equal(normal.tokenAccounting.promptTokens, 120);
   assert.equal(normal.costAccounting.actualCost > 0, true);
 
-  const streaming = await engine.execute({ userId, executionPlan: executionPlan(), promptPackage: promptPackage(), stream: true });
+  const streaming = await engine.execute({
+    userId,
+    executionPlan: executionPlan(),
+    promptPackage: promptPackage(),
+    override: { provider: 'openai', model: 'fast-json' },
+    stream: true
+  });
   assert.equal(streaming.streaming, true);
   assert.equal(streaming.text, 'ab');
 
   const retryEngine = new LLMRuntimeEngine({ providerRegistry: registry({ retryFailures: 2 }), modelRegistry: models(), retryEngine: new RetryEngine({ maxAttempts: 3, baseDelayMs: 1, maxDelayMs: 2 }) });
-  const retried = await retryEngine.execute({ userId, executionPlan: executionPlan(), promptPackage: promptPackage() });
+  const retried = await retryEngine.execute({
+    userId,
+    executionPlan: executionPlan(),
+    promptPackage: promptPackage(),
+    override: { provider: 'openai', model: 'fast-json' }
+  });
   assert.equal(retried.retries, 2);
 
   const failoverEngine = new LLMRuntimeEngine({ providerRegistry: registry({ primaryFail: true }), modelRegistry: models(), retryEngine: new RetryEngine({ maxAttempts: 1 }) });
-  const fallback = await failoverEngine.execute({ userId, executionPlan: executionPlan(), promptPackage: promptPackage() });
+  const fallback = await failoverEngine.execute({
+    userId,
+    executionPlan: executionPlan(),
+    promptPackage: promptPackage(),
+    override: { provider: 'openai', model: 'fast-json' }
+  });
   assert.equal(fallback.provider, 'anthropic');
   assert.equal(fallback.fallbacks >= 1, true);
 

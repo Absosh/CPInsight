@@ -18,6 +18,10 @@ const schema = Joi.object({
   CODEFORCES_API_BASE: Joi.string().uri().default('https://codeforces.com/api'),
   LEETCODE_GRAPHQL_ENDPOINT: Joi.string().uri().default('https://leetcode.com/graphql'),
   CODECHEF_BASE_URL: Joi.string().uri().default('https://www.codechef.com'),
+  LLM_PROVIDER: Joi.string().valid('openai', 'anthropic', 'gemini', 'azure_openai', 'openrouter', 'ollama', 'vllm').default('gemini'),
+  LLM_MODEL: Joi.string().default('gemini-2.5-flash'),
+  GEMINI_API_KEY: Joi.string().allow('').default(''),
+  GEMINI_BASE_URL: Joi.string().uri().default('https://generativelanguage.googleapis.com/v1beta'),
   OUTBOX_RELAY_ENABLED: Joi.boolean().truthy('true').falsy('false').default(true),
   OUTBOX_RELAY_BATCH_SIZE: Joi.number().integer().min(1).max(1000).default(100),
   OUTBOX_RELAY_LEASE_MS: Joi.number().integer().min(1000).max(300000).default(30000),
@@ -69,6 +73,12 @@ module.exports = {
     codeforcesApiBase: value.CODEFORCES_API_BASE,
     leetcodeGraphqlEndpoint: value.LEETCODE_GRAPHQL_ENDPOINT,
     codechefBaseUrl: value.CODECHEF_BASE_URL
+  },
+  llm: {
+    provider: value.LLM_PROVIDER,
+    model: value.LLM_MODEL,
+    geminiConfigured: Boolean(value.GEMINI_API_KEY),
+    geminiBaseUrl: value.GEMINI_BASE_URL
   },
   outboxRelay: {
     enabled: value.OUTBOX_RELAY_ENABLED,

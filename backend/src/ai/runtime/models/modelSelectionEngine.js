@@ -11,6 +11,14 @@ class ModelSelectionEngine {
       return { model: manual, reason: 'manual_override' };
     }
 
+    const preferred = this.modelRegistry.preferredFromEnv && this.modelRegistry.preferredFromEnv();
+    if (preferred) {
+      const health = this.providerRegistry.health().find((item) => item.provider === preferred.provider);
+      if (health && health.healthy && !health.circuitOpen) {
+        return { model: preferred, reason: 'environment_preference' };
+      }
+    }
+
     const promptTokens = promptPackage.audit ? promptPackage.audit.promptSizeTokens || 0 : 0;
     const needsJSON = (executionPlan.outputSchemas || []).length > 0;
     const preferredModes = new Set(executionPlan.reasoningModes || []);
@@ -24,7 +32,7 @@ class ModelSelectionEngine {
       })
       .map((model) => {
         const cost = ((promptTokens / 1000) * model.pricing.promptPer1k) + ((model.maxOutputTokens / 1000) * model.pricing.completionPer1k);
-        const providerRank = ['openai', 'anthropic', 'gemini', 'azure_openai', 'openrouter', 'ollama', 'vllm'].indexOf(model.provider);
+        const providerRank = ['gemini', 'openai', 'anthropic', 'azure_openai', 'openrouter', 'ollama', 'vllm'].indexOf(model.provider);
         const providerPriorityScore = 1 / (1 + (providerRank < 0 ? 99 : providerRank));
         const jsonBoost = needsJSON && model.supportsJSON ? 0.5 : 0;
         const localBoost = model.pricing.promptPer1k === 0 ? 0.05 : 0;

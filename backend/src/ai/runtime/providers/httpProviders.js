@@ -1,6 +1,23 @@
 const axios = require('axios');
 const { ProviderAdapter } = require('./providerAdapter');
 
+function providerError(provider, error) {
+  const status = error.response && error.response.status;
+  const retryAfter = error.response && error.response.headers && error.response.headers['retry-after'];
+  const sanitized = (message) => {
+    const next = new Error(message);
+    if (status) next.response = { status, headers: retryAfter ? { 'retry-after': retryAfter } : {} };
+    return next;
+  };
+  if (status === 401 || status === 403) return sanitized(`${provider} provider authentication failed`);
+  if (status === 429) {
+    return sanitized(`${provider} provider rate limited${retryAfter ? `; retry after ${retryAfter}s` : ''}`);
+  }
+  if (status >= 500) return sanitized(`${provider} provider unavailable`);
+  if (status >= 400) return sanitized(`${provider} provider rejected the request`);
+  return sanitized(`${provider} provider request failed`);
+}
+
 function commonMessages(promptPackage) {
   return [
     { role: 'system', content: promptPackage.systemPrompt },
@@ -80,14 +97,29 @@ class GeminiProvider extends ProviderAdapter {
 
   buildRequest({ model, promptPackage, parameters = {} }) {
     return {
-      url: `${this.baseUrl}/models/${model.name}:generateContent?key=${this.apiKey}`,
-      headers: {},
+      url: `${this.baseUrl}/models/${model.name}:generateContent`,
+      headers: { 'x-goog-api-key': this.apiKey },
       body: {
-        contents: [{ role: 'user', parts: [{ text: JSON.stringify(promptPackage) }] }],
+        systemInstruction: {
+          parts: [{ text: `${promptPackage.systemPrompt}\n${promptPackage.developerInstructions.join('\n')}` }]
+        },
+        contents: [{
+          role: 'user',
+          parts: [{ text: JSON.stringify({
+            evidenceBlock: promptPackage.evidenceBlock,
+            reasoningContext: promptPackage.reasoningContext,
+            outputSchema: promptPackage.outputSchema,
+            groundingRules: promptPackage.groundingRules,
+            citationRules: promptPackage.citationRules,
+            safetyRules: promptPackage.safetyRules,
+            responseConstraints: promptPackage.responseConstraints
+          }) }]
+        }],
         generationConfig: {
           temperature: parameters.temperature ?? 0.2,
           topP: parameters.topP ?? 1,
-          maxOutputTokens: parameters.maxTokens || model.maxOutputTokens
+          maxOutputTokens: parameters.maxTokens || model.maxOutputTokens,
+          responseMimeType: model.supportsJSON ? 'application/json' : undefined
         }
       }
     };
@@ -95,8 +127,16 @@ class GeminiProvider extends ProviderAdapter {
 
   async invoke(request) {
     if (!this.apiKey) throw new Error('Gemini API key is not configured');
-    const response = await axios.post(request.url, request.body, { headers: request.headers, timeout: request.timeoutMs || 30000 });
-    return { rawResponse: response.data, text: JSON.stringify(response.data.candidates || []), usage: response.data.usageMetadata || {} };
+    try {
+      const response = await axios.post(request.url, request.body, { headers: request.headers, timeout: request.timeoutMs || 30000 });
+      const text = (response.data.candidates || [])
+        .flatMap((candidate) => (candidate.content && candidate.content.parts) || [])
+        .map((part) => part.text || '')
+        .join('');
+      return { rawResponse: response.data, text, usage: response.data.usageMetadata || {} };
+    } catch (error) {
+      throw providerError('Gemini', error);
+    }
   }
 }
 
@@ -108,5 +148,4 @@ class OpenAICompatibleProvider extends OpenAIProvider {
   }
 }
 
-module.exports = { OpenAIProvider, AnthropicProvider, GeminiProvider, OpenAICompatibleProvider, commonMessages };
-
+module.exports = { OpenAIProvider, AnthropicProvider, GeminiProvider, OpenAICompatibleProvider, commonMessages, providerError };
