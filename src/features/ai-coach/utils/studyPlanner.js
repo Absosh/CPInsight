@@ -1,19 +1,12 @@
-const TOPIC_ALIAS = {
-  dp: 'Dynamic Programming',
-  dfs: 'Graphs',
-  bfs: 'Graphs',
-  graph: 'Graphs',
-  graphs: 'Graphs',
-  greedy: 'Greedy',
-  implementation: 'Implementation',
-  math: 'Math',
-  trees: 'Trees',
-  tree: 'Trees',
-  binary_search: 'Binary Search',
-  'binary search': 'Binary Search',
-  strings: 'Strings',
-  string: 'Strings'
-};
+import { buildTopicPracticeUrl, normalizeTopicDisplayName, topicMappings } from './topicMappings.js';
+
+const TOPIC_ALIAS = topicMappings.reduce((aliases, mapping) => {
+  aliases[mapping.displayName.toLowerCase()] = mapping.displayName;
+  mapping.aliases.forEach((alias) => {
+    aliases[alias.toLowerCase()] = mapping.displayName;
+  });
+  return aliases;
+}, {});
 
 const TARGET_TOPIC_REQUIREMENTS = [
   { min: 1200, topics: ['Implementation', 'Greedy', 'Math', 'Binary Search'] },
@@ -40,8 +33,8 @@ function normalizeConfidence(value, fallback = 0.72) {
 function titleCase(value) {
   const text = String(value || '').replace(/[_-]/g, ' ').trim();
   if (!text) return 'General Practice';
-  const alias = TOPIC_ALIAS[text.toLowerCase()];
-  if (alias) return alias;
+  const alias = normalizeTopicDisplayName(text);
+  if (alias !== 'General Practice') return alias;
   return text.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
 }
 
@@ -231,10 +224,7 @@ function normalizeDifficulty(difficulty, topic = {}) {
 }
 
 function practiceUrl(platform, topic, name) {
-  const encodedTopic = encodeURIComponent(String(topic || name || '').toLowerCase().replace(/\s+/g, '-'));
-  if (platform === 'LeetCode') return `https://leetcode.com/problemset/?search=${encodedTopic}`;
-  if (platform === 'CodeChef') return `https://www.codechef.com/practice?search=${encodedTopic}`;
-  return `https://codeforces.com/problemset?tags=${encodedTopic}`;
+  return buildTopicPracticeUrl(platform, topic || name);
 }
 
 function collectSubmissions(analytics = {}) {
