@@ -3,6 +3,7 @@ import { AiIcon } from './Icon.jsx';
 import { StateShell } from './StateShell.jsx';
 
 export function CoachMessage({ question, response, timestamp, metadata, streaming = false, state = 'success' }) {
+  const hasMetadata = metadata && typeof metadata === 'object' && Object.keys(metadata).length > 0;
   return (
     <StateShell state={state}>
       <article className="ai-card ai-coach-message ai-reveal" aria-live={streaming ? 'polite' : 'off'}>
@@ -16,10 +17,12 @@ export function CoachMessage({ question, response, timestamp, metadata, streamin
         <div className={streaming ? 'ai-streaming-cursor' : undefined}>
           {response || 'No response available.'}
         </div>
-        <details>
-          <summary>Metadata</summary>
-          <pre>{JSON.stringify(metadata || {}, null, 2)}</pre>
-        </details>
+        {hasMetadata && (
+          <details>
+            <summary>Metadata</summary>
+            <pre>{JSON.stringify(metadata, null, 2)}</pre>
+          </details>
+        )}
       </article>
     </StateShell>
   );
