@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   BehaviorChip,
   ConfidenceBadge,
@@ -6,7 +6,7 @@ import {
   RecommendationCard
 } from '../../../components/ai/index.js';
 import { useAiCoachWorkspace } from '../state/AiCoachWorkspaceProvider.jsx';
-import { buildStudyPlanner } from '../utils/studyPlanner.js';
+import { buildProblemBank, buildStudyPlanner, refreshProblemBankStatuses } from '../utils/studyPlanner.js';
 
 const TARGET_OPTIONS = [1200, 1400, 1600, 1800, 1900, 2000, 2100];
 
@@ -32,9 +32,15 @@ function ProgressBar({ value, label }) {
   );
 }
 
-function Section({ title, subtitle, children, className = '' }) {
+function activateOnKeyboard(event, callback) {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  callback();
+}
+
+function Section({ id, title, subtitle, children, className = '' }) {
   return (
-    <section className={`study-section ai-card ${className}`.trim()}>
+    <section id={id} className={`study-section ai-card ${className}`.trim()}>
       <header className="study-section-header">
         <div>
           <h2>{title}</h2>
@@ -46,9 +52,17 @@ function Section({ title, subtitle, children, className = '' }) {
   );
 }
 
-function TodayFocus({ focus, onQuickStart }) {
+function TodayFocus({ focus, onQuickStart, onOpenProblemBank }) {
   return (
-    <section className="study-focus-card ai-card">
+    <section
+      id="study-today"
+      className="study-focus-card ai-card study-clickable"
+      role="button"
+      tabIndex={0}
+      aria-label={`Open problem bank for ${focus.primaryWeakTopic}`}
+      onClick={onOpenProblemBank}
+      onKeyDown={(event) => activateOnKeyboard(event, onOpenProblemBank)}
+    >
       <div>
         <p className="study-eyebrow">Today's Focus</p>
         <h2>{focus.goal}</h2>
@@ -59,20 +73,29 @@ function TodayFocus({ focus, onQuickStart }) {
         <StudyMetric label="Estimated Time" value={focus.estimatedCompletionTime} />
         <ConfidenceBadge value={focus.confidence} />
       </div>
-      <button className="ai-button ai-focusable" type="button" onClick={onQuickStart}>Quick Start</button>
+      <button className="ai-button ai-focusable" type="button" onClick={(event) => { event.stopPropagation(); onQuickStart(); }}>Quick Start</button>
     </section>
   );
 }
 
-function DailyPlan({ tasks, actions }) {
+function DailyPlan({ tasks, actions, onOpenProblemBank }) {
   return (
-    <Section title="Daily Study Plan" subtitle="A focused sequence assembled from current priorities.">
+    <Section id="study-daily" title="Daily Study Plan" subtitle="A focused sequence assembled from current priorities.">
       <div className="study-task-list">
         {tasks.map((task) => {
           const key = `${task.title}-${task.topic}`;
           const completed = actions[key]?.action === 'completed';
           return (
-            <article key={key} className="study-task-card" data-completed={completed}>
+            <article
+              key={key}
+              className="study-task-card study-clickable"
+              data-completed={completed}
+              role="button"
+              tabIndex={0}
+              aria-label={`Open problem bank for ${task.topic}`}
+              onClick={() => onOpenProblemBank({ type: 'daily-task', label: task.title, topic: task.topic, difficulty: task.difficulty, estimatedTime: task.duration })}
+              onKeyDown={(event) => activateOnKeyboard(event, () => onOpenProblemBank({ type: 'daily-task', label: task.title, topic: task.topic, difficulty: task.difficulty, estimatedTime: task.duration }))}
+            >
               <div>
                 <h3>{task.title}</h3>
                 <p>{task.topic}</p>
@@ -82,7 +105,7 @@ function DailyPlan({ tasks, actions }) {
                 <dt>Difficulty</dt><dd>{task.difficulty}</dd>
                 <dt>Priority</dt><dd>{task.priority}</dd>
               </dl>
-              <button className="ai-button ai-focusable" type="button">Quick Start</button>
+              <button className="ai-button ai-focusable" type="button" onClick={(event) => { event.stopPropagation(); onOpenProblemBank({ type: 'daily-task', label: task.title, topic: task.topic, difficulty: task.difficulty, estimatedTime: task.duration }); }}>Problem Bank</button>
             </article>
           );
         })}
@@ -91,12 +114,19 @@ function DailyPlan({ tasks, actions }) {
   );
 }
 
-function WeeklyRoadmap({ days }) {
+function WeeklyRoadmap({ days, onOpenProblemBank }) {
   return (
-    <Section title="Weekly Roadmap" subtitle="Expandable daily focus blocks for the selected rating target.">
+    <Section id="study-weekly" title="Weekly Roadmap" subtitle="Expandable daily focus blocks for the selected rating target.">
       <div className="study-week-grid">
         {days.map((day) => (
-          <details key={day.day} className="study-day-card">
+          <details
+            key={day.day}
+            className="study-day-card study-clickable"
+            onClick={(event) => {
+              if (event.target.tagName.toLowerCase() === 'summary') return;
+              onOpenProblemBank({ type: 'weekly-roadmap', label: day.day, topic: day.focusTopic, estimatedTime: day.estimatedTime, confidence: day.confidence });
+            }}
+          >
             <summary>
               <span>{day.day}</span>
               <strong>{day.focusTopic}</strong>
@@ -107,6 +137,7 @@ function WeeklyRoadmap({ days }) {
               <dt>Goal</dt><dd>{day.goal}</dd>
             </dl>
             <ProgressBar label="Completion" value={day.completion} />
+            <button className="ai-button ai-focusable" type="button" onClick={() => onOpenProblemBank({ type: 'weekly-roadmap', label: day.day, topic: day.focusTopic, estimatedTime: day.estimatedTime, confidence: day.confidence })}>Open Problem Bank</button>
           </details>
         ))}
       </div>
@@ -114,12 +145,20 @@ function WeeklyRoadmap({ days }) {
   );
 }
 
-function TopicPriorities({ topics }) {
+function TopicPriorities({ topics, onOpenProblemBank }) {
   return (
-    <Section title="Topic Priorities" subtitle="Ranked by dynamic ROI from analytics, review evidence, reflections, and target rating needs." className="study-section-wide">
+    <Section id="study-topics" title="Topic Priorities" subtitle="Ranked by dynamic ROI from analytics, review evidence, reflections, and target rating needs." className="study-section-wide">
       <div className="study-topic-priority-list">
         {topics.map((topic, index) => (
-          <article key={topic.topic} className="study-topic-card">
+          <article
+            key={topic.topic}
+            className="study-topic-card study-clickable"
+            role="button"
+            tabIndex={0}
+            aria-label={`Open problem bank for ${topic.topic}`}
+            onClick={() => onOpenProblemBank({ type: 'topic-priority', label: topic.topic, topic: topic.topic, difficulty: topic.difficulty, confidence: topic.confidence, reason: topic.reason, roi: topic.roi })}
+            onKeyDown={(event) => activateOnKeyboard(event, () => onOpenProblemBank({ type: 'topic-priority', label: topic.topic, topic: topic.topic, difficulty: topic.difficulty, confidence: topic.confidence, reason: topic.reason, roi: topic.roi }))}
+          >
             <div className="study-topic-rank">#{index + 1}</div>
             <div>
               <h3>{topic.topic}</h3>
@@ -143,20 +182,33 @@ function TopicPriorities({ topics }) {
   );
 }
 
-function RecommendedProblems({ groups, onToggleComplete }) {
+function RecommendedProblems({ groups, onToggleComplete, onOpenProblemBank }) {
   const labels = [
     ['today', "Today's Practice"],
     ['week', 'This Week'],
     ['stretch', 'Stretch Goal']
   ];
   return (
-    <Section title="Recommended Problems" subtitle="Existing recommendations grouped into actionable practice windows." className="study-section-wide">
+    <Section id="study-recommended" title="Recommended Problems" subtitle="Existing recommendations grouped into actionable practice windows." className="study-section-wide">
       <div className="study-recommendation-groups">
         {labels.map(([key, label]) => (
           <div key={key}>
             <h3>{label}</h3>
             {(groups[key] || []).map((recommendation) => (
-              <RecommendationCard key={recommendation.id} recommendation={recommendation} onToggleComplete={onToggleComplete} />
+              <div
+                key={recommendation.id}
+                className="study-recommendation-click-target"
+                role="button"
+                tabIndex={0}
+                aria-label={`Open problem bank for ${recommendation.topic}`}
+                onClick={(event) => {
+                  if (event.target.closest('button')) return;
+                  onOpenProblemBank({ type: 'recommendation', label: recommendation.title, topic: recommendation.topic, difficulty: recommendation.difficulty, estimatedTime: recommendation.estimatedTime, confidence: recommendation.confidence, reason: recommendation.evidence });
+                }}
+                onKeyDown={(event) => activateOnKeyboard(event, () => onOpenProblemBank({ type: 'recommendation', label: recommendation.title, topic: recommendation.topic, difficulty: recommendation.difficulty, estimatedTime: recommendation.estimatedTime, confidence: recommendation.confidence, reason: recommendation.evidence }))}
+              >
+                <RecommendationCard recommendation={recommendation} onToggleComplete={onToggleComplete} />
+              </div>
             ))}
           </div>
         ))}
@@ -167,7 +219,7 @@ function RecommendedProblems({ groups, onToggleComplete }) {
 
 function StudyTime({ time }) {
   return (
-    <Section title="Estimated Study Time" subtitle="Time budget by day, week, topic, and difficulty.">
+    <Section id="study-time" title="Estimated Study Time" subtitle="Time budget by day, week, topic, and difficulty.">
       <div className="study-time-grid">
         <StudyMetric label="Today" value={`${time.todayMinutes} min`} />
         <StudyMetric label="This Week" value={`${Math.round(time.weekMinutes / 60)} hr`} />
@@ -182,7 +234,7 @@ function StudyTime({ time }) {
 
 function ProgressTracking({ progress }) {
   return (
-    <Section title="Progress Tracking" subtitle="Local progress state plus existing analytics signals.">
+    <Section id="study-progress" title="Progress Tracking" subtitle="Local progress state plus existing analytics signals.">
       <div className="study-progress-grid">
         <ProgressBar label="Daily completion" value={progress.dailyCompletion} />
         <ProgressBar label="Weekly completion" value={progress.weeklyCompletion} />
@@ -196,9 +248,9 @@ function ProgressTracking({ progress }) {
   );
 }
 
-function TargetRatingRoadmap({ roadmap, onTargetChange }) {
+function TargetRatingRoadmap({ roadmap, onTargetChange, onOpenProblemBank }) {
   return (
-    <Section title="Target Rating Roadmap" subtitle="A transparent skill-gap roadmap, not a rating prediction." className="study-section-wide">
+    <Section id="study-target" title="Target Rating Roadmap" subtitle="A transparent skill-gap roadmap, not a rating prediction." className="study-section-wide">
       <div className="study-target-grid">
         <label className="study-rating-control">
           <span>Current Rating</span>
@@ -215,13 +267,26 @@ function TargetRatingRoadmap({ roadmap, onTargetChange }) {
       </div>
       <div className="study-insight-grid">
         <div><h3>Current Strengths</h3>{roadmap.insights.currentStrengths.map((item) => <BehaviorChip key={item} behavior={item} kind="strength" confidence={0.8} />)}</div>
-        <div><h3>Biggest Gaps</h3>{roadmap.insights.biggestGaps.map((item) => <BehaviorChip key={item} behavior={item} kind="weakness" confidence={0.78} />)}</div>
+        <div><h3>Biggest Gaps</h3>{roadmap.insights.biggestGaps.map((item) => (
+          <button key={item} className="study-chip-button" type="button" onClick={() => onOpenProblemBank({ type: 'rating-gap', label: item, topic: item, confidence: 0.78 })}>
+            <BehaviorChip behavior={item} kind="weakness" confidence={0.78} />
+          </button>
+        ))}</div>
         <div><h3>Highest ROI Topic</h3><BehaviorChip behavior={roadmap.insights.highestRoiTopic} kind="pattern" confidence={0.84} /></div>
         <div><h3>Primary Bottleneck</h3><p>{roadmap.insights.primaryBottleneck}</p></div>
       </div>
       <div className="study-milestone-list">
         {roadmap.milestones.map((milestone) => (
-          <article key={milestone.title} className="study-milestone-card" data-status={milestone.status}>
+          <article
+            key={milestone.title}
+            className="study-milestone-card study-clickable"
+            data-status={milestone.status}
+            role="button"
+            tabIndex={0}
+            aria-label={`Open problem bank for ${milestone.title}`}
+            onClick={() => onOpenProblemBank({ type: 'milestone', label: milestone.title, topic: milestone.title, estimatedTime: `${milestone.estimatedHours} hours`, confidence: milestone.confidence, reason: [milestone.reason] })}
+            onKeyDown={(event) => activateOnKeyboard(event, () => onOpenProblemBank({ type: 'milestone', label: milestone.title, topic: milestone.title, estimatedTime: `${milestone.estimatedHours} hours`, confidence: milestone.confidence, reason: [milestone.reason] }))}
+          >
             <ProgressMilestone
               currentStage={milestone.title}
               completed={Math.round(milestone.progress)}
@@ -260,8 +325,93 @@ function ContestImpact({ impact, sources }) {
   );
 }
 
+function ProblemBankModal({ problemBank, filters, onFilterChange, onClose, onRefresh, refreshing }) {
+  if (!problemBank) return null;
+  const filteredProblems = problemBank.problems.filter((problem) => {
+    const platformMatches = filters.platform === 'all' || problem.platform === filters.platform;
+    const difficultyMatches = filters.difficulty === 'all' || problem.difficulty === filters.difficulty;
+    const statusMatches = filters.status === 'all' || problem.status === filters.status;
+    return platformMatches && difficultyMatches && statusMatches;
+  });
+  const grouped = filteredProblems.reduce((accumulator, problem) => {
+    accumulator[problem.platform] = accumulator[problem.platform] || [];
+    accumulator[problem.platform].push(problem);
+    return accumulator;
+  }, {});
+
+  return (
+    <div className="study-problem-bank-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="study-problem-bank-modal" role="dialog" aria-modal="true" aria-labelledby="problem-bank-title" onMouseDown={(event) => event.stopPropagation()}>
+        <header className="study-problem-bank-header">
+          <div>
+            <p className="study-eyebrow">Problem Bank</p>
+            <h2 id="problem-bank-title">{problemBank.topic}</h2>
+            <p>{problemBank.reason?.[0] || 'Problems are curated from existing recommendations and topic metadata.'}</p>
+          </div>
+          <button className="ai-button ai-focusable" type="button" onClick={onClose} aria-label="Close problem bank">Close</button>
+        </header>
+
+        <div className="study-problem-bank-summary">
+          <StudyMetric label="Source" value={problemBank.label} />
+          <StudyMetric label="Estimated Solve Time" value={problemBank.estimatedTime} />
+          <StudyMetric label="Completion" value={`${problemBank.progress}%`} />
+          <ConfidenceBadge value={problemBank.confidence} />
+        </div>
+
+        <div className="study-problem-bank-filters" aria-label="Problem bank filters">
+          <label><span>Platform</span><select value={filters.platform} onChange={(event) => onFilterChange({ ...filters, platform: event.target.value })}><option value="all">All</option><option value="Codeforces">Codeforces</option><option value="LeetCode">LeetCode</option><option value="CodeChef">CodeChef</option></select></label>
+          <label><span>Difficulty</span><select value={filters.difficulty} onChange={(event) => onFilterChange({ ...filters, difficulty: event.target.value })}><option value="all">All</option><option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option></select></label>
+          <label><span>Status</span><select value={filters.status} onChange={(event) => onFilterChange({ ...filters, status: event.target.value })}><option value="all">All</option><option value="Not Attempted">Not Attempted</option><option value="Attempted">Attempted</option><option value="Solved">Solved</option></select></label>
+          <button className="ai-button ai-focusable" type="button" onClick={onRefresh} disabled={refreshing}>{refreshing ? 'Refreshing...' : 'Refresh Status'}</button>
+        </div>
+
+        <div className="study-problem-bank-body">
+          <section>
+            <h3>Recommended Problems</h3>
+            {Object.entries(grouped).length ? Object.entries(grouped).map(([platform, problems]) => (
+              <div key={platform} className="study-problem-platform-group">
+                <h4>{platform}</h4>
+                <div className="study-problem-card-grid">
+                  {problems.map((problem) => (
+                    <article key={problem.id} className="study-problem-card" data-status={problem.status}>
+                      <div>
+                        <span>{problem.platform}</span>
+                        <h5>{problem.name}</h5>
+                      </div>
+                      <dl>
+                        <dt>Difficulty</dt><dd>{problem.difficulty}</dd>
+                        <dt>Acceptance</dt><dd>{problem.acceptanceRate || 'Not available'}</dd>
+                        <dt>Time</dt><dd>{problem.estimatedSolveTime}</dd>
+                        <dt>Topic</dt><dd>{problem.topic}</dd>
+                        <dt>Status</dt><dd>{problem.status}</dd>
+                      </dl>
+                      <a className="ai-button ai-focusable" href={problem.url} target="_blank" rel="noreferrer">Open Problem</a>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )) : <p>No problems match the selected filters.</p>}
+          </section>
+          <aside className="study-topic-info-card">
+            <h3>Topic Information</h3>
+            <dl>
+              <dt>Difficulty Distribution</dt><dd>{Object.entries(problemBank.difficultyDistribution).map(([key, value]) => `${key}: ${value}`).join(', ') || 'Not available'}</dd>
+              <dt>Required Concepts</dt><dd>{[...new Set(problemBank.problems.flatMap((problem) => problem.requiredConcepts))].join(', ')}</dd>
+              <dt>Previous Attempts</dt><dd>{problemBank.problems.reduce((sum, problem) => sum + Number(problem.previousAttempts || 0), 0)}</dd>
+              <dt>Updated</dt><dd>{new Date(problemBank.updatedAt).toLocaleTimeString()}</dd>
+            </dl>
+          </aside>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export function StudyPlannerWorkspace() {
-  const { state, dispatch, refreshInsights } = useAiCoachWorkspace();
+  const { state, dispatch, refreshInsights, api } = useAiCoachWorkspace();
+  const [problemBank, setProblemBank] = useState(null);
+  const [problemFilters, setProblemFilters] = useState({ platform: 'all', difficulty: 'all', status: 'all' });
+  const [refreshingProblems, setRefreshingProblems] = useState(false);
   const targetRating = state.contextualInsights.targetRating;
   const planner = useMemo(() => buildStudyPlanner({
     contextualInsights: state.contextualInsights,
@@ -272,6 +422,41 @@ export function StudyPlannerWorkspace() {
     reflections: state.contextualInsights.recentReflections,
     targetRating
   }), [state.contextualInsights, targetRating]);
+
+  function openProblemBank(source) {
+    setProblemFilters({ platform: 'all', difficulty: 'all', status: 'all' });
+    setProblemBank(buildProblemBank({ source, planner, analytics: state.contextualInsights.analytics }));
+  }
+
+  useEffect(() => {
+    function handleOpenProblemBank(event) {
+      openProblemBank(event.detail || {});
+    }
+    window.addEventListener('cpinsight:openProblemBank', handleOpenProblemBank);
+    return () => window.removeEventListener('cpinsight:openProblemBank', handleOpenProblemBank);
+  }, [planner, state.contextualInsights.analytics]);
+
+  useEffect(() => {
+    if (!problemBank) return undefined;
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setProblemBank(null);
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [problemBank]);
+
+  async function refreshSelectedProblemStatuses() {
+    if (!problemBank) return;
+    setRefreshingProblems(true);
+    try {
+      const analytics = await api.getCombinedAnalytics();
+      setProblemBank((current) => refreshProblemBankStatuses(current, analytics));
+    } catch {
+      setProblemBank((current) => refreshProblemBankStatuses(current, state.contextualInsights.analytics));
+    } finally {
+      setRefreshingProblems(false);
+    }
+  }
 
   function updateTarget(nextTarget) {
     dispatch({ type: 'studyPlanner/targetChanged', targetRating: nextTarget });
@@ -309,17 +494,25 @@ export function StudyPlannerWorkspace() {
         </section>
       ) : null}
 
-      <TodayFocus focus={planner.todaysFocus} onQuickStart={quickStart} />
+      <TodayFocus focus={planner.todaysFocus} onQuickStart={quickStart} onOpenProblemBank={() => openProblemBank({ type: 'today-focus', label: "Today's Focus", topic: planner.todaysFocus.primaryWeakTopic, estimatedTime: planner.todaysFocus.estimatedCompletionTime, confidence: planner.todaysFocus.confidence, reason: planner.todaysFocus.why })} />
       <div className="study-planner-grid">
-        <DailyPlan tasks={planner.dailyPlan} actions={state.recommendationActions} />
-        <WeeklyRoadmap days={planner.weeklyRoadmap} />
-        <TopicPriorities topics={planner.topicPriorities} />
-        <RecommendedProblems groups={planner.recommendedProblems} onToggleComplete={toggleRecommendation} />
+        <DailyPlan tasks={planner.dailyPlan} actions={state.recommendationActions} onOpenProblemBank={openProblemBank} />
+        <WeeklyRoadmap days={planner.weeklyRoadmap} onOpenProblemBank={openProblemBank} />
+        <TopicPriorities topics={planner.topicPriorities} onOpenProblemBank={openProblemBank} />
+        <RecommendedProblems groups={planner.recommendedProblems} onToggleComplete={toggleRecommendation} onOpenProblemBank={openProblemBank} />
         <StudyTime time={planner.estimatedStudyTime} />
         <ProgressTracking progress={planner.progress} />
-        <TargetRatingRoadmap roadmap={planner.targetRating} onTargetChange={updateTarget} />
+        <TargetRatingRoadmap roadmap={planner.targetRating} onTargetChange={updateTarget} onOpenProblemBank={openProblemBank} />
         <ContestImpact impact={planner.recentContestImpact} sources={planner.sourceSummary} />
       </div>
+      <ProblemBankModal
+        problemBank={problemBank}
+        filters={problemFilters}
+        onFilterChange={setProblemFilters}
+        onClose={() => setProblemBank(null)}
+        onRefresh={refreshSelectedProblemStatuses}
+        refreshing={refreshingProblems}
+      />
     </section>
   );
 }

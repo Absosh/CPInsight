@@ -214,6 +214,172 @@ function recommendedProblems(recommendations, priorities) {
   }));
 }
 
+function normalizePlatform(platform) {
+  const text = String(platform || '').toLowerCase();
+  if (text.includes('codeforces')) return 'Codeforces';
+  if (text.includes('leetcode')) return 'LeetCode';
+  if (text.includes('codechef')) return 'CodeChef';
+  return 'Codeforces';
+}
+
+function normalizeDifficulty(difficulty, topic = {}) {
+  const text = String(difficulty || '').toLowerCase();
+  if (text.includes('easy') || text.includes('foundation')) return 'Easy';
+  if (text.includes('hard') || text.includes('stretch') || text.includes('target')) return 'Hard';
+  if (Number(topic.roi) >= 86) return 'Hard';
+  return 'Medium';
+}
+
+function practiceUrl(platform, topic, name) {
+  const encodedTopic = encodeURIComponent(String(topic || name || '').toLowerCase().replace(/\s+/g, '-'));
+  if (platform === 'LeetCode') return `https://leetcode.com/problemset/?search=${encodedTopic}`;
+  if (platform === 'CodeChef') return `https://www.codechef.com/practice?search=${encodedTopic}`;
+  return `https://codeforces.com/problemset?tags=${encodedTopic}`;
+}
+
+function collectSubmissions(analytics = {}) {
+  return [
+    ...list(analytics.recentSubmissions),
+    ...list(analytics.submissions),
+    ...list(analytics.contestHistory).flatMap((contest) => list(contest.submissions))
+  ];
+}
+
+function statusForProblem(problem, analytics = {}) {
+  const submissions = collectSubmissions(analytics);
+  const topic = String(problem.topic || '').toLowerCase();
+  const name = String(problem.name || problem.title || '').toLowerCase();
+  const platform = String(problem.platform || '').toLowerCase();
+  const matches = submissions.filter((submission) => {
+    const submissionPlatform = String(submission.platform || submission.site || '').toLowerCase();
+    const submissionProblem = String(submission.problemName || submission.problem || submission.name || submission.title || '').toLowerCase();
+    const submissionTags = list(submission.tags || submission.topics).join(' ').toLowerCase();
+    const platformMatches = !platform || !submissionPlatform || submissionPlatform.includes(platform);
+    return platformMatches && (
+      (name && submissionProblem && (submissionProblem.includes(name) || name.includes(submissionProblem))) ||
+      (topic && (submissionProblem.includes(topic) || submissionTags.includes(topic)))
+    );
+  });
+
+  if (!matches.length) return 'Not Attempted';
+  const solved = matches.some((submission) => {
+    const verdict = String(submission.verdict || submission.status || '').toLowerCase();
+    return verdict.includes('accepted') || verdict === 'ok' || verdict === 'ac' || verdict.includes('solved');
+  });
+  return solved ? 'Solved' : 'Attempted';
+}
+
+function problemFromRecommendation(recommendation, source, analytics, index) {
+  const platform = normalizePlatform(recommendation.platform);
+  const topic = titleCase(recommendation.topic || source.topic || source.label);
+  const name = recommendation.problemName || recommendation.name || recommendation.title || `${topic} practice set`;
+  const problem = {
+    id: `${source.id}-${platform}-${index}`,
+    platform,
+    name,
+    difficulty: normalizeDifficulty(recommendation.difficulty, source),
+    acceptanceRate: recommendation.acceptanceRate || recommendation.acceptance_rate || null,
+    estimatedSolveTime: recommendation.estimatedSolveTime || recommendation.estimatedTime || source.estimatedTime || '45 minutes',
+    topic,
+    status: recommendation.status || 'Not Attempted',
+    url: recommendation.url || recommendation.problemUrl || practiceUrl(platform, topic, name),
+    requiredConcepts: list(recommendation.requiredConcepts).length ? list(recommendation.requiredConcepts) : [topic, 'Implementation discipline'],
+    previousAttempts: Number(recommendation.previousAttempts || 0)
+  };
+  return { ...problem, status: statusForProblem(problem, analytics) };
+}
+
+function fallbackProblems(source, analytics = {}) {
+  const topic = titleCase(source.topic || source.label);
+  const difficulty = normalizeDifficulty(source.difficulty, source);
+  return ['Codeforces', 'LeetCode'].map((platform, index) => {
+    const problem = {
+      id: `${source.id}-${platform}-${index}`,
+      platform,
+      name: `${topic} ${platform} practice`,
+      difficulty,
+      acceptanceRate: null,
+      estimatedSolveTime: source.estimatedTime || '45 minutes',
+      topic,
+      status: 'Not Attempted',
+      url: practiceUrl(platform, topic),
+      requiredConcepts: [topic, difficulty === 'Hard' ? 'Edge-case handling' : 'Core pattern recognition'],
+      previousAttempts: 0
+    };
+    return { ...problem, status: statusForProblem(problem, analytics) };
+  });
+}
+
+export function buildProblemBank({ source = {}, planner = {}, analytics = {} } = {}) {
+  const normalizedSource = {
+    id: source.id || `${source.type || 'study'}-${titleCase(source.topic || source.label)}`,
+    type: source.type || 'study-item',
+    label: source.label || source.title || source.topic || 'Study Item',
+    topic: titleCase(source.topic || source.label || source.title || 'Implementation'),
+    difficulty: source.difficulty || 'moderate',
+    estimatedTime: source.estimatedTime || source.duration || '45 minutes',
+    confidence: normalizeConfidence(source.confidence || 0.68),
+    reason: list(source.reason).length ? list(source.reason) : list(source.evidence)
+  };
+
+  const recommendations = [
+    ...list(planner.recommendedProblems?.today),
+    ...list(planner.recommendedProblems?.week),
+    ...list(planner.recommendedProblems?.stretch)
+  ].filter((recommendation) => titleCase(recommendation.topic) === normalizedSource.topic);
+
+  const problems = recommendations.length
+    ? recommendations.flatMap((recommendation, index) => {
+      const platform = String(recommendation.platform || '').toLowerCase();
+      if (!platform || platform.includes('any connected')) {
+        return ['Codeforces', 'LeetCode'].map((targetPlatform, platformIndex) => problemFromRecommendation(
+          { ...recommendation, platform: targetPlatform },
+          normalizedSource,
+          analytics,
+          `${index}-${platformIndex}`
+        ));
+      }
+      return problemFromRecommendation(recommendation, normalizedSource, analytics, index);
+    })
+    : fallbackProblems(normalizedSource, analytics);
+
+  const grouped = problems.reduce((accumulator, problem) => {
+    accumulator[problem.platform] = accumulator[problem.platform] || [];
+    accumulator[problem.platform].push(problem);
+    return accumulator;
+  }, {});
+
+  const difficultyDistribution = problems.reduce((accumulator, problem) => {
+    accumulator[problem.difficulty] = (accumulator[problem.difficulty] || 0) + 1;
+    return accumulator;
+  }, {});
+
+  return {
+    ...normalizedSource,
+    problems,
+    grouped,
+    difficultyDistribution,
+    progress: Math.round((problems.filter((problem) => problem.status === 'Solved').length / Math.max(1, problems.length)) * 100),
+    updatedAt: new Date().toISOString()
+  };
+}
+
+export function refreshProblemBankStatuses(problemBank, analytics = {}) {
+  if (!problemBank) return problemBank;
+  const problems = list(problemBank.problems).map((problem) => ({ ...problem, status: statusForProblem(problem, analytics) }));
+  return {
+    ...problemBank,
+    problems,
+    grouped: problems.reduce((accumulator, problem) => {
+      accumulator[problem.platform] = accumulator[problem.platform] || [];
+      accumulator[problem.platform].push(problem);
+      return accumulator;
+    }, {}),
+    progress: Math.round((problems.filter((problem) => problem.status === 'Solved').length / Math.max(1, problems.length)) * 100),
+    updatedAt: new Date().toISOString()
+  };
+}
+
 function buildDailyPlan(priorities, recommendations) {
   const primary = priorities[0] || { topic: 'Implementation', roi: 72, confidence: 0.66 };
   const secondary = priorities[1] || primary;
