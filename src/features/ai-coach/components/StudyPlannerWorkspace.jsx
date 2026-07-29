@@ -325,6 +325,27 @@ function ContestImpact({ impact, sources }) {
   );
 }
 
+function StudyPlannerHero({ loading, dismissed, onClose, onRefresh }) {
+  if (dismissed) return null;
+  return (
+    <header className="study-planner-header">
+      <div>
+        <p className="study-eyebrow">Adaptive Study Planner</p>
+        <h1>What should I study next?</h1>
+        <p>Plan updates from existing analytics, contest reviews, recommendations, behavior evidence, and reflection memory.</p>
+      </div>
+      <div className="study-planner-header-actions">
+        <button className="ai-button ai-focusable" type="button" onClick={onRefresh} disabled={loading}>
+          {loading ? 'Updating...' : 'Refresh Plan'}
+        </button>
+        <button className="study-hero-close ai-focusable" type="button" onClick={onClose} aria-label="Close study planner introduction">
+          ×
+        </button>
+      </div>
+    </header>
+  );
+}
+
 function ProblemBankModal({ problemBank, filters, onFilterChange, onClose, onRefresh, refreshing }) {
   if (!problemBank) return null;
   const filteredProblems = problemBank.problems.filter((problem) => {
@@ -413,6 +434,7 @@ export function StudyPlannerWorkspace() {
   const [problemFilters, setProblemFilters] = useState({ platform: 'all', difficulty: 'all', status: 'all' });
   const [refreshingProblems, setRefreshingProblems] = useState(false);
   const [activeStudySection, setActiveStudySection] = useState('tracker');
+  const [introDismissed, setIntroDismissed] = useState(false);
   const targetRating = state.contextualInsights.targetRating;
   const planner = useMemo(() => buildStudyPlanner({
     contextualInsights: state.contextualInsights,
@@ -511,6 +533,12 @@ export function StudyPlannerWorkspace() {
 
     return (
       <>
+        <StudyPlannerHero
+          loading={state.contextualInsights.loading}
+          dismissed={introDismissed}
+          onClose={() => setIntroDismissed(true)}
+          onRefresh={refreshInsights}
+        />
         <TodayFocus focus={planner.todaysFocus} onQuickStart={quickStart} onOpenProblemBank={() => openProblemBank({ type: 'today-focus', label: "Today's Focus", topic: planner.todaysFocus.primaryWeakTopic, estimatedTime: planner.todaysFocus.estimatedCompletionTime, confidence: planner.todaysFocus.confidence, reason: planner.todaysFocus.why })} />
         <div className="study-planner-grid study-planner-focused">
           <DailyPlan tasks={planner.dailyPlan} actions={state.recommendationActions} onOpenProblemBank={openProblemBank} />
@@ -524,17 +552,6 @@ export function StudyPlannerWorkspace() {
 
   return (
     <section className="coach-workspace-surface study-planner-surface" aria-label="Adaptive Study Planner">
-      <header className="study-planner-header">
-        <div>
-          <p className="study-eyebrow">Adaptive Study Planner</p>
-          <h1>What should I study next?</h1>
-          <p>Plan updates from existing analytics, contest reviews, recommendations, behavior evidence, and reflection memory.</p>
-        </div>
-        <button className="ai-button ai-focusable" type="button" onClick={refreshInsights} disabled={state.contextualInsights.loading}>
-          {state.contextualInsights.loading ? 'Updating...' : 'Refresh Plan'}
-        </button>
-      </header>
-
       {state.contextualInsights.error ? (
         <section className="study-error ai-card" role="alert">
           <h2>Planner data is partially unavailable.</h2>

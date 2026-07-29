@@ -375,6 +375,35 @@
   align-items: start;
 }
 
+.study-planner-header-actions {
+  display: flex;
+  align-items: start;
+  gap: var(--ai-space-sm);
+}
+
+.study-hero-close {
+  display: grid;
+  place-items: center;
+  inline-size: 38px;
+  block-size: 38px;
+  border: 0;
+  border-radius: var(--ai-radius-pill, 999px);
+  background: color-mix(in srgb, var(--ai-surface) 64%, transparent);
+  color: var(--ai-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: background var(--ai-transition-normal), color var(--ai-transition-normal), transform var(--ai-transition-normal), box-shadow var(--ai-transition-normal);
+}
+
+.study-hero-close:hover {
+  background: var(--ai-surface-hover);
+  color: var(--ai-heading);
+  box-shadow: var(--ai-shadow-sm);
+  transform: translateY(-1px);
+}
+
 .study-planner-header {
   border: 1px solid var(--ai-border);
   border-radius: var(--ai-radius-xl);
