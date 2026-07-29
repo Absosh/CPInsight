@@ -44,6 +44,7 @@ function mergePlans(classification, rulePlans) {
 
   return {
     planId: crypto.randomUUID(),
+    question: classification.question,
     questionHash: classification.questionHash,
     intents: {
       primary: classification.primaryIntent,

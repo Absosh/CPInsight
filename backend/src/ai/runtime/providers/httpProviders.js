@@ -25,6 +25,8 @@ function commonMessages(promptPackage) {
     { role: 'user', content: JSON.stringify({
       evidenceBlock: promptPackage.evidenceBlock,
       reasoningContext: promptPackage.reasoningContext,
+      userQuestion: promptPackage.userQuestion,
+      questionRelevantEvidence: promptPackage.reasoningContext?.questionRelevantEvidence || [],
       outputSchema: promptPackage.outputSchema,
       groundingRules: promptPackage.groundingRules,
       citationRules: promptPackage.citationRules,
@@ -108,6 +110,8 @@ class GeminiProvider extends ProviderAdapter {
           parts: [{ text: JSON.stringify({
             evidenceBlock: promptPackage.evidenceBlock,
             reasoningContext: promptPackage.reasoningContext,
+            userQuestion: promptPackage.userQuestion,
+            questionRelevantEvidence: promptPackage.reasoningContext?.questionRelevantEvidence || [],
             outputSchema: promptPackage.outputSchema,
             groundingRules: promptPackage.groundingRules,
             citationRules: promptPackage.citationRules,

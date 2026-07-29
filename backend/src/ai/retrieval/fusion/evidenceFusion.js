@@ -112,6 +112,7 @@ function fuse({ plan, retrievalResults, sourceHealth }) {
 
   return Object.freeze({
     packageId: crypto.randomUUID(),
+    question: plan.question,
     questionHash: plan.questionHash,
     planId: plan.planId,
     retrievalMetadata: {
@@ -146,4 +147,3 @@ function fuse({ plan, retrievalResults, sourceHealth }) {
 }
 
 module.exports = { fuse, normalizeEvidence, rankEvidence, detectContradictions };
-

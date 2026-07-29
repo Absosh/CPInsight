@@ -35,6 +35,29 @@ function confidence(findings, evidencePackage) {
   return Number(((findingConfidence * 0.45) + (packageConfidence * 0.35) + (coverage * 0.2)).toFixed(4));
 }
 
+function questionRelevantEvidence(evidencePackage) {
+  const question = String(evidencePackage.question || '').toLowerCase();
+  const topicPriorityQuestion = /\b(topic|practice|bridge (the )?gap|rating)\b/.test(question);
+  if (!topicPriorityQuestion) return [];
+  return (evidencePackage.evidence || [])
+    .filter((item) => item.source === 'topic_performance' && item.payload && item.payload.topic)
+    .slice()
+    .sort((a, b) => {
+      const priorityDelta = Number(b.payload.ratingGapPriorityScore || 0) - Number(a.payload.ratingGapPriorityScore || 0);
+      if (priorityDelta !== 0) return priorityDelta;
+      return b.confidence - a.confidence;
+    })
+    .slice(0, 8)
+    .map((item, index) => ({
+      rank: index + 1,
+      evidenceId: item.evidenceId,
+      source: item.source,
+      type: item.type,
+      confidence: item.confidence,
+      payload: item.payload
+    }));
+}
+
 function buildReasoningContext(evidencePackage, { budget = '8k' } = {}) {
   const startedAt = Date.now();
   const findings = extractFindings(evidencePackage);
@@ -47,6 +70,7 @@ function buildReasoningContext(evidencePackage, { budget = '8k' } = {}) {
     ontologyVersion: ONTOLOGY_VERSION,
     evidencePackageId: evidencePackage.packageId,
     planId: evidencePackage.planId,
+    userQuestion: evidencePackage.question || null,
     questionHash: evidencePackage.questionHash,
     userProfile: null,
     primaryFindings: findings.primaryFindings.map(({ evidence, averageRankScore, ...finding }) => finding),
@@ -63,6 +87,7 @@ function buildReasoningContext(evidencePackage, { budget = '8k' } = {}) {
       discardedEvidenceIds: compression.discardedEvidenceIds,
       clusters: compression.clusters
     },
+    questionRelevantEvidence: questionRelevantEvidence(evidencePackage),
     historicalComparison: {
       available: compression.clusters.some((cluster) => cluster.type.includes('historical') || cluster.type.includes('contest')),
       sourceClusters: compression.clusters.filter((cluster) => cluster.type.includes('historical') || cluster.type.includes('contest')).map((cluster) => cluster.clusterId)

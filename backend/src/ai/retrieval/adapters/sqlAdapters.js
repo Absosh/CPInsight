@@ -166,24 +166,120 @@ class HistoricalAggregationsAdapter extends SourceAdapter {
   }
 }
 
+function requestedPlatform(plan) {
+  const question = String(plan?.question || '').toLowerCase();
+  if (question.includes('codeforces')) return 'codeforces';
+  if (question.includes('leetcode')) return 'leetcode';
+  if (question.includes('codechef')) return 'codechef';
+  return null;
+}
+
+function targetRatingRange(plan) {
+  const question = String(plan?.question || '');
+  const numbers = question.match(/\b\d{3,4}\b/g)?.map(Number) || [];
+  if (numbers.length < 2) return null;
+  const [min, max] = numbers.slice(0, 2).sort((a, b) => a - b);
+  return { min, max };
+}
+
+function topicPriorityScore(row, plan) {
+  const range = targetRatingRange(plan);
+  const topic = String(row.topic || '').toLowerCase();
+  const attempts = Number(row.submissions || 0);
+  const solved = Number(row.solved_problems || 0);
+  const acceptanceRate = Number(row.acceptance_rate || 0);
+  const averageDifficulty = Number(row.average_difficulty || 0);
+  const bandFit = range && averageDifficulty
+    ? Math.max(0, 1 - (Math.min(Math.abs(averageDifficulty - range.min), Math.abs(averageDifficulty - range.max)) / 400))
+    : 0.4;
+  const sample = Math.min(1, attempts / 8);
+  const weakness = Math.max(0, 1 - acceptanceRate);
+  const underPracticed = Math.max(0, 1 - solved / 8);
+  const fundamental = ['dp', 'binary search', 'greedy', 'graphs', 'dfs and similar', 'two pointers', 'data structures'].includes(topic) ? 0.18 : 0;
+  return Number((bandFit * 0.35 + sample * 0.2 + weakness * 0.18 + underPracticed * 0.09 + fundamental).toFixed(4));
+}
+
 class TopicPerformanceAdapter extends SourceAdapter {
   constructor({ db }) {
     super({ name: 'topic_performance', reliability: 0.75 });
     this.db = db;
   }
 
-  async retrieve({ userId, source }) {
+  async retrieve({ userId, plan, source }) {
+    const platform = requestedPlatform(plan);
     const result = await this.db.query(
-      `SELECT unnest(tags) AS topic, COUNT(*)::int AS submissions
-       FROM submission_history sh
-       JOIN platform_accounts pa ON pa.id = sh.platform_account_id
-       WHERE pa.user_id = $1 AND tags IS NOT NULL
+      `WITH expanded AS (
+         SELECT
+           LOWER(tag) AS topic,
+           sh.platform,
+           sh.problem_key,
+           sh.problem_name,
+           sh.verdict,
+           sh.difficulty,
+           sh.submitted_at,
+           CASE
+             WHEN (sh.platform = 'codeforces' AND sh.verdict = 'OK')
+               OR (sh.platform = 'leetcode' AND sh.verdict = 'AC')
+               OR sh.verdict IN ('ACCEPTED', 'Accepted')
+             THEN 1 ELSE 0
+           END AS accepted
+         FROM submission_history sh
+         JOIN platform_accounts pa ON pa.id = sh.platform_account_id
+         CROSS JOIN LATERAL unnest(sh.tags) AS tag
+         WHERE pa.user_id = $1
+           AND sh.tags IS NOT NULL
+           AND ($3::text IS NULL OR sh.platform::text = $3)
+       )
+       SELECT
+         topic,
+         COUNT(*)::int AS submissions,
+         SUM(accepted)::int AS accepted_submissions,
+         COUNT(DISTINCT CASE WHEN accepted = 1 THEN problem_key END)::int AS solved_problems,
+         COUNT(DISTINCT problem_key)::int AS attempted_problems,
+         ROUND((SUM(accepted)::numeric / NULLIF(COUNT(*), 0)), 4)::float AS acceptance_rate,
+         ROUND(AVG(difficulty) FILTER (WHERE difficulty IS NOT NULL))::int AS average_difficulty,
+         MAX(submitted_at) AS latest_attempt_at,
+         COUNT(*) FILTER (WHERE submitted_at >= NOW() - INTERVAL '30 days')::int AS recent_submissions,
+         ARRAY_AGG(DISTINCT platform::text) AS platforms
+       FROM expanded
        GROUP BY topic
-       ORDER BY submissions DESC
+       ORDER BY
+         solved_problems ASC,
+         submissions DESC,
+         recent_submissions DESC
        LIMIT $2`,
-      [userId, Math.max(1, Math.min(100, Number(source.limit) || 50))]
+      [userId, Math.max(1, Math.min(100, Number(source.limit) || 50)), platform]
     );
-    return result.rows.map((row) => rowEvidence({ source: this.name, type: 'topic_performance', row: { id: row.topic, ...row }, confidence: 0.68, distance: source.priority }));
+    return result.rows.map((row) => {
+      const attempts = Number(row.submissions || 0);
+      const solved = Number(row.solved_problems || 0);
+      const acceptanceRate = Number(row.acceptance_rate || 0);
+      const priorityScore = topicPriorityScore(row, plan);
+      const confidence = Math.min(0.9, 0.52 + Math.min(0.16, attempts / 100) + Math.min(0.14, priorityScore / 4) + Math.min(0.08, Number(row.recent_submissions || 0) / 100));
+      return rowEvidence({
+        source: this.name,
+        type: 'topic_performance',
+        row: {
+          id: row.topic,
+          topic: row.topic,
+          submissions: attempts,
+          acceptedSubmissions: Number(row.accepted_submissions || 0),
+          solvedProblems: solved,
+          attemptedProblems: Number(row.attempted_problems || 0),
+          acceptanceRate,
+          averageDifficulty: row.average_difficulty,
+          latestAttemptAt: row.latest_attempt_at,
+          recentSubmissions: Number(row.recent_submissions || 0),
+          platforms: row.platforms || [],
+          requestedPlatform: platform,
+          ratingGapPriorityScore: priorityScore,
+          gapSignal: solved <= 2 || acceptanceRate < 0.45 ? 'candidate_weak_topic' : 'practiced_topic'
+        },
+        confidence,
+        timestamp: row.latest_attempt_at,
+        distance: source.priority
+      });
+    }).sort((a, b) => (b.payload.ratingGapPriorityScore || 0) - (a.payload.ratingGapPriorityScore || 0) || b.confidence - a.confidence);
   }
 }
 
@@ -195,11 +291,11 @@ class PlatformStatisticsAdapter extends SourceAdapter {
 
   async retrieve({ userId, source }) {
     const result = await this.db.query(
-      `SELECT platform, COUNT(*)::int AS submissions
+      `SELECT sh.platform, COUNT(*)::int AS submissions
        FROM submission_history sh
        JOIN platform_accounts pa ON pa.id = sh.platform_account_id
        WHERE pa.user_id = $1
-       GROUP BY platform
+       GROUP BY sh.platform
        ORDER BY submissions DESC
        LIMIT $2`,
       [userId, Math.max(1, Math.min(50, Number(source.limit) || 20))]
