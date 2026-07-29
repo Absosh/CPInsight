@@ -1,21 +1,21 @@
 .coach-workspace {
   display: grid;
-  grid-template-columns: 288px minmax(0, 1fr) 340px;
+  grid-template-columns: 280px minmax(0, 1fr) 320px;
+  block-size: 100vh;
   min-block-size: 100vh;
+  overflow: hidden;
   background:
-    radial-gradient(circle at 16% 10%, var(--ai-glow), transparent 34%),
-    radial-gradient(circle at 82% 0%, color-mix(in srgb, var(--ai-highlight) 10%, transparent), transparent 30%),
-    linear-gradient(135deg, var(--ai-bg-primary), var(--ai-bg-secondary));
+    radial-gradient(circle at 48% 0%, color-mix(in srgb, var(--ai-primary) 10%, transparent), transparent 34%),
+    linear-gradient(180deg, #08111f 0%, #07101d 100%);
   color: var(--ai-text);
 }
 
 .coach-left-sidebar,
 .coach-right-sidebar {
   min-width: 0;
-  border-color: var(--ai-border);
-  background: var(--ai-surface-overlay);
-  backdrop-filter: blur(14px);
-  overflow: auto;
+  block-size: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
   scrollbar-color: var(--ai-primary) transparent;
   scrollbar-width: thin;
 }
@@ -23,27 +23,29 @@
 .coach-left-sidebar::-webkit-scrollbar,
 .coach-right-sidebar::-webkit-scrollbar,
 .ai-conversation-scroll::-webkit-scrollbar {
-  inline-size: 8px;
+  inline-size: 5px;
 }
 
 .coach-left-sidebar::-webkit-scrollbar-thumb,
 .coach-right-sidebar::-webkit-scrollbar-thumb,
 .ai-conversation-scroll::-webkit-scrollbar-thumb {
   border-radius: var(--ai-radius-pill, 999px);
-  background: var(--ai-primary);
+  background: rgba(96, 165, 250, 0.45);
 }
 
 .coach-left-sidebar {
-  border-inline-end: 1px solid var(--ai-border);
-  padding: var(--ai-space-xl);
+  border-inline-end: 1px solid color-mix(in srgb, var(--ai-border) 62%, transparent);
+  background: color-mix(in srgb, #06101d 94%, transparent);
+  padding: var(--ai-space-lg);
 }
 
 .coach-right-sidebar {
-  border-inline-start: 1px solid var(--ai-border);
+  border-inline-start: 1px solid color-mix(in srgb, var(--ai-border) 56%, transparent);
+  background: color-mix(in srgb, #081323 88%, transparent);
   display: grid;
-  gap: var(--ai-space-xl);
+  gap: var(--ai-space-lg);
   align-content: start;
-  padding: var(--ai-space-xl);
+  padding: var(--ai-space-lg);
 }
 
 .coach-left-sidebar header {
@@ -66,10 +68,10 @@
   place-items: center;
   inline-size: 42px;
   block-size: 42px;
-  border: 1px solid var(--ai-border-strong);
-  border-radius: var(--ai-radius-lg);
-  background: var(--ai-gradient-primary);
-  box-shadow: var(--ai-glow-shadow);
+  border: 0;
+  border-radius: var(--ai-radius-md);
+  background: color-mix(in srgb, var(--ai-primary) 22%, transparent);
+  box-shadow: none;
   color: var(--ai-heading);
   font-weight: 900;
 }
@@ -85,9 +87,9 @@
 .coach-left-sidebar button,
 .coach-composer button,
 .coach-session-actions button {
-  border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-lg);
-  background: var(--ai-gradient-surface);
+  border: 0;
+  border-radius: var(--ai-radius-md);
+  background: transparent;
   color: var(--ai-text);
   cursor: pointer;
   font: inherit;
@@ -99,10 +101,9 @@
 .coach-left-sidebar button:hover,
 .coach-composer button:hover,
 .coach-session-actions button:hover {
-  border-color: var(--ai-border-strong);
-  background: var(--ai-surface-hover);
-  box-shadow: var(--ai-shadow-sm);
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--ai-primary) 10%, transparent);
+  box-shadow: none;
+  transform: none;
 }
 
 .coach-search {
@@ -121,9 +122,9 @@
 .coach-filter-row select,
 .coach-composer textarea {
   inline-size: 100%;
-  border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-xl);
-  background: var(--ai-surface-overlay);
+  border: 0;
+  border-radius: var(--ai-radius-lg);
+  background: color-mix(in srgb, var(--ai-surface) 72%, transparent);
   color: var(--ai-text);
   font: inherit;
   padding: var(--ai-space-md) var(--ai-space-lg);
@@ -153,16 +154,16 @@
 
 .coach-nav {
   display: grid;
-  gap: var(--ai-space-md);
-  margin-block-end: var(--ai-space-xl);
+  gap: var(--ai-space-xs);
+  margin-block-end: var(--ai-space-lg);
 }
 
 .coach-nav button {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--ai-space-md);
+  gap: var(--ai-space-sm);
   align-items: center;
-  min-block-size: 68px;
+  min-block-size: 46px;
   text-align: start;
 }
 
@@ -177,11 +178,7 @@
 }
 
 .coach-nav button small {
-  overflow: hidden;
-  color: var(--ai-text-muted);
-  font-size: 0.75rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: none;
 }
 
 .coach-nav-icon {
@@ -190,17 +187,16 @@
   inline-size: 34px;
   block-size: 34px;
   border-radius: var(--ai-radius-md);
-  background: var(--ai-surface-active);
+  background: color-mix(in srgb, var(--ai-primary) 10%, transparent);
   color: var(--ai-highlight);
   font-size: 0.72rem;
   font-weight: 900;
 }
 
 .coach-nav button[aria-current="page"] {
-  border-color: var(--ai-evidence);
   color: var(--ai-text);
-  background: var(--ai-surface-active);
-  box-shadow: inset 3px 0 0 var(--ai-primary), var(--ai-glow-shadow);
+  background: color-mix(in srgb, var(--ai-primary) 14%, transparent);
+  box-shadow: inset 3px 0 0 var(--ai-primary);
 }
 
 .coach-session-list {
@@ -209,15 +205,15 @@
 }
 
 .coach-session-row {
-  border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-xl);
-  background: var(--ai-gradient-surface);
+  border: 0;
+  border-radius: var(--ai-radius-md);
+  background: transparent;
   overflow: hidden;
-  box-shadow: var(--ai-shadow-sm);
+  box-shadow: none;
 }
 
 .coach-session-row[data-active="true"] {
-  border-color: var(--ai-evidence);
+  background: color-mix(in srgb, var(--ai-primary) 10%, transparent);
 }
 
 .coach-session-row > button {
@@ -248,27 +244,31 @@
 }
 
 .coach-center-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   min-width: 0;
-  min-block-size: 100vh;
-  border-inline: 1px solid var(--ai-divider);
+  block-size: 100vh;
+  min-block-size: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, #08111f 94%, black 6%);
+  border-inline: 0;
 }
 
 .coach-primary-tabs {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 4;
   display: flex;
+  justify-content: center;
   gap: var(--ai-space-sm);
-  border-block-end: 1px solid var(--ai-border);
-  background: color-mix(in srgb, var(--ai-surface) 88%, transparent);
-  backdrop-filter: blur(14px);
-  padding: var(--ai-space-lg) var(--ai-space-xl);
+  border-block-end: 1px solid color-mix(in srgb, var(--ai-border) 54%, transparent);
+  background: color-mix(in srgb, #08111f 90%, transparent);
+  padding: var(--ai-space-md) var(--ai-space-xl);
 }
 
 .coach-primary-tabs button {
-  border: 1px solid var(--ai-border);
+  border: 0;
   border-radius: var(--ai-radius-pill, 999px);
-  background: var(--ai-surface-overlay);
+  background: transparent;
   color: var(--ai-text-muted);
   cursor: pointer;
   font: inherit;
@@ -278,10 +278,9 @@
 }
 
 .coach-primary-tabs button[aria-selected="true"] {
-  border-color: var(--ai-evidence);
-  background: var(--ai-gradient-primary);
+  background: color-mix(in srgb, var(--ai-primary) 18%, transparent);
   color: var(--ai-text);
-  box-shadow: var(--ai-glow-shadow);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ai-primary) 30%, transparent);
 }
 
 .coach-empty-state,
@@ -296,14 +295,13 @@
 
 .coach-empty-state {
   justify-items: center;
-  min-block-size: calc(100vh - 170px);
-  margin: var(--ai-space-xl);
-  border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-xl);
+  min-block-size: min(620px, 100%);
+  margin: 0 auto;
+  border: 0;
+  border-radius: 0;
   background:
-    radial-gradient(circle at 50% 0%, var(--ai-glow), transparent 42%),
-    var(--ai-gradient-surface);
-  box-shadow: var(--ai-shadow-lg);
+    radial-gradient(circle at 50% 4%, color-mix(in srgb, var(--ai-primary) 14%, transparent), transparent 42%);
+  box-shadow: none;
 }
 
 .coach-empty-orb {
@@ -311,10 +309,10 @@
   place-items: center;
   inline-size: 86px;
   block-size: 86px;
-  border: 1px solid var(--ai-border-strong);
-  border-radius: var(--ai-radius-xl);
-  background: var(--ai-gradient-primary);
-  box-shadow: var(--ai-glow-shadow);
+  border: 0;
+  border-radius: 26px;
+  background: color-mix(in srgb, var(--ai-primary) 20%, transparent);
+  box-shadow: 0 20px 60px color-mix(in srgb, var(--ai-primary) 20%, transparent);
   color: var(--ai-heading);
   font-size: 1.4rem;
   font-weight: 900;
@@ -349,11 +347,11 @@
 }
 
 .coach-suggestion-grid button {
-  border: 1px solid var(--ai-border);
+  border: 1px solid color-mix(in srgb, var(--ai-border) 56%, transparent);
   border-radius: var(--ai-radius-lg);
-  background: var(--ai-surface-overlay);
+  background: color-mix(in srgb, var(--ai-surface) 46%, transparent);
   color: var(--ai-text);
-  cursor: default;
+  cursor: pointer;
   font: inherit;
   padding: var(--ai-space-md) var(--ai-space-lg);
   text-align: start;
@@ -989,12 +987,12 @@
 
 .coach-user-message {
   justify-self: end;
-  max-inline-size: min(720px, 86%);
-  border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-xl) var(--ai-radius-xl) var(--ai-radius-sm) var(--ai-radius-xl);
-  background: color-mix(in srgb, var(--ai-evidence) 10%, var(--ai-surface-raised));
+  max-inline-size: min(680px, 78%);
+  border: 0;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--ai-primary) 17%, #111827 83%);
   padding: var(--ai-space-md) var(--ai-space-lg);
-  box-shadow: var(--ai-shadow-sm);
+  box-shadow: none;
 }
 
 .coach-user-message p {
@@ -1009,16 +1007,18 @@
 }
 
 .coach-failed-message {
+  max-inline-size: min(760px, 100%);
   border: 1px solid var(--ai-danger);
-  border-radius: var(--ai-radius-xl);
+  border-radius: 18px;
   background: color-mix(in srgb, var(--ai-danger) 10%, var(--ai-surface-raised));
   padding: var(--ai-space-lg);
 }
 
 .coach-rendered-response {
   display: grid;
-  gap: var(--ai-space-lg);
-  padding: var(--ai-space-sm);
+  gap: var(--ai-space-md);
+  max-inline-size: min(820px, 100%);
+  padding: 0;
 }
 
 .coach-response-sections {
@@ -1028,11 +1028,11 @@
 
 .coach-message-actions,
 .coach-recommendation-actions {
-  border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-xl);
-  background: var(--ai-gradient-surface);
-  padding: var(--ai-space-md);
-  box-shadow: var(--ai-shadow-sm);
+  border: 0;
+  border-radius: var(--ai-radius-lg);
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
 }
 
 .coach-message-actions {
@@ -1071,12 +1071,14 @@
 
 .coach-composer {
   display: grid;
-  gap: var(--ai-space-md);
-  border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-xl);
-  background: var(--ai-gradient-surface);
-  box-shadow: var(--ai-shadow-lg);
-  padding: var(--ai-space-lg);
+  gap: var(--ai-space-sm);
+  inline-size: min(820px, 100%);
+  margin: 0 auto;
+  border: 1px solid color-mix(in srgb, var(--ai-border) 56%, transparent);
+  border-radius: 26px;
+  background: color-mix(in srgb, #101b2d 94%, transparent);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+  padding: var(--ai-space-md);
 }
 
 .coach-composer label {
@@ -1092,12 +1094,12 @@
 .coach-input-shell {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--ai-space-md);
+  gap: var(--ai-space-sm);
   align-items: start;
-  border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-xl);
-  background: var(--ai-surface-overlay);
-  padding: var(--ai-space-sm);
+  border: 0;
+  border-radius: 20px;
+  background: transparent;
+  padding: 0;
 }
 
 .coach-attach-button {
@@ -1108,7 +1110,8 @@
 }
 
 .coach-composer textarea {
-  min-block-size: 92px;
+  min-block-size: 58px;
+  max-block-size: 220px;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -1147,11 +1150,11 @@
 
 .coach-context-card,
 .coach-topic-grid {
-  border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-xl);
-  background: var(--ai-gradient-surface);
+  border: 0;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--ai-surface) 54%, transparent);
   padding: var(--ai-space-lg);
-  box-shadow: var(--ai-shadow-sm);
+  box-shadow: none;
 }
 
 .coach-context-card {
@@ -1180,9 +1183,9 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--ai-space-xs) var(--ai-space-md);
-  border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-lg);
-  background: var(--ai-surface-overlay);
+  border: 0;
+  border-radius: var(--ai-radius-md);
+  background: color-mix(in srgb, var(--ai-primary) 7%, transparent);
   padding: var(--ai-space-md);
 }
 
@@ -2053,4 +2056,199 @@
 
 .study-problem-card {
   border-block-end: 1px solid color-mix(in srgb, var(--ai-border) 13%, transparent);
+}
+
+/* Final ChatGPT-style workspace pass. Keep functionality intact; only reshape layout and scroll behavior. */
+html:has(#aiCoachRoot),
+body:has(#aiCoachRoot),
+#aiCoachRoot {
+  block-size: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.coach-workspace {
+  grid-template-columns: 280px minmax(0, 1fr) 320px;
+  block-size: 100vh;
+  max-block-size: 100vh;
+  overflow: hidden;
+  background: #08111f;
+}
+
+.coach-left-sidebar,
+.coach-center-panel,
+.coach-right-sidebar {
+  min-block-size: 0;
+  block-size: 100vh;
+}
+
+.coach-left-sidebar,
+.coach-right-sidebar {
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+.coach-left-sidebar {
+  background: #07101d;
+  padding: 1rem;
+}
+
+.coach-center-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  background: #08111f;
+}
+
+.coach-right-sidebar {
+  background: #091525;
+  padding: 1.25rem 1rem;
+}
+
+.coach-primary-tabs {
+  flex: 0 0 auto;
+  min-block-size: 60px;
+  border-block-end: 1px solid rgba(96, 165, 250, 0.1);
+  background: rgba(8, 17, 31, 0.94);
+}
+
+.coach-center-panel .ai-conversation-view {
+  min-block-size: 0;
+  block-size: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.coach-center-panel .ai-conversation-scroll {
+  min-block-size: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1.25rem, 7vw, 7rem) 1.25rem;
+}
+
+.coach-center-panel .ai-conversation-scroll > * {
+  inline-size: min(820px, 100%);
+  margin-inline: auto;
+}
+
+.coach-center-panel .ai-conversation-scroll > .coach-user-message {
+  inline-size: fit-content;
+  max-inline-size: min(680px, 78%);
+  margin-inline: auto max(0px, calc((100% - min(820px, 100%)) / 2));
+}
+
+.coach-center-panel .ai-conversation-composer {
+  flex: 0 0 auto;
+  border: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 17, 31, 0), #08111f 32%),
+    #08111f;
+  padding: 0.75rem clamp(1.25rem, 7vw, 7rem) 1rem;
+}
+
+.coach-center-panel > .coach-workspace-surface,
+.coach-center-panel > .study-planner-surface {
+  min-block-size: 0;
+  block-size: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+.coach-nav button,
+.coach-session-row,
+.coach-session-row > button {
+  border-radius: 12px;
+}
+
+.coach-nav button,
+.coach-session-row {
+  background: transparent;
+}
+
+.coach-nav button[aria-current="page"],
+.coach-session-row[data-active="true"] {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.coach-composer {
+  inline-size: min(820px, 100%);
+  border-radius: 24px;
+  background: #111c2e;
+  gap: 0.35rem;
+  padding: 0.65rem;
+}
+
+.coach-composer label {
+  gap: 0;
+}
+
+.coach-composer label > span {
+  display: none;
+}
+
+.coach-composer textarea {
+  block-size: 48px;
+  min-block-size: 48px;
+  max-block-size: 160px;
+  overflow: hidden;
+  padding-block: 0.55rem;
+  resize: none;
+}
+
+.coach-composer > div {
+  min-block-size: 30px;
+}
+
+.coach-shortcut-hint {
+  font-size: 0.72rem;
+}
+
+.coach-empty-state {
+  min-block-size: 100%;
+  padding-block: clamp(1.5rem, 3vw, 2.75rem);
+}
+
+.coach-empty-state h2 {
+  font-size: clamp(2rem, 4.2vw, 3.7rem);
+  line-height: 1.08;
+}
+
+.coach-empty-state > p:not(.coach-empty-kicker) {
+  max-inline-size: 580px;
+  font-size: 1rem;
+}
+
+.coach-rendered-response,
+.coach-response-sections {
+  gap: 1rem;
+}
+
+.coach-workspace .ai-card,
+.coach-workspace .ai-evidence-card,
+.coach-workspace .ai-recommendation-card,
+.coach-workspace .ai-reasoning-panel,
+.coach-workspace .ai-behavior-overview,
+.coach-workspace .ai-recommendation-list,
+.coach-workspace .ai-reflection-feed {
+  border-color: rgba(96, 165, 250, 0.12);
+  background: rgba(15, 23, 42, 0.42);
+  box-shadow: none;
+}
+
+.coach-right-sidebar .ai-card,
+.coach-right-sidebar .ai-behavior-overview,
+.coach-right-sidebar .ai-recommendation-list,
+.coach-right-sidebar .ai-reflection-feed,
+.coach-context-card,
+.coach-topic-grid {
+  border: 0;
+  border-block-end: 1px solid rgba(96, 165, 250, 0.1);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0 0 1.25rem;
 }
