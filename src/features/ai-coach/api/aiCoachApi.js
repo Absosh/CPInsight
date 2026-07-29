@@ -16,9 +16,82 @@ async function parseResponse(response) {
   return payload;
 }
 
-export function createAiCoachApiClient({ baseUrl = '/api', getAccessToken = () => null, fetchImpl = globalThis.fetch } = {}) {
-  async function request(endpoint, { signal, method = 'GET', body } = {}) {
-    const token = getAccessToken();
+function resolveDefaultBaseUrl() {
+  const configured = globalThis.CPINSIGHT_API_BASE || globalThis.localStorage?.getItem('cpinsight:apiBaseUrl');
+  if (configured) return configured.replace(/\/$/, '');
+  const location = globalThis.location;
+  const isLiveServer = ['localhost', '127.0.0.1'].includes(location?.hostname) && location?.port === '5500';
+  if (isLiveServer) return 'http://localhost:4000/api';
+  if (location?.protocol === 'http:' || location?.protocol === 'https:') return `${location.origin}/api`;
+  return '/api';
+}
+
+function defaultTokenStore() {
+  return {
+    getAccessToken: () => globalThis.localStorage?.getItem('accessToken') || null,
+    getRefreshToken: () => globalThis.localStorage?.getItem('refreshToken') || null,
+    setTokens: ({ accessToken, refreshToken }) => {
+      if (accessToken) globalThis.localStorage?.setItem('accessToken', accessToken);
+      if (refreshToken) globalThis.localStorage?.setItem('refreshToken', refreshToken);
+    },
+    clearTokens: () => {
+      globalThis.localStorage?.removeItem('accessToken');
+      globalThis.localStorage?.removeItem('refreshToken');
+    }
+  };
+}
+
+export function createAiCoachApiClient({
+  baseUrl = resolveDefaultBaseUrl(),
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+  clearTokens,
+  onUnauthorized,
+  fetchImpl = globalThis.fetch
+} = {}) {
+  const tokenStore = defaultTokenStore();
+  const readAccessToken = getAccessToken || tokenStore.getAccessToken;
+  const readRefreshToken = getRefreshToken || tokenStore.getRefreshToken;
+  const persistTokens = setTokens || tokenStore.setTokens;
+  const removeTokens = clearTokens || tokenStore.clearTokens;
+  let refreshPromise = null;
+
+  async function refreshAccessToken() {
+    const refreshToken = readRefreshToken();
+    if (!refreshToken) return false;
+    if (!refreshPromise) {
+      refreshPromise = fetchImpl(`${baseUrl}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+      })
+        .then(async (response) => {
+          if (!response.ok) return false;
+          const payload = await response.json().catch(() => ({}));
+          if (!payload.accessToken || !payload.refreshToken) return false;
+          persistTokens({ accessToken: payload.accessToken, refreshToken: payload.refreshToken });
+          return true;
+        })
+        .catch(() => false)
+        .finally(() => {
+          refreshPromise = null;
+        });
+    }
+    return refreshPromise;
+  }
+
+  function handleUnauthorized() {
+    removeTokens();
+    if (onUnauthorized) {
+      onUnauthorized();
+    } else {
+      globalThis.dispatchEvent?.(new CustomEvent('auth:logout'));
+    }
+  }
+
+  async function request(endpoint, { signal, method = 'GET', body } = {}, retried = false) {
+    const token = readAccessToken();
     const response = await fetchImpl(`${baseUrl}${endpoint}`, {
       method,
       signal,
@@ -28,6 +101,11 @@ export function createAiCoachApiClient({ baseUrl = '/api', getAccessToken = () =
       },
       body: body === undefined ? undefined : JSON.stringify(body)
     });
+    if (response.status === 401 && !retried) {
+      const refreshed = await refreshAccessToken();
+      if (refreshed) return request(endpoint, { signal, method, body }, true);
+      handleUnauthorized();
+    }
     return parseResponse(response);
   }
 
@@ -48,7 +126,7 @@ export function createAiCoachApiClient({ baseUrl = '/api', getAccessToken = () =
       return request('/ai/reasoning/prompt', { method: 'POST', body: { reasoningContext, options }, signal });
     },
     buildExecutionPlan({ question, intent, reasoningContext, promptPackage }, signal) {
-      return request('/ai/tasks/plan', { method: 'POST', body: { question, intent, reasoningContext, promptPackage }, signal });
+      return request('/ai/plan', { method: 'POST', body: { question, intent, reasoningContext, promptPackage }, signal });
     },
     executeRuntime(executionPlan, promptPackage, override, signal) {
       return request('/ai/runtime/execute', { method: 'POST', body: { executionPlan, promptPackage, override }, signal });
