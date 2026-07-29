@@ -1679,3 +1679,378 @@
     transform: translateY(0);
   }
 }
+
+/* Sleek minimal pass: reduce nested containers and let content lead. */
+.coach-workspace {
+  grid-template-columns: 292px minmax(0, 1fr) 312px;
+  background:
+    radial-gradient(circle at 50% -12%, color-mix(in srgb, var(--ai-primary) 14%, transparent), transparent 38%),
+    linear-gradient(145deg, color-mix(in srgb, var(--ai-bg-primary) 92%, #000), var(--ai-bg-secondary));
+}
+
+.coach-left-sidebar,
+.coach-right-sidebar {
+  border-color: color-mix(in srgb, var(--ai-border) 18%, transparent);
+  background: color-mix(in srgb, var(--ai-bg-primary) 42%, transparent);
+  box-shadow: none;
+}
+
+.coach-left-sidebar {
+  padding: 2rem 1.1rem;
+}
+
+.coach-left-sidebar header {
+  margin-block-end: 2.2rem;
+}
+
+.coach-left-sidebar h1 {
+  font-size: 1.85rem;
+  line-height: 1.08;
+}
+
+.coach-brand-mark {
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 18px;
+}
+
+.coach-search input,
+.coach-filter-row select {
+  min-block-size: 46px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--ai-bg-primary) 42%, transparent);
+  box-shadow: none;
+}
+
+.coach-nav {
+  gap: 0.35rem;
+}
+
+.coach-nav button {
+  min-block-size: 54px;
+  border-radius: 18px;
+  opacity: 0.82;
+}
+
+.coach-nav button:hover,
+.coach-nav button[aria-current="page"] {
+  opacity: 1;
+  background: color-mix(in srgb, var(--ai-primary) 10%, transparent);
+  box-shadow: none;
+}
+
+.coach-nav button[aria-current="page"] {
+  box-shadow: inset 3px 0 0 var(--ai-primary);
+}
+
+.coach-nav-icon {
+  inline-size: 30px;
+  block-size: 30px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ai-primary) 12%, transparent);
+}
+
+.coach-session-list,
+.coach-session-row,
+.coach-session-row > button,
+.coach-session-actions {
+  background: transparent;
+  box-shadow: none;
+}
+
+.coach-center-panel {
+  border-inline-color: color-mix(in srgb, var(--ai-border) 18%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ai-bg-secondary) 28%, transparent), transparent 38%);
+}
+
+.coach-primary-tabs {
+  justify-content: center;
+  background: color-mix(in srgb, var(--ai-bg-primary) 54%, transparent);
+  padding: 1rem 1.5rem;
+}
+
+.coach-primary-tabs button {
+  min-block-size: 40px;
+  border-radius: 999px;
+  background: transparent;
+  padding-inline: 1.25rem;
+}
+
+.coach-primary-tabs button[aria-selected="true"] {
+  background: color-mix(in srgb, var(--ai-primary) 18%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ai-primary) 28%, transparent);
+}
+
+.coach-empty-state {
+  inline-size: min(680px, calc(100% - 96px));
+  min-block-size: calc(100vh - 220px);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: clamp(2rem, 7vw, 5rem) 0;
+}
+
+.coach-empty-orb {
+  inline-size: 76px;
+  block-size: 76px;
+  box-shadow: 0 18px 46px color-mix(in srgb, var(--ai-primary) 24%, transparent);
+}
+
+.coach-empty-state h2 {
+  font-size: clamp(2.45rem, 5.4vw, 4.85rem);
+  font-weight: 850;
+}
+
+.coach-suggestion-grid {
+  inline-size: min(620px, 100%);
+  gap: 0.65rem;
+}
+
+.coach-suggestion-grid button {
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--ai-surface) 32%, transparent);
+  box-shadow: none;
+}
+
+.coach-suggestion-grid button:hover {
+  background: color-mix(in srgb, var(--ai-primary) 10%, transparent);
+}
+
+.coach-composer {
+  inline-size: min(760px, calc(100% - 64px));
+  justify-self: center;
+  border-radius: 26px;
+  background: color-mix(in srgb, var(--ai-surface) 58%, transparent);
+  box-shadow:
+    0 24px 58px color-mix(in srgb, var(--ai-bg-primary) 48%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--ai-border) 22%, transparent);
+}
+
+.coach-input-shell {
+  background: transparent;
+}
+
+.coach-right-sidebar {
+  padding: 2rem 1rem;
+}
+
+.coach-context-card,
+.coach-topic-grid,
+.study-nav-card,
+.ai-behavior-overview,
+.ai-recommendation-list,
+.ai-reflection-timeline {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0.35rem 0.15rem;
+}
+
+.coach-context-card,
+.coach-topic-grid {
+  border-block-end: 1px solid color-mix(in srgb, var(--ai-border) 16%, transparent);
+  padding-block-end: 1.4rem;
+}
+
+.coach-context-card h2,
+.coach-topic-grid h3,
+.ai-card-header h2,
+.ai-card-header h3,
+.ai-card-header h4 {
+  font-size: 1.05rem;
+  letter-spacing: 0;
+}
+
+.coach-context-card h2 span,
+.ai-icon {
+  background: color-mix(in srgb, var(--ai-primary) 10%, transparent);
+  box-shadow: none;
+}
+
+.coach-context-metric {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.15rem;
+  padding: 0.65rem 0;
+}
+
+.coach-context-metric i {
+  display: none;
+}
+
+.coach-context-metric strong {
+  font-size: 0.95rem;
+}
+
+.coach-topic-grid li {
+  background: transparent;
+  color: var(--ai-text-muted);
+  padding: 0;
+}
+
+.study-planner-surface {
+  inline-size: min(900px, 100%);
+  justify-self: center;
+  padding: clamp(2.2rem, 5vw, 4.2rem) clamp(1.4rem, 3vw, 2.4rem);
+}
+
+.study-planner-header {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.study-planner-header h1 {
+  max-inline-size: 620px;
+  font-size: clamp(2.4rem, 5vw, 4.3rem);
+}
+
+.study-focus-card {
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--ai-surface) 26%, transparent);
+  box-shadow: none;
+}
+
+.study-section {
+  border-block-start: 1px solid color-mix(in srgb, var(--ai-border) 18%, transparent);
+  padding-block-start: 2.2rem;
+}
+
+.study-section-header {
+  margin-block-end: 1.2rem;
+}
+
+.study-section-header h2 {
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+}
+
+.study-task-list,
+.study-week-grid,
+.study-topic-priority-list,
+.study-milestone-list,
+.study-recommendation-groups,
+.study-time-grid,
+.study-progress-grid,
+.study-source-grid {
+  gap: 0.75rem;
+}
+
+.study-task-card,
+.study-day-card,
+.study-topic-card,
+.study-impact-card,
+.study-metric,
+.study-rating-control,
+.study-milestone-card {
+  border-radius: 20px;
+  background: transparent;
+  box-shadow: none;
+  padding: 1rem 0;
+}
+
+.study-task-card,
+.study-day-card,
+.study-topic-card,
+.study-impact-card {
+  border-block-end: 1px solid color-mix(in srgb, var(--ai-border) 13%, transparent);
+}
+
+.study-task-card:hover,
+.study-day-card:hover,
+.study-topic-card:hover,
+.study-impact-card:hover,
+.study-milestone-card:hover {
+  background: color-mix(in srgb, var(--ai-primary) 7%, transparent);
+  box-shadow: none;
+}
+
+.study-clickable::after {
+  border: 0;
+  background: transparent;
+  color: var(--ai-highlight);
+  padding-inline: 0;
+}
+
+.study-topic-card {
+  grid-template-columns: auto minmax(0, 1fr) minmax(150px, auto) auto;
+}
+
+.study-topic-rank {
+  inline-size: 34px;
+  block-size: 34px;
+  background: color-mix(in srgb, var(--ai-primary) 12%, transparent);
+}
+
+.study-recommendation-groups {
+  grid-template-columns: 1fr;
+}
+
+.study-recommendation-groups > div {
+  background: transparent;
+  padding: 0;
+}
+
+.study-recommendation-groups > div + div {
+  border-block-start: 1px solid color-mix(in srgb, var(--ai-border) 18%, transparent);
+  padding-block-start: 1.5rem;
+}
+
+.coach-workspace .ai-card,
+.coach-workspace .ai-evidence-card,
+.coach-workspace .ai-recommendation-card,
+.coach-workspace .ai-reasoning-panel,
+.coach-workspace .ai-quality-indicator,
+.coach-workspace .ai-progress-milestone {
+  border: 0;
+  background: color-mix(in srgb, var(--ai-surface) 24%, transparent);
+  box-shadow: none;
+}
+
+.coach-workspace .ai-card[data-interactive="true"]:hover {
+  background: color-mix(in srgb, var(--ai-primary) 8%, transparent);
+  box-shadow: none;
+}
+
+.study-nav-minimal {
+  background: transparent;
+  padding: 0;
+}
+
+.study-nav-row {
+  min-block-size: 52px;
+  border-radius: 16px;
+  padding-inline: 1rem;
+}
+
+.study-nav-problem-bank {
+  box-shadow: none;
+}
+
+.study-problem-bank-modal {
+  inline-size: min(980px, 100%);
+  background: color-mix(in srgb, var(--ai-bg-secondary) 96%, transparent);
+  box-shadow: 0 34px 90px color-mix(in srgb, #000 52%, transparent);
+}
+
+.study-problem-bank-summary,
+.study-problem-bank-filters,
+.study-problem-card,
+.study-topic-info-card {
+  background: transparent;
+  box-shadow: none;
+}
+
+.study-problem-bank-summary {
+  border-block: 1px solid color-mix(in srgb, var(--ai-border) 18%, transparent);
+  padding-block: 1rem;
+}
+
+.study-problem-bank-filters {
+  border-block-end: 1px solid color-mix(in srgb, var(--ai-border) 18%, transparent);
+  border-radius: 0;
+  padding-inline: 0;
+}
+
+.study-problem-card {
+  border-block-end: 1px solid color-mix(in srgb, var(--ai-border) 13%, transparent);
+}
