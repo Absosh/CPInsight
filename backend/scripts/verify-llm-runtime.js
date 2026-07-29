@@ -51,6 +51,7 @@ function models() {
   return new ModelRegistry([
     { name: 'fast-json', provider: 'openai', contextWindow: 128000, supportsStreaming: true, supportsJSON: true, supportsTools: false, supportsVision: false, maxOutputTokens: 4096, pricing: { promptPer1k: 0.001, completionPer1k: 0.002 }, status: 'available' },
     { name: 'fallback-json', provider: 'anthropic', contextWindow: 200000, supportsStreaming: true, supportsJSON: false, supportsTools: false, supportsVision: false, maxOutputTokens: 4096, pricing: { promptPer1k: 0.002, completionPer1k: 0.004 }, status: 'available' },
+    { name: 'gemini-flash-lite-latest', provider: 'gemini', contextWindow: 1000000, supportsStreaming: true, supportsJSON: true, supportsTools: false, supportsVision: false, maxOutputTokens: 8192, pricing: { promptPer1k: 0.000075, completionPer1k: 0.0003 }, status: 'available' },
     { name: 'gemini-wide', provider: 'gemini', contextWindow: 1000000, supportsStreaming: true, supportsJSON: true, supportsTools: false, supportsVision: false, maxOutputTokens: 8192, pricing: { promptPer1k: 0.001, completionPer1k: 0.003 }, status: 'available' },
     { name: 'local', provider: 'ollama', contextWindow: 32768, supportsStreaming: true, supportsJSON: false, supportsTools: false, supportsVision: false, maxOutputTokens: 2048, pricing: { promptPer1k: 0, completionPer1k: 0 }, status: 'local' }
   ]);
@@ -93,6 +94,7 @@ async function run() {
   });
   const normal = await engine.execute({ userId, executionPlan: executionPlan(), promptPackage: promptPackage() });
   assert.equal(normal.provider, 'gemini');
+  assert.equal(normal.model, 'gemini-flash-lite-latest');
   assert.equal(normal.streaming, false);
   assert.equal(normal.tokenAccounting.promptTokens, 120);
   assert.equal(normal.costAccounting.actualCost > 0, true);
