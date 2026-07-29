@@ -67,7 +67,7 @@ class DiagnosticRule extends PlannerRule {
       intent: INTENTS.DIAGNOSTIC,
       sources: context.sources,
       strategies: context.strategies,
-      preferredSources: ['behavior_knowledge_graph', 'behavior_insights', 'evidence_store', 'contest_history', 'session_summaries', 'feature_versions'],
+      preferredSources: ['behavior_knowledge_graph', 'behavior_insights', 'topic_performance', 'evidence_store', 'contest_history', 'session_summaries', 'feature_versions'],
       preferredStrategies: ['knowledge_graph_traversal', 'evidence_chain_retrieval', 'contest_timeline_retrieval', 'session_reconstruction_retrieval', 'sql_retrieval'],
       evidenceTypes: ['knowledge_edges', 'insight_evidence', 'contest_outcomes', 'session_timelines']
     });
@@ -139,7 +139,7 @@ class ReflectiveRule extends PlannerRule {
       intent: INTENTS.REFLECTIVE,
       sources: context.sources,
       strategies: context.strategies,
-      preferredSources: ['behavior_knowledge_graph', 'behavior_profiles', 'behavior_insights', 'pattern_evolution', 'evidence_store'],
+      preferredSources: ['behavior_knowledge_graph', 'behavior_profiles', 'behavior_insights', 'topic_performance', 'pattern_evolution', 'evidence_store'],
       preferredStrategies: ['knowledge_graph_traversal', 'behavior_profile_lookup', 'evidence_chain_retrieval'],
       evidenceTypes: ['profile_dimensions', 'patterns', 'evidence_chains']
     });
@@ -248,4 +248,3 @@ module.exports = {
   GoalPlanningRule,
   ExploratoryRule
 };
-

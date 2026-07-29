@@ -37,7 +37,7 @@ function confidence(findings, evidencePackage) {
 
 function questionRelevantEvidence(evidencePackage) {
   const question = String(evidencePackage.question || '').toLowerCase();
-  const topicPriorityQuestion = /\b(topic|practice|bridge (the )?gap|rating)\b/.test(question);
+  const topicPriorityQuestion = /\b(topic|practice|study|revise|reach|target|improve|bridge (the )?gap|rating)\b/.test(question);
   if (!topicPriorityQuestion) return [];
   return (evidencePackage.evidence || [])
     .filter((item) => item.source === 'topic_performance' && item.payload && item.payload.topic)
@@ -71,6 +71,8 @@ function buildReasoningContext(evidencePackage, { budget = '8k' } = {}) {
     evidencePackageId: evidencePackage.packageId,
     planId: evidencePackage.planId,
     userQuestion: evidencePackage.question || null,
+    retrievalMode: evidencePackage.retrievalMetadata?.retrievalMode || 'hybrid',
+    personalContextAvailable: Boolean((evidencePackage.evidence || []).length),
     questionHash: evidencePackage.questionHash,
     userProfile: null,
     primaryFindings: findings.primaryFindings.map(({ evidence, averageRankScore, ...finding }) => finding),

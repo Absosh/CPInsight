@@ -3,12 +3,12 @@ const { INTENTS, INTENT_DEFINITIONS } = require('./intentTaxonomy');
 
 const RULES = Object.freeze([
   { intent: INTENTS.EVIDENCE_REQUEST, weight: 7, patterns: [/\bwhy do you think\b/i, /\bshow (me )?(the )?evidence\b/i, /\bprove\b/i, /\bevidence\b/i] },
-  { intent: INTENTS.DIAGNOSTIC, weight: 3, patterns: [/\bwhy\b/i, /\bcause\b/i, /\breason\b/i, /\bdrop(ped)?\b/i, /\bmistake\b/i, /\bpanic\b/i, /\bweak(ness)?\b/i] },
+  { intent: INTENTS.DIAGNOSTIC, weight: 3, patterns: [/\bwhy\b/i, /\bcause\b/i, /\breason\b/i, /\bdrop(ped)?\b/i, /\bmistake\b/i, /\bpanic\b/i, /\bweak(ness|est)?\b/i] },
   { intent: INTENTS.COMPARATIVE, weight: 4, patterns: [/\bcompare\b/i, /\bversus\b/i, /\bvs\b/i, /\bdifference\b/i, /\blast \d+\b/i, /\bbetter than\b/i] },
   { intent: INTENTS.TREND_ANALYSIS, weight: 3, patterns: [/\bimprov(ing|e|ed)\b/i, /\btrend\b/i, /\bprogress\b/i, /\bregress(ing|ion)?\b/i, /\bgetting better\b/i, /\bover time\b/i] },
-  { intent: INTENTS.COACHING, weight: 3, patterns: [/\bwhat should i practice\b/i, /\bcoach\b/i, /\bimprove\b/i, /\bpractice\b/i, /\btrain\b/i, /\bfix\b/i, /\btopic\b/i, /\bsingle most important\b/i, /\bbridge (the )?gap\b/i] },
+  { intent: INTENTS.COACHING, weight: 3, patterns: [/\bwhat should i practice\b/i, /\bcoach\b/i, /\bimprove\b/i, /\bpractice\b/i, /\btrain\b/i, /\bfix\b/i, /\btopic(s)?\b/i, /\bsingle most important\b/i, /\bbridge (the )?gap\b/i] },
   { intent: INTENTS.PREDICTIVE, weight: 2, patterns: [/\bwill i\b/i, /\bcan i\b/i, /\bshould i\b/i, /\bpredict\b/i, /\blikely\b/i, /\breadiness\b/i, /\bchance\b/i] },
-  { intent: INTENTS.REFLECTIVE, weight: 2, patterns: [/\bwhat kind of\b/i, /\bmy style\b/i, /\bstrength\b/i, /\bweakness\b/i, /\bpattern\b/i, /\bhabit\b/i] },
+  { intent: INTENTS.REFLECTIVE, weight: 2, patterns: [/\bwhat kind of\b/i, /\bmy style\b/i, /\bstrength|strongest\b/i, /\bweakness|weakest\b/i, /\bpattern\b/i, /\bhabit\b/i] },
   { intent: INTENTS.HISTORICAL_REVIEW, weight: 2, patterns: [/\blast\b/i, /\bpast\b/i, /\bhistory\b/i, /\breview\b/i, /\bprevious\b/i, /\bmonth\b/i, /\bweek\b/i, /\bcontest(s)?\b/i, /\brating\b/i] },
   { intent: INTENTS.GOAL_PLANNING, weight: 3, patterns: [/\bgoal\b/i, /\bplan\b/i, /\breach\b/i, /\btarget\b/i, /\broadmap\b/i, /\bby next\b/i, /\bbridge (the )?gap\b/i, /\bbetween\s+\d{3,4}\s+and\s+\d{3,4}\b/i] },
   { intent: INTENTS.EXPLORATORY, weight: 1, patterns: [/\bshow me\b/i, /\bdiscover\b/i, /\binteresting\b/i, /\bexplore\b/i, /\banything\b/i] }

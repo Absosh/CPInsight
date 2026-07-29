@@ -2,6 +2,16 @@ const { attachedEvidence, textOf } = require('./groundingValidator');
 
 function validateRecommendations(response, evidencePackage, reasoningContext, { minConfidence = 0.55 } = {}) {
   const evidenceById = new Map([...(evidencePackage.evidence || []), ...(reasoningContext.evidenceSummary?.usedEvidence || [])].map((item) => [item.evidenceId, item]));
+  if (reasoningContext.retrievalMode === 'general' || evidenceById.size === 0) {
+    return {
+      valid: true,
+      accepted: [],
+      rejected: [],
+      supportRate: 1,
+      skipped: true,
+      reason: 'personal_context_unavailable_or_not_required'
+    };
+  }
   const accepted = [];
   const rejected = [];
   for (const recommendation of response.recommendations) {
@@ -22,4 +32,3 @@ function validateRecommendations(response, evidencePackage, reasoningContext, { 
 }
 
 module.exports = { validateRecommendations };
-

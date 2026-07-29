@@ -7,6 +7,16 @@ function citationId(citation) {
 
 function validateCitations(response, evidencePackage, reasoningContext) {
   const known = evidenceIds(evidencePackage, reasoningContext);
+  if (reasoningContext.retrievalMode === 'general' || known.size === 0) {
+    return {
+      valid: true,
+      accepted: [],
+      fabricated: [],
+      quality: 1,
+      skipped: true,
+      reason: 'personal_context_unavailable_or_not_required'
+    };
+  }
   const fabricated = [];
   const accepted = [];
   for (const citation of response.citations) {
@@ -30,4 +40,3 @@ function validateCitations(response, evidencePackage, reasoningContext) {
 }
 
 module.exports = { validateCitations };
-

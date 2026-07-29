@@ -24,6 +24,17 @@ function attachedEvidence(item) {
 
 function validateGrounding(response, evidencePackage, reasoningContext) {
   const known = evidenceIds(evidencePackage, reasoningContext);
+  const personalContextOptional = reasoningContext.retrievalMode === 'general' || known.size === 0;
+  if (personalContextOptional) {
+    return {
+      valid: true,
+      accepted: [],
+      unsupported: [],
+      coverage: 1,
+      skipped: true,
+      reason: 'personal_context_unavailable_or_not_required'
+    };
+  }
   const unsupported = [];
   const accepted = [];
   for (const observation of response.observations) {
@@ -41,4 +52,3 @@ function validateGrounding(response, evidencePackage, reasoningContext) {
 }
 
 module.exports = { validateGrounding, evidenceIds, attachedEvidence, textOf };
-

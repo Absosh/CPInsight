@@ -9,6 +9,21 @@ function unique(values) {
   return [...new Set(values.filter(Boolean))];
 }
 
+function retrievalMode(question, classification) {
+  const normalized = String(question || '').toLowerCase();
+  if (/\b(my|me|i|mine)\b/.test(normalized) && /\b(rating|contest|submission|history|weakest|strongest|profile|progress|consistent|consistency|last|recent)\b/.test(normalized)) {
+    return 'personal';
+  }
+  if (/\b(reach|target|roadmap|study|practice|revise|improve|bridge (the )?gap|between\s+\d{3,4}\s+and\s+\d{3,4})\b/.test(normalized)) {
+    return 'hybrid';
+  }
+  if (/\b(explain|what is|how does|how do|define|concept|algorithm|data structure|bfs|dfs|fenwick|segment tree|memoization|dynamic programming|binary search)\b/.test(normalized)) {
+    return 'general';
+  }
+  if (classification.primaryIntent === INTENTS.UNKNOWN) return 'general';
+  return 'hybrid';
+}
+
 function mergePlans(classification, rulePlans) {
   const sources = new Map();
   const strategies = new Map();
@@ -35,12 +50,13 @@ function mergePlans(classification, rulePlans) {
     minimumHistoricalCoverageDays = Math.max(minimumHistoricalCoverageDays, plan.confidencePlan.minimumHistoricalCoverageDays);
   }
 
-  const selectedSources = [...sources.values()].sort((a, b) => a.priority - b.priority);
-  const selectedStrategies = [...strategies.values()].sort((a, b) => a.priority - b.priority || a.name.localeCompare(b.name));
-  const cappedTokens = Math.min(6000, Math.max(0, estimatedContextTokens));
-  const evidenceSufficiency = classification.primaryIntent === INTENTS.UNKNOWN || !selectedSources.length
-    ? 'insufficient'
-    : 'requires_retrieval';
+  const mode = retrievalMode(classification.question, classification);
+  const selectedSources = mode === 'general' ? [] : [...sources.values()].sort((a, b) => a.priority - b.priority);
+  const selectedStrategies = mode === 'general' ? [] : [...strategies.values()].sort((a, b) => a.priority - b.priority || a.name.localeCompare(b.name));
+  const cappedTokens = mode === 'general' ? 0 : Math.min(6000, Math.max(0, estimatedContextTokens));
+  const evidenceSufficiency = mode === 'general'
+    ? 'skipped_optional'
+    : (selectedSources.length ? 'personalization_optional' : 'personalization_unavailable');
 
   return {
     planId: crypto.randomUUID(),
@@ -54,6 +70,7 @@ function mergePlans(classification, rulePlans) {
       ambiguous: classification.ambiguous,
       classified: classification.intents
     },
+    retrievalMode: mode,
     requiredEvidence: [...evidenceTypes],
     retrievalSources: selectedSources,
     retrievalStrategies: selectedStrategies,
@@ -65,7 +82,8 @@ function mergePlans(classification, rulePlans) {
       minimumSupportingSessions,
       minimumHistoricalCoverageDays,
       evidenceSufficiency,
-      insufficientReason: evidenceSufficiency === 'insufficient' ? 'No confident known intent or supported source was identified.' : null
+      insufficientReason: null,
+      personalEvidenceRequired: mode === 'personal'
     },
     tokenBudget: {
       estimatedContextTokens: cappedTokens,

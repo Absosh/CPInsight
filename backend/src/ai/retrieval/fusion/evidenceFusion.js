@@ -118,6 +118,7 @@ function fuse({ plan, retrievalResults, sourceHealth }) {
     retrievalMetadata: {
       createdAt: new Date().toISOString(),
       plannerIntent: plan.intents,
+      retrievalMode: plan.retrievalMode || 'hybrid',
       requiredEvidence: plan.requiredEvidence,
       sourceCount: retrievedSources.length
     },
