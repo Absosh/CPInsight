@@ -412,6 +412,7 @@ export function StudyPlannerWorkspace() {
   const [problemBank, setProblemBank] = useState(null);
   const [problemFilters, setProblemFilters] = useState({ platform: 'all', difficulty: 'all', status: 'all' });
   const [refreshingProblems, setRefreshingProblems] = useState(false);
+  const [activeStudySection, setActiveStudySection] = useState('tracker');
   const targetRating = state.contextualInsights.targetRating;
   const planner = useMemo(() => buildStudyPlanner({
     contextualInsights: state.contextualInsights,
@@ -435,6 +436,14 @@ export function StudyPlannerWorkspace() {
     window.addEventListener('cpinsight:openProblemBank', handleOpenProblemBank);
     return () => window.removeEventListener('cpinsight:openProblemBank', handleOpenProblemBank);
   }, [planner, state.contextualInsights.analytics]);
+
+  useEffect(() => {
+    function handleStudySectionSelected(event) {
+      if (event.detail?.section) setActiveStudySection(event.detail.section);
+    }
+    window.addEventListener('cpinsight:studySectionSelected', handleStudySectionSelected);
+    return () => window.removeEventListener('cpinsight:studySectionSelected', handleStudySectionSelected);
+  }, []);
 
   useEffect(() => {
     if (!problemBank) return undefined;
@@ -474,6 +483,45 @@ export function StudyPlannerWorkspace() {
     });
   }
 
+  function renderActiveSection() {
+    if (activeStudySection === 'recommended') {
+      return (
+        <div className="study-planner-grid study-planner-focused">
+          <RecommendedProblems groups={planner.recommendedProblems} onToggleComplete={toggleRecommendation} onOpenProblemBank={openProblemBank} />
+          <ContestImpact impact={planner.recentContestImpact} sources={planner.sourceSummary} />
+        </div>
+      );
+    }
+
+    if (activeStudySection === 'rating') {
+      return (
+        <div className="study-planner-grid study-planner-focused">
+          <TargetRatingRoadmap roadmap={planner.targetRating} onTargetChange={updateTarget} onOpenProblemBank={openProblemBank} />
+        </div>
+      );
+    }
+
+    if (activeStudySection === 'topics') {
+      return (
+        <div className="study-planner-grid study-planner-focused">
+          <TopicPriorities topics={planner.topicPriorities} onOpenProblemBank={openProblemBank} />
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <TodayFocus focus={planner.todaysFocus} onQuickStart={quickStart} onOpenProblemBank={() => openProblemBank({ type: 'today-focus', label: "Today's Focus", topic: planner.todaysFocus.primaryWeakTopic, estimatedTime: planner.todaysFocus.estimatedCompletionTime, confidence: planner.todaysFocus.confidence, reason: planner.todaysFocus.why })} />
+        <div className="study-planner-grid study-planner-focused">
+          <DailyPlan tasks={planner.dailyPlan} actions={state.recommendationActions} onOpenProblemBank={openProblemBank} />
+          <WeeklyRoadmap days={planner.weeklyRoadmap} onOpenProblemBank={openProblemBank} />
+          <StudyTime time={planner.estimatedStudyTime} />
+          <ProgressTracking progress={planner.progress} />
+        </div>
+      </>
+    );
+  }
+
   return (
     <section className="coach-workspace-surface study-planner-surface" aria-label="Adaptive Study Planner">
       <header className="study-planner-header">
@@ -494,17 +542,7 @@ export function StudyPlannerWorkspace() {
         </section>
       ) : null}
 
-      <TodayFocus focus={planner.todaysFocus} onQuickStart={quickStart} onOpenProblemBank={() => openProblemBank({ type: 'today-focus', label: "Today's Focus", topic: planner.todaysFocus.primaryWeakTopic, estimatedTime: planner.todaysFocus.estimatedCompletionTime, confidence: planner.todaysFocus.confidence, reason: planner.todaysFocus.why })} />
-      <div className="study-planner-grid">
-        <DailyPlan tasks={planner.dailyPlan} actions={state.recommendationActions} onOpenProblemBank={openProblemBank} />
-        <WeeklyRoadmap days={planner.weeklyRoadmap} onOpenProblemBank={openProblemBank} />
-        <TopicPriorities topics={planner.topicPriorities} onOpenProblemBank={openProblemBank} />
-        <RecommendedProblems groups={planner.recommendedProblems} onToggleComplete={toggleRecommendation} onOpenProblemBank={openProblemBank} />
-        <StudyTime time={planner.estimatedStudyTime} />
-        <ProgressTracking progress={planner.progress} />
-        <TargetRatingRoadmap roadmap={planner.targetRating} onTargetChange={updateTarget} onOpenProblemBank={openProblemBank} />
-        <ContestImpact impact={planner.recentContestImpact} sources={planner.sourceSummary} />
-      </div>
+      {renderActiveSection()}
       <ProblemBankModal
         problemBank={problemBank}
         filters={problemFilters}

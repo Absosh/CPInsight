@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BehaviorOverview, ReflectionFeed, RecommendationList } from '../../../components/ai/index.js';
 import { useAiCoachWorkspace } from '../state/AiCoachWorkspaceProvider.jsx';
 
@@ -13,106 +13,68 @@ function Metric({ label, value }) {
 }
 
 const STUDY_NAV_SECTIONS = [
-  {
-    group: 'Tracker',
-    items: [
-      ['study-daily', 'Daily Goals', 'Today task sequence'],
-      ['study-weekly', 'Weekly Goals', 'Seven-day roadmap'],
-      ['study-time', 'Estimated Study Time', 'Time allocation'],
-      ['study-progress', 'Progress Tracking', 'Completion and consistency']
-    ]
-  },
-  {
-    group: 'Recommended',
-    items: [
-      ['study-today', "Today's Problems", 'Primary focus bank'],
-      ['study-recommended', 'Weekly Problems', 'Practice windows'],
-      ['study-recommended', 'Stretch Problems', 'Higher ROI practice']
-    ]
-  },
-  {
-    group: 'Rating',
-    items: [
-      ['study-target', 'Target Rating', 'Selected target'],
-      ['study-target', 'Skill Gap', 'Required mastery'],
-      ['study-target', 'Target Rating Roadmap', 'Milestones']
-    ]
-  },
-  {
-    group: 'Topics',
-    items: [
-      ['study-topics', 'Priority Topics', 'ROI ranking'],
-      ['study-topics', 'Weak Topics', 'Highest expected return'],
-      ['study-target', 'Recent Improvements', 'Strengths and gaps']
-    ]
-  }
+  { section: 'tracker', label: 'Tracker', problemTopic: 'Daily Practice' },
+  { section: 'recommended', label: 'Recommended', problemTopic: "Today's Practice" },
+  { section: 'rating', label: 'Rating', problemTopic: 'Target Rating' },
+  { section: 'topics', label: 'Topics', problemTopic: 'Priority Topics' }
 ];
 
-function openProblemBankFromNav(label, insights) {
-  const topic = label.includes('Stretch') ? insights.weakestTopics?.[1]?.name : insights.weakestTopics?.[0]?.name;
+function emitStudySection(section) {
+  window.dispatchEvent(new CustomEvent('cpinsight:studySectionSelected', { detail: { section } }));
+}
+
+function openProblemBankFromNav(item, insights) {
+  const topic = item.section === 'topics' || item.section === 'recommended'
+    ? insights.weakestTopics?.[0]?.name
+    : item.problemTopic;
   window.dispatchEvent(new CustomEvent('cpinsight:openProblemBank', {
     detail: {
       type: 'study-navigation',
-      label,
-      topic: topic || label,
+      label: item.label,
+      topic: topic || item.problemTopic,
       reason: ['Opened from Study Navigation.']
     }
   }));
 }
 
 function StudyNavigationPanel({ insights }) {
-  const [activeSection, setActiveSection] = useState('study-today');
-  const sectionIds = useMemo(() => [...new Set(STUDY_NAV_SECTIONS.flatMap((section) => section.items.map(([id]) => id)))], []);
+  const [activeSection, setActiveSection] = useState('tracker');
 
   useEffect(() => {
-    const nodes = sectionIds.map((id) => document.getElementById(id)).filter(Boolean);
-    if (!nodes.length || !globalThis.IntersectionObserver) return undefined;
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries.find((entry) => entry.isIntersecting);
-      if (visible?.target?.id) setActiveSection(visible.target.id);
-    }, { root: null, rootMargin: '-20% 0px -55% 0px', threshold: 0.01 });
-    nodes.forEach((node) => observer.observe(node));
-    return () => observer.disconnect();
-  }, [sectionIds]);
+    function handleSectionSelected(event) {
+      if (event.detail?.section) setActiveSection(event.detail.section);
+    }
+    window.addEventListener('cpinsight:studySectionSelected', handleSectionSelected);
+    return () => window.removeEventListener('cpinsight:studySectionSelected', handleSectionSelected);
+  }, []);
 
-  function scrollToSection(id) {
-    setActiveSection(id);
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  function selectSection(section) {
+    setActiveSection(section);
+    emitStudySection(section);
   }
 
   return (
     <aside className="coach-right-sidebar study-navigation-sidebar" aria-label="Study Navigation">
-      <section className="coach-context-card study-navigation-overview">
-        <h2><span aria-hidden="true">SP</span> Study Navigation</h2>
-        <Metric label="Daily Goals" value={insights.todaysRecommendations?.length || 0} />
-        <Metric label="Weekly Goals" value={insights.weakestTopics?.length || 0} />
-        <Metric label="Target Rating" value={insights.targetRating} />
-      </section>
-      {STUDY_NAV_SECTIONS.map((section) => (
-        <section key={section.group} className="study-nav-card">
-          <h3>{section.group}</h3>
-          <div>
-            {section.items.map(([id, label, subtitle]) => (
-              <button
-                key={`${section.group}-${label}`}
-                type="button"
-                className="study-nav-row"
-                data-active={activeSection === id}
-                onClick={() => scrollToSection(id)}
-              >
-                <span>
-                  <strong>{label}</strong>
-                  <small>{subtitle}</small>
-                </span>
-                <span aria-hidden="true">→</span>
-              </button>
-            ))}
-          </div>
-          <button className="ai-button ai-focusable study-nav-problem-bank" type="button" onClick={() => openProblemBankFromNav(section.group, insights)}>
-            Open {section.group} Problem Bank
+      <nav className="study-nav-card study-nav-minimal" aria-label="Study planner sections">
+        {STUDY_NAV_SECTIONS.map((item) => (
+          <button
+            key={item.section}
+            type="button"
+            className="study-nav-row"
+            data-active={activeSection === item.section}
+            onClick={() => selectSection(item.section)}
+          >
+            <strong>{item.label}</strong>
           </button>
-        </section>
-      ))}
+        ))}
+      </nav>
+      <button
+        className="ai-button ai-focusable study-nav-problem-bank"
+        type="button"
+        onClick={() => openProblemBankFromNav(STUDY_NAV_SECTIONS.find((item) => item.section === activeSection) || STUDY_NAV_SECTIONS[0], insights)}
+      >
+        Open Problem Bank
+      </button>
     </aside>
   );
 }
