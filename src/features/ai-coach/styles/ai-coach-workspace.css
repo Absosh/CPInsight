@@ -1,12 +1,32 @@
 .coach-workspace {
+  --ai-bg-primary: #070b17;
+  --ai-bg-secondary: #0b1020;
+  --ai-surface: rgba(255, 255, 255, 0.03);
+  --ai-surface-raised: rgba(255, 255, 255, 0.045);
+  --ai-surface-overlay: rgba(255, 255, 255, 0.035);
+  --ai-surface-hover: rgba(255, 255, 255, 0.06);
+  --ai-surface-active: rgba(16, 185, 129, 0.12);
+  --ai-primary: #10b981;
+  --ai-secondary: #34d399;
+  --ai-highlight: #6ee7b7;
+  --ai-evidence: #10b981;
+  --ai-success: #10b981;
+  --ai-border: rgba(255, 255, 255, 0.06);
+  --ai-border-strong: rgba(16, 185, 129, 0.28);
+  --ai-divider: rgba(255, 255, 255, 0.08);
+  --ai-glow: rgba(16, 185, 129, 0.14);
+  --ai-focus-ring: rgba(16, 185, 129, 0.28);
+  --ai-gradient-primary: linear-gradient(135deg, #10b981, #34d399);
+  --ai-gradient-surface: linear-gradient(145deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015));
+  --ai-glow-shadow: 0 0 28px rgba(16, 185, 129, 0.18);
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr) 320px;
   block-size: 100vh;
   min-block-size: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(circle at 48% 0%, color-mix(in srgb, var(--ai-primary) 10%, transparent), transparent 34%),
-    linear-gradient(180deg, #08111f 0%, #07101d 100%);
+    radial-gradient(circle at 48% 0%, rgba(16, 185, 129, 0.08), transparent 34%),
+    linear-gradient(180deg, #070b17 0%, #0b1020 100%);
   color: var(--ai-text);
 }
 
@@ -30,7 +50,7 @@
 .coach-right-sidebar::-webkit-scrollbar-thumb,
 .ai-conversation-scroll::-webkit-scrollbar-thumb {
   border-radius: var(--ai-radius-pill, 999px);
-  background: rgba(96, 165, 250, 0.45);
+  background: rgba(16, 185, 129, 0.45);
 }
 
 .coach-left-sidebar {
@@ -250,7 +270,7 @@
   block-size: 100vh;
   min-block-size: 0;
   overflow: hidden;
-  background: color-mix(in srgb, #08111f 94%, black 6%);
+  background: color-mix(in srgb, #070b17 94%, black 6%);
   border-inline: 0;
 }
 
@@ -261,7 +281,7 @@
   justify-content: center;
   gap: var(--ai-space-sm);
   border-block-end: 1px solid color-mix(in srgb, var(--ai-border) 54%, transparent);
-  background: color-mix(in srgb, #08111f 90%, transparent);
+  background: color-mix(in srgb, #070b17 90%, transparent);
   padding: var(--ai-space-md) var(--ai-space-xl);
 }
 
@@ -2072,7 +2092,7 @@ body:has(#aiCoachRoot),
   block-size: 100vh;
   max-block-size: 100vh;
   overflow: hidden;
-  background: #08111f;
+  background: #070b17;
 }
 
 .coach-left-sidebar,
@@ -2090,7 +2110,7 @@ body:has(#aiCoachRoot),
 }
 
 .coach-left-sidebar {
-  background: #07101d;
+  background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)), #070b17;
   padding: 1rem;
 }
 
@@ -2098,19 +2118,19 @@ body:has(#aiCoachRoot),
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
-  background: #08111f;
+  background: #070b17;
 }
 
 .coach-right-sidebar {
-  background: #091525;
+  background: linear-gradient(145deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01)), #070b17;
   padding: 1.25rem 1rem;
 }
 
 .coach-primary-tabs {
   flex: 0 0 auto;
   min-block-size: 60px;
-  border-block-end: 1px solid rgba(96, 165, 250, 0.1);
-  background: rgba(8, 17, 31, 0.94);
+  border-block-end: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(7, 11, 23, 0.94);
 }
 
 .coach-center-panel .ai-conversation-view {
@@ -2144,8 +2164,8 @@ body:has(#aiCoachRoot),
   flex: 0 0 auto;
   border: 0;
   background:
-    linear-gradient(180deg, rgba(8, 17, 31, 0), #08111f 32%),
-    #08111f;
+    linear-gradient(180deg, rgba(7, 11, 23, 0), #070b17 32%),
+    #070b17;
   padding: 0.75rem clamp(1.25rem, 7vw, 7rem) 1rem;
 }
 
@@ -2171,13 +2191,15 @@ body:has(#aiCoachRoot),
 
 .coach-nav button[aria-current="page"],
 .coach-session-row[data-active="true"] {
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(16, 185, 129, 0.14);
 }
 
 .coach-composer {
   inline-size: min(820px, 100%);
   border-radius: 24px;
-  background: #111c2e;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02)),
+    #0b1020;
   gap: 0.35rem;
   padding: 0.65rem;
 }
@@ -2234,8 +2256,8 @@ body:has(#aiCoachRoot),
 .coach-workspace .ai-behavior-overview,
 .coach-workspace .ai-recommendation-list,
 .coach-workspace .ai-reflection-feed {
-  border-color: rgba(96, 165, 250, 0.12);
-  background: rgba(15, 23, 42, 0.42);
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.035);
   box-shadow: none;
 }
 
@@ -2246,7 +2268,7 @@ body:has(#aiCoachRoot),
 .coach-context-card,
 .coach-topic-grid {
   border: 0;
-  border-block-end: 1px solid rgba(96, 165, 250, 0.1);
+  border-block-end: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
