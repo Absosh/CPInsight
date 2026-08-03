@@ -1,5 +1,6 @@
 import React from 'react';
 import { AiIcon } from './Icon.jsx';
+import { MarkdownText } from './MarkdownText.jsx';
 import { StateShell } from './StateShell.jsx';
 
 export function CoachMessage({ question, response, timestamp, metadata, streaming = false, state = 'success' }) {
@@ -15,7 +16,7 @@ export function CoachMessage({ question, response, timestamp, metadata, streamin
           </div>
         </header>
         <div className={streaming ? 'ai-streaming-cursor' : undefined}>
-          {response || 'No response available.'}
+          <MarkdownText value={response || 'No response available.'} />
         </div>
         {hasMetadata && (
           <details>

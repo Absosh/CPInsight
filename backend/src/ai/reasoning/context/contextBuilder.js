@@ -58,7 +58,18 @@ function questionRelevantEvidence(evidencePackage) {
     }));
 }
 
-function buildReasoningContext(evidencePackage, { budget = '8k' } = {}) {
+function normalizeConversationHistory(history = []) {
+  return (Array.isArray(history) ? history : [])
+    .filter((turn) => turn && typeof turn.content === 'string' && turn.content.trim())
+    .slice(-8)
+    .map((turn) => ({
+      role: turn.role === 'assistant' || turn.role === 'coach' ? 'assistant' : 'user',
+      content: turn.content.trim().slice(0, 2400),
+      createdAt: turn.createdAt || null
+    }));
+}
+
+function buildReasoningContext(evidencePackage, { budget = '8k', conversationHistory = [] } = {}) {
   const startedAt = Date.now();
   const findings = extractFindings(evidencePackage);
   const causalChains = buildCausalChains(findings.allFindings);
@@ -71,6 +82,7 @@ function buildReasoningContext(evidencePackage, { budget = '8k' } = {}) {
     evidencePackageId: evidencePackage.packageId,
     planId: evidencePackage.planId,
     userQuestion: evidencePackage.question || null,
+    conversationHistory: normalizeConversationHistory(conversationHistory),
     retrievalMode: evidencePackage.retrievalMetadata?.retrievalMode || 'hybrid',
     personalContextAvailable: Boolean((evidencePackage.evidence || []).length),
     questionHash: evidencePackage.questionHash,

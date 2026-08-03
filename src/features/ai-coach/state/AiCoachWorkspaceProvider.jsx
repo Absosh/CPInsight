@@ -88,14 +88,25 @@ function insightsFromSources({ profile, analytics, latestReview, behaviorProfile
   };
 }
 
-async function executeCoachPipeline({ api, question, signal, dispatch, sessionId, coachMessageId }) {
+function conversationHistoryForSession(session, limit = 8) {
+  return (session?.messages || [])
+    .filter((message) => message.status === 'completed' && message.content && message.content.trim())
+    .map((message) => ({
+      role: message.role === 'coach' ? 'assistant' : 'user',
+      content: message.content,
+      createdAt: message.createdAt
+    }))
+    .slice(-limit);
+}
+
+async function executeCoachPipeline({ api, question, signal, dispatch, sessionId, coachMessageId, conversationHistory = [] }) {
   dispatch({ type: 'messages/streamingStarted', sessionId, messageId: coachMessageId });
   dispatch({ type: 'messages/streamingChunk', sessionId, messageId: coachMessageId, chunk: 'Planning evidence...' });
   const classification = await api.classify(question, {}, signal);
   const plan = await api.plan(question, {}, signal);
   dispatch({ type: 'messages/streamingChunk', sessionId, messageId: coachMessageId, chunk: '\nRetrieving evidence...' });
   const evidencePackage = await api.retrieve(plan, {}, signal);
-  const reasoningContext = await api.buildReasoningContext(evidencePackage, { budget: '8k' }, signal);
+  const reasoningContext = await api.buildReasoningContext(evidencePackage, { budget: '8k', conversationHistory }, signal);
   const promptPackage = await api.buildPrompt(reasoningContext, {}, signal);
   const executionPlan = await api.buildExecutionPlan({ question, intent: classification, reasoningContext, promptPackage }, signal);
   dispatch({ type: 'messages/streamingChunk', sessionId, messageId: coachMessageId, chunk: '\nGenerating coach response...' });
@@ -176,12 +187,14 @@ export function AiCoachWorkspaceProvider({ apiClient, initialState, children }) 
 
   const submitQuestion = useCallback(async (question) => {
     const sessionId = state.activeSessionId;
+    const session = state.sessions.find((item) => item.sessionId === sessionId);
+    const conversationHistory = conversationHistoryForSession(session);
     const coachMessageId = createWorkspaceId('message');
     const abortController = new AbortController();
     abortRef.current = abortController;
     dispatch({ type: 'messages/userSubmitted', question, coachMessageId });
     try {
-      const result = await executeCoachPipeline({ api, question, signal: abortController.signal, dispatch, sessionId, coachMessageId });
+      const result = await executeCoachPipeline({ api, question, signal: abortController.signal, dispatch, sessionId, coachMessageId, conversationHistory });
       dispatch({
         type: 'messages/completed',
         sessionId,

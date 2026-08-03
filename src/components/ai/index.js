@@ -6,6 +6,7 @@ export { aiAnimationClasses } from './animations/animationClasses.js';
 export { AiIcon, aiIconMap } from './base/Icon.jsx';
 export { StateShell } from './base/StateShell.jsx';
 export { CoachMessage } from './base/CoachMessage.jsx';
+export { MarkdownText } from './base/MarkdownText.jsx';
 export { ConfidenceBadge } from './base/ConfidenceBadge.jsx';
 export { EvidenceCard } from './cards/EvidenceCard.jsx';
 export { RecommendationCard } from './cards/RecommendationCard.jsx';

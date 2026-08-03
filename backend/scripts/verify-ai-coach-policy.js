@@ -72,10 +72,19 @@ async function run() {
   assert.equal(generalPlan.retrievalMode, 'general');
   assert.equal(generalPlan.retrievalSources.length, 0);
   const generalPackage = emptyPackage(generalPlan);
-  const generalContext = buildReasoningContext(generalPackage);
+  const generalContext = buildReasoningContext(generalPackage, {
+    conversationHistory: [
+      { role: 'user', content: 'Does CP help in coding interviews?', createdAt: new Date().toISOString() },
+      { role: 'assistant', content: 'Yes, but it should be balanced with interview-specific practice.', createdAt: new Date().toISOString() }
+    ]
+  });
   const generalPrompt = buildPromptPackage(generalContext);
   assert.equal(generalContext.personalContextAvailable, false);
+  assert.equal(generalContext.conversationHistory.length, 2);
   assert.equal(generalPrompt.responseConstraints.answerWithoutPersonalEvidence, true);
+  assert.equal(generalPrompt.responseConstraints.usePreparedContextOnly, false);
+  assert.equal(generalPrompt.systemPrompt.includes('Behave like Gemini first'), true);
+  assert.equal(generalPrompt.developerInstructions.some((item) => item.includes('complete user-visible answer')), true);
   const validatedGeneral = validateGeneralAnswer(generalContext, generalPackage);
   assert.equal(validatedGeneral.validationReport.grounding.valid, true);
   assert.equal(validatedGeneral.validationReport.citations.valid, true);
@@ -100,7 +109,9 @@ async function run() {
       mode: generalPlan.retrievalMode,
       sources: generalPlan.retrievalSources.length,
       answersWithoutPersonalEvidence: generalPrompt.responseConstraints.answerWithoutPersonalEvidence,
-      validationAllowsNoEvidence: validatedGeneral.validationReport.grounding.skipped
+      validationAllowsNoEvidence: validatedGeneral.validationReport.grounding.skipped,
+      conversationHistoryTurns: generalContext.conversationHistory.length,
+      geminiStylePrompt: generalPrompt.systemPrompt.includes('Behave like Gemini first')
     },
     hybrid: {
       mode: hybridPlan.retrievalMode,

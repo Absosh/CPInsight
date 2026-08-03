@@ -130,6 +130,127 @@
   padding: 0 var(--ai-space-lg) var(--ai-space-lg);
 }
 
+.ai-markdown {
+  color: var(--ai-text);
+  font-size: 0.98rem;
+  line-height: 1.72;
+}
+
+.ai-markdown > *:first-child {
+  margin-block-start: 0;
+}
+
+.ai-markdown > *:last-child {
+  margin-block-end: 0;
+}
+
+.ai-markdown p {
+  margin: 0.75rem 0;
+}
+
+.ai-markdown h3,
+.ai-markdown h4,
+.ai-markdown h5,
+.ai-markdown h6 {
+  color: var(--ai-text);
+  letter-spacing: 0;
+  line-height: 1.25;
+  margin: 1.45rem 0 0.55rem;
+}
+
+.ai-markdown h3 {
+  font-size: 1.16rem;
+}
+
+.ai-markdown h4,
+.ai-markdown h5,
+.ai-markdown h6 {
+  font-size: 1.02rem;
+}
+
+.ai-markdown ul,
+.ai-markdown ol {
+  display: grid;
+  gap: 0.42rem;
+  margin: 0.75rem 0;
+  padding-inline-start: 1.35rem;
+}
+
+.ai-markdown li::marker {
+  color: var(--ai-primary);
+}
+
+.ai-markdown strong {
+  color: var(--ai-text);
+  font-weight: 750;
+}
+
+.ai-markdown em {
+  color: var(--ai-text-muted);
+}
+
+.ai-markdown code {
+  border: 1px solid var(--ai-border);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--ai-surface-active) 76%, transparent);
+  color: var(--ai-highlight);
+  font-size: 0.9em;
+  padding: 0.08rem 0.35rem;
+}
+
+.ai-markdown pre {
+  overflow-x: auto;
+  border: 1px solid var(--ai-border);
+  border-radius: var(--ai-radius-md);
+  background: color-mix(in srgb, var(--ai-bg-secondary) 88%, transparent);
+  margin: 1rem 0;
+  padding: 0.95rem;
+}
+
+.ai-markdown pre code {
+  border: 0;
+  background: transparent;
+  color: var(--ai-text);
+  padding: 0;
+}
+
+.ai-markdown blockquote {
+  border-inline-start: 3px solid var(--ai-primary);
+  color: var(--ai-text-muted);
+  margin: 1rem 0;
+  padding: 0.2rem 0 0.2rem 1rem;
+}
+
+.ai-markdown hr {
+  border: 0;
+  border-block-start: 1px solid var(--ai-border);
+  margin: 1.2rem 0;
+}
+
+.ai-markdown-table-wrap {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.ai-markdown table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.ai-markdown th,
+.ai-markdown td {
+  border-block-end: 1px solid var(--ai-border);
+  padding: 0.65rem 0.75rem;
+  text-align: start;
+  vertical-align: top;
+}
+
+.ai-markdown th {
+  color: var(--ai-text);
+  font-weight: 750;
+}
+
 .ai-card-actions {
   display: flex;
   align-items: center;

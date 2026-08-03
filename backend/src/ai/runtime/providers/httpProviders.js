@@ -120,7 +120,7 @@ class GeminiProvider extends ProviderAdapter {
           }) }]
         }],
         generationConfig: {
-          temperature: parameters.temperature ?? 0.2,
+          temperature: parameters.temperature ?? 0.65,
           topP: parameters.topP ?? 1,
           maxOutputTokens: parameters.maxTokens || model.maxOutputTokens,
           responseMimeType: model.supportsJSON ? 'application/json' : undefined
