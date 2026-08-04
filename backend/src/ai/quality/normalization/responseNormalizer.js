@@ -1,18 +1,50 @@
 function tryParseJson(text) {
   if (!text || typeof text !== 'string') return null;
+  const trimmed = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
   try {
-    return JSON.parse(text);
+    return JSON.parse(trimmed);
   } catch (_error) {
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
+    const start = trimmed.indexOf('{');
+    const end = trimmed.lastIndexOf('}');
     if (start >= 0 && end > start) {
       try {
-        return JSON.parse(text.slice(start, end + 1));
+        return JSON.parse(trimmed.slice(start, end + 1));
       } catch (_nested) {
         return null;
       }
     }
   }
+  return null;
+}
+
+function extractJsonStringField(text, field) {
+  if (!text || typeof text !== 'string') return null;
+  const match = new RegExp(`"${field}"\\s*:\\s*"`, 'i').exec(text);
+  if (!match) return null;
+
+  let index = match.index + match[0].length;
+  let escaped = false;
+  let value = '';
+
+  while (index < text.length) {
+    const char = text[index];
+    if (escaped) {
+      value += `\\${char}`;
+      escaped = false;
+    } else if (char === '\\') {
+      escaped = true;
+    } else if (char === '"') {
+      try {
+        return JSON.parse(`"${value}"`);
+      } catch (_error) {
+        return value.replace(/\\n/g, '\n').replace(/\\"/g, '"');
+      }
+    } else {
+      value += char;
+    }
+    index += 1;
+  }
+
   return null;
 }
 
@@ -22,10 +54,11 @@ function asArray(value) {
 }
 
 function normalize(rawResponse) {
+  const responseText = rawResponse.text || rawResponse.rawResponse || '';
   const parsed = typeof rawResponse === 'object' && rawResponse && rawResponse.observations
     ? rawResponse
-    : tryParseJson(rawResponse.text || rawResponse.rawResponse || '') || {};
-  const summary = parsed.summary || parsed.answer || rawResponse.text || '';
+    : tryParseJson(responseText) || {};
+  const summary = parsed.summary || parsed.answer || extractJsonStringField(responseText, 'summary') || responseText || '';
   return Object.freeze({
     observations: asArray(parsed.observations),
     inferences: asArray(parsed.inferences),
@@ -44,4 +77,3 @@ function normalize(rawResponse) {
 }
 
 module.exports = { normalize };
-
