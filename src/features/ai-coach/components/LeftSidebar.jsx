@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import { AiCoachView } from '../types/aiCoachTypes.js';
 import { useAiCoachWorkspace } from '../state/AiCoachWorkspaceProvider.jsx';
 import { SessionList } from './SessionList.jsx';
 
@@ -18,56 +17,61 @@ export function LeftSidebar({ searchInputRef }) {
   const { state, dispatch, startNewConversation } = useAiCoachWorkspace();
   const localSearchRef = useRef(null);
   const ref = searchInputRef || localSearchRef;
+
   return (
     <aside className="coach-left-sidebar" aria-label="AI Assistant workspace navigation">
-      <header>
-        <div>
-          <span className="coach-brand-mark">AI</span>
-          <h1>AI Assistant</h1>
+      <div className="coach-sidebar-main">
+        <header>
+          <div>
+            <span className="coach-brand-mark">AI</span>
+            <h1>AI Assistant</h1>
+          </div>
+          <button type="button" onClick={startNewConversation}>New</button>
+        </header>
+        <label className="coach-search">
+          <span>Search</span>
+          <input
+            ref={ref}
+            value={state.searchQuery}
+            onChange={(event) => dispatch({ type: 'workspace/searchChanged', query: event.target.value })}
+            placeholder="Sessions, evidence, reflections"
+          />
+        </label>
+        <div className="coach-filter-row">
+          <select value={state.filters.status} onChange={(event) => dispatch({ type: 'workspace/filterChanged', key: 'status', value: event.target.value })} aria-label="Session status filter">
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+          </select>
+          <select value={state.filters.confidence} onChange={(event) => dispatch({ type: 'workspace/filterChanged', key: 'confidence', value: event.target.value })} aria-label="Confidence filter">
+            <option value="all">Any confidence</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
         </div>
-        <button type="button" onClick={startNewConversation}>New</button>
-      </header>
-      <label className="coach-search">
-        <span>Search</span>
-        <input
-          ref={ref}
-          value={state.searchQuery}
-          onChange={(event) => dispatch({ type: 'workspace/searchChanged', query: event.target.value })}
-          placeholder="Sessions, evidence, reflections"
-        />
-      </label>
-      <div className="coach-filter-row">
-        <select value={state.filters.status} onChange={(event) => dispatch({ type: 'workspace/filterChanged', key: 'status', value: event.target.value })} aria-label="Session status filter">
-          <option value="all">All</option>
-          <option value="active">Active</option>
-          <option value="archived">Archived</option>
-        </select>
-        <select value={state.filters.confidence} onChange={(event) => dispatch({ type: 'workspace/filterChanged', key: 'confidence', value: event.target.value })} aria-label="Confidence filter">
-          <option value="all">Any confidence</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
+        <nav className="coach-nav">
+          {navItems.map(([view, label, subtitle, icon]) => (
+            <button key={view} type="button" aria-current={state.activeView === view ? 'page' : undefined} onClick={() => dispatch({ type: 'workspace/viewChanged', view })}>
+              <span className="coach-nav-icon" aria-hidden="true">{icon}</span>
+              <span>
+                <strong>{label}</strong>
+                <small>{subtitle}</small>
+              </span>
+            </button>
+          ))}
+        </nav>
+        <SessionList />
       </div>
-      <nav className="coach-nav">
-        {navItems.map(([view, label, subtitle, icon]) => (
-          <button key={view} type="button" aria-current={state.activeView === view ? 'page' : undefined} onClick={() => dispatch({ type: 'workspace/viewChanged', view })}>
-            <span className="coach-nav-icon" aria-hidden="true">{icon}</span>
-            <span>
-              <strong>{label}</strong>
-              <small>{subtitle}</small>
-            </span>
-          </button>
-        ))}
-      </nav>
-      <button type="button" className="coach-return-button" onClick={returnToDashboard}>
-        <span className="coach-nav-icon" aria-hidden="true">←</span>
-        <span>
-          <strong>Return</strong>
-          <small>Back to dashboard</small>
-        </span>
-      </button>
-      <SessionList />
+      <div className="coach-sidebar-footer">
+        <button type="button" className="coach-return-button" onClick={returnToDashboard}>
+          <span className="coach-nav-icon" aria-hidden="true">&lt;</span>
+          <span>
+            <strong>Return</strong>
+            <small>Back to dashboard</small>
+          </span>
+        </button>
+      </div>
     </aside>
   );
 }

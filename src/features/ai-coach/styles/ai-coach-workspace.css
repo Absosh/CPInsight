@@ -2683,3 +2683,129 @@ body:has(#aiCoachRoot),
     max-inline-size: 100%;
   }
 }
+
+/* Sidebar recents polish: keep navigation and history quiet, aligned, and independently scrollable. */
+.coach-left-sidebar {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.coach-sidebar-main {
+  min-block-size: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-inline-end: 0.2rem;
+  scrollbar-color: rgba(16, 185, 129, 0.42) transparent;
+  scrollbar-width: thin;
+}
+
+.coach-sidebar-main::-webkit-scrollbar {
+  inline-size: 5px;
+}
+
+.coach-sidebar-main::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.42);
+}
+
+.coach-sidebar-footer {
+  flex: 0 0 auto;
+  padding-block-start: 0.85rem;
+}
+
+.coach-recents-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 1rem 0.4rem 0.4rem;
+}
+
+.coach-recents-header h2 {
+  margin: 0;
+  color: var(--ai-text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+.coach-session-list {
+  gap: 0;
+}
+
+.coach-session-history {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.coach-session-row {
+  min-block-size: 38px;
+  border-radius: 10px;
+  padding: 0 0.18rem;
+  transition: background var(--ai-transition-normal);
+}
+
+.coach-session-row:hover {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.coach-session-row[data-active="true"] {
+  background: rgba(16, 185, 129, 0.12);
+  box-shadow: inset 2px 0 0 var(--ai-primary);
+}
+
+.coach-session-title-button {
+  min-block-size: 38px;
+  border-radius: 10px;
+  padding: 0.5rem 0.55rem;
+}
+
+.coach-session-title-button strong {
+  color: color-mix(in srgb, var(--ai-heading) 92%, var(--ai-text-muted));
+  font-size: 0.9rem;
+  font-weight: 520;
+  line-height: 1.32;
+}
+
+.coach-session-row-tools {
+  gap: 0.1rem;
+  padding-inline-end: 0.25rem;
+}
+
+.coach-session-pin,
+.coach-session-menu-button {
+  inline-size: 26px;
+  block-size: 26px;
+  min-block-size: 26px;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.coach-session-menu-button:hover,
+.coach-session-menu-button[aria-expanded="true"] {
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--ai-highlight);
+}
+
+.coach-session-menu-button:hover svg,
+.coach-session-menu-button[aria-expanded="true"] svg,
+.coach-session-pin svg {
+  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.68));
+}
+
+.coach-session-pin {
+  color: var(--ai-primary);
+}
+
+.coach-session-menu {
+  border-radius: 16px;
+  padding: 0.45rem;
+}
+
+.coach-return-button {
+  margin-block: 0;
+}

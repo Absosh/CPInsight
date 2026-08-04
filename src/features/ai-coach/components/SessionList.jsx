@@ -56,45 +56,50 @@ export function SessionList() {
 
   return (
     <section className="coach-session-list" aria-label="Session history">
-      {sessions.map((session) => (
-        <article key={session.sessionId} className="coach-session-row" data-active={session.sessionId === state.activeSessionId}>
-          <button className="coach-session-title-button" type="button" onClick={() => selectConversation(session.sessionId)}>
-            <strong>{session.title}</strong>
-          </button>
-          <div className="coach-session-row-tools">
-            {session.pinned ? (
-              <span className="coach-session-pin" aria-label="Pinned chat" title="Pinned chat">
-                <SessionIcon name="pin" />
-              </span>
-            ) : null}
-            <button
-              type="button"
-              className="coach-session-menu-button"
-              aria-label={`Open actions for ${session.title}`}
-              aria-expanded={openMenuId === session.sessionId}
-              onClick={() => setOpenMenuId((current) => current === session.sessionId ? null : session.sessionId)}
-            >
-              <SessionIcon name="dots" />
+      <header className="coach-recents-header">
+        <h2>Recents</h2>
+      </header>
+      <div className="coach-session-history">
+        {sessions.map((session) => (
+          <article key={session.sessionId} className="coach-session-row" data-active={session.sessionId === state.activeSessionId}>
+            <button className="coach-session-title-button" type="button" onClick={() => selectConversation(session.sessionId)}>
+              <strong>{session.title}</strong>
             </button>
-            {openMenuId === session.sessionId ? (
-              <div className="coach-session-menu" role="menu">
-                {actions(session).map((action) => (
-                  <button
-                    key={action.label}
-                    type="button"
-                    role="menuitem"
-                    data-danger={action.danger ? 'true' : undefined}
-                    onClick={() => runAction(action)}
-                  >
-                    <SessionIcon name={action.icon} />
-                    <span>{action.label}</span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </article>
-      ))}
+            <div className="coach-session-row-tools">
+              {session.pinned ? (
+                <span className="coach-session-pin" aria-label="Pinned chat" title="Pinned chat">
+                  <SessionIcon name="pin" />
+                </span>
+              ) : null}
+              <button
+                type="button"
+                className="coach-session-menu-button"
+                aria-label={`Open actions for ${session.title}`}
+                aria-expanded={openMenuId === session.sessionId}
+                onClick={() => setOpenMenuId((current) => current === session.sessionId ? null : session.sessionId)}
+              >
+                <SessionIcon name="dots" />
+              </button>
+              {openMenuId === session.sessionId ? (
+                <div className="coach-session-menu" role="menu">
+                  {actions(session).map((action) => (
+                    <button
+                      key={action.label}
+                      type="button"
+                      role="menuitem"
+                      data-danger={action.danger ? 'true' : undefined}
+                      onClick={() => runAction(action)}
+                    >
+                      <SessionIcon name={action.icon} />
+                      <span>{action.label}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </article>
+        ))}
+      </div>
     </section>
   );
 }
