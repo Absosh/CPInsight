@@ -134,6 +134,40 @@ export function createAiCoachApiClient({
     validate({ executionPlan, reasoningContext, evidencePackage, rawResponse }, signal) {
       return request('/ai/validate', { method: 'POST', body: { executionPlan, reasoningContext, evidencePackage, rawResponse }, signal });
     },
+    listConversations(params = {}) {
+      const search = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') search.set(key, value);
+      });
+      return request(`/ai/conversations${search.toString() ? `?${search}` : ''}`);
+    },
+    getConversation(conversationId) {
+      return request(`/ai/conversations/${encodeURIComponent(conversationId)}`);
+    },
+    createConversation(body = {}) {
+      return request('/ai/conversations', { method: 'POST', body });
+    },
+    addConversationMessage(conversationId, message) {
+      return request(`/ai/conversations/${encodeURIComponent(conversationId)}/messages`, { method: 'POST', body: message });
+    },
+    updateConversation(conversationId, patch) {
+      return request(`/ai/conversations/${encodeURIComponent(conversationId)}`, { method: 'PATCH', body: patch });
+    },
+    deleteConversation(conversationId) {
+      return request(`/ai/conversations/${encodeURIComponent(conversationId)}`, { method: 'DELETE' });
+    },
+    archiveConversation(conversationId) {
+      return request(`/ai/conversations/${encodeURIComponent(conversationId)}/archive`, { method: 'POST', body: {} });
+    },
+    pinConversation(conversationId, pinned) {
+      return request(`/ai/conversations/${encodeURIComponent(conversationId)}/pin`, { method: 'POST', body: { pinned } });
+    },
+    renameConversation(conversationId, title) {
+      return request(`/ai/conversations/${encodeURIComponent(conversationId)}/rename`, { method: 'POST', body: { title } });
+    },
+    searchConversations(query, limit = 20) {
+      return request('/ai/conversations/search', { method: 'POST', body: { query, limit } });
+    },
     getQuality(validationId) {
       return request(`/ai/quality/${validationId}`);
     },

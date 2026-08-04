@@ -1,16 +1,21 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAiCoachWorkspace } from '../state/AiCoachWorkspaceProvider.jsx';
 
 export function MessageComposer() {
-  const { state, submitQuestion, abortGeneration } = useAiCoachWorkspace();
-  const [question, setQuestion] = useState('');
+  const { state, submitQuestion, abortGeneration, draftStorageKey } = useAiCoachWorkspace();
+  const [question, setQuestion] = useState(() => globalThis.localStorage?.getItem(draftStorageKey) || '');
   const busy = state.streaming.active;
+
+  useEffect(() => {
+    globalThis.localStorage?.setItem(draftStorageKey, question);
+  }, [draftStorageKey, question]);
 
   async function handleSubmit(event) {
     event.preventDefault();
     const trimmed = question.trim();
     if (!trimmed || busy) return;
     setQuestion('');
+    globalThis.localStorage?.removeItem(draftStorageKey);
     await submitQuestion(trimmed);
   }
 

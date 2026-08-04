@@ -39,7 +39,7 @@ function PrimaryTabs({ activeView, onChange }) {
 }
 
 export function CenterPanel() {
-  const { state, dispatch } = useAiCoachWorkspace();
+  const { state, dispatch, submitQuestion } = useAiCoachWorkspace();
   const session = selectActiveSession(state);
   const messages = useVirtualMessages(session?.messages || []);
   const content = useMemo(() => {
@@ -55,13 +55,13 @@ export function CenterPanel() {
             <h2>Start with a question that needs evidence.</h2>
             <p>Ask CPInsight to explain contests, surface behavior patterns, or turn validated recommendations into a focused practice plan.</p>
             <div className="coach-suggestion-grid" aria-label="Suggested prompts">
-              {suggestedPrompts.map((prompt) => <button key={prompt} type="button">{prompt}</button>)}
+              {suggestedPrompts.map((prompt) => <button key={prompt} type="button" onClick={() => submitQuestion(prompt)}>{prompt}</button>)}
             </div>
           </section>
         )}
       </ConversationView>
     );
-  }, [messages, state.activeView]);
+  }, [messages, state.activeView, submitQuestion]);
   return (
     <main className="coach-center-panel">
       <PrimaryTabs activeView={state.activeView === 'studyPlans' ? 'studyPlans' : 'conversation'} onChange={(view) => dispatch({ type: 'workspace/viewChanged', view })} />

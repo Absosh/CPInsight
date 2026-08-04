@@ -2,26 +2,16 @@ import { AiCoachMessageStatus, AiCoachSessionStatus, AiCoachView } from '../type
 import { createWorkspaceId } from '../utils/id.js';
 
 export function createInitialAiCoachState(now = new Date().toISOString()) {
-  const sessionId = createWorkspaceId('session');
   return {
     activeView: AiCoachView.conversation,
-    activeSessionId: sessionId,
+    activeSessionId: null,
     searchQuery: '',
     filters: { status: 'all', confidence: 'all', topic: 'all' },
     selection: { evidenceId: null, reasoningOpen: true, rightPanelOpen: true, leftPanelOpen: true },
     streaming: { active: false, messageId: null, abortController: null },
     preferences: { theme: 'dark', density: 'comfortable', reducedMotion: false },
-    sessions: [{
-      sessionId,
-      title: 'New coaching session',
-      summary: 'Ask CPInsight about your competitive programming behavior.',
-      status: AiCoachSessionStatus.active,
-      pinned: true,
-      createdAt: now,
-      updatedAt: now,
-      metadata: { source: 'workspace' },
-      messages: []
-    }],
+    sessions: [],
+    conversationsLoading: false,
     contextualInsights: {
       loading: false,
       loadedAt: null,
@@ -69,9 +59,37 @@ export function aiCoachReducer(state, action) {
       return { ...state, preferences: { ...state.preferences, ...action.preferences } };
     case 'workspace/selectionChanged':
       return { ...state, selection: { ...state.selection, ...action.selection } };
+    case 'conversations/loading':
+      return { ...state, conversationsLoading: true };
+    case 'conversations/loaded':
+      return {
+        ...state,
+        conversationsLoading: false,
+        activeSessionId: action.activeSessionId || action.conversations?.[0]?.sessionId || null,
+        sessions: action.conversations || []
+      };
+    case 'conversations/upserted': {
+      const exists = state.sessions.some((session) => session.sessionId === action.conversation.sessionId);
+      const sessions = exists
+        ? state.sessions.map((session) => session.sessionId === action.conversation.sessionId ? { ...session, ...action.conversation } : session)
+        : [action.conversation, ...state.sessions];
+      return {
+        ...state,
+        conversationsLoading: false,
+        activeSessionId: action.select ? action.conversation.sessionId : state.activeSessionId,
+        activeView: action.select ? AiCoachView.conversation : state.activeView,
+        sessions
+      };
+    }
+    case 'conversations/failed':
+      return {
+        ...state,
+        conversationsLoading: false,
+        errors: [{ message: action.error, createdAt: new Date().toISOString() }, ...state.errors].slice(0, 10)
+      };
     case 'sessions/created': {
       const now = action.now || new Date().toISOString();
-      const session = {
+      const session = action.session || {
         sessionId: createWorkspaceId('session'),
         title: action.title || 'New coaching session',
         summary: '',
@@ -99,7 +117,7 @@ export function aiCoachReducer(state, action) {
       if (!session) return state;
       const now = action.now || new Date().toISOString();
       const userMessage = {
-        messageId: createWorkspaceId('message'),
+        messageId: action.userMessageId || createWorkspaceId('message'),
         role: 'user',
         content: action.question,
         status: AiCoachMessageStatus.completed,

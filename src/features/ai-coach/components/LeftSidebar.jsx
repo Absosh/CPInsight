@@ -15,7 +15,7 @@ function returnToDashboard() {
 }
 
 export function LeftSidebar({ searchInputRef }) {
-  const { state, dispatch } = useAiCoachWorkspace();
+  const { state, dispatch, startNewConversation } = useAiCoachWorkspace();
   const localSearchRef = useRef(null);
   const ref = searchInputRef || localSearchRef;
   return (
@@ -25,7 +25,7 @@ export function LeftSidebar({ searchInputRef }) {
           <span className="coach-brand-mark">AI</span>
           <h1>AI Assistant</h1>
         </div>
-        <button type="button" onClick={() => dispatch({ type: 'sessions/created' })}>New</button>
+        <button type="button" onClick={startNewConversation}>New</button>
       </header>
       <label className="coach-search">
         <span>Search</span>
@@ -51,7 +51,7 @@ export function LeftSidebar({ searchInputRef }) {
       </div>
       <nav className="coach-nav">
         {navItems.map(([view, label, subtitle, icon]) => (
-          <button key={view} type="button" aria-current={state.activeView === view ? 'page' : undefined} onClick={() => view === AiCoachView.conversation ? dispatch({ type: 'sessions/created' }) : dispatch({ type: 'workspace/viewChanged', view })}>
+          <button key={view} type="button" aria-current={state.activeView === view ? 'page' : undefined} onClick={() => dispatch({ type: 'workspace/viewChanged', view })}>
             <span className="coach-nav-icon" aria-hidden="true">{icon}</span>
             <span>
               <strong>{label}</strong>

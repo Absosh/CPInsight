@@ -5,6 +5,8 @@ import { aiCoachReducer, createInitialAiCoachState } from './aiCoachReducer.js';
 import { createWorkspaceId } from '../utils/id.js';
 
 const AiCoachWorkspaceContext = createContext(null);
+const LAST_CONVERSATION_KEY = 'cpinsight:ai:lastConversationId';
+const DRAFT_KEY = 'cpinsight:ai:draft';
 
 function settledValue(result, fallback = null) {
   return result.status === 'fulfilled' ? result.value : fallback;
@@ -99,6 +101,25 @@ function conversationHistoryForSession(session, limit = 8) {
     .slice(-limit);
 }
 
+function normalizeConversation(conversation) {
+  const normalized = {
+    sessionId: conversation.sessionId || conversation.conversationId || conversation.id,
+    conversationId: conversation.conversationId || conversation.sessionId || conversation.id,
+    title: conversation.title || 'New chat',
+    summary: conversation.summary || '',
+    preview: conversation.preview || '',
+    status: conversation.status || 'active',
+    pinned: Boolean(conversation.pinned),
+    archivedAt: conversation.archivedAt,
+    deletedAt: conversation.deletedAt,
+    createdAt: conversation.createdAt || new Date().toISOString(),
+    updatedAt: conversation.updatedAt || new Date().toISOString(),
+    metadata: conversation.metadata || {}
+  };
+  if (Array.isArray(conversation.messages)) normalized.messages = conversation.messages;
+  return normalized;
+}
+
 async function executeCoachPipeline({ api, question, signal, dispatch, sessionId, coachMessageId, conversationHistory = [] }) {
   dispatch({ type: 'messages/streamingStarted', sessionId, messageId: coachMessageId });
   dispatch({ type: 'messages/streamingChunk', sessionId, messageId: coachMessageId, chunk: 'Planning evidence...' });
@@ -150,11 +171,118 @@ export function AiCoachWorkspaceProvider({ apiClient, initialState, children }) 
     }
   }, [api]);
 
+  const selectConversation = useCallback(async (sessionId) => {
+    if (!sessionId) return null;
+    dispatch({ type: 'sessions/selected', sessionId });
+    globalThis.localStorage?.setItem(LAST_CONVERSATION_KEY, sessionId);
+    try {
+      const conversation = normalizeConversation(await api.getConversation(sessionId));
+      dispatch({ type: 'conversations/upserted', conversation, select: true });
+      return conversation;
+    } catch (error) {
+      dispatch({ type: 'conversations/failed', error: error.message });
+      return null;
+    }
+  }, [api]);
+
+  const loadConversations = useCallback(async () => {
+    dispatch({ type: 'conversations/loading' });
+    try {
+      const payload = await api.listConversations({ includeArchived: true });
+      const list = (payload.conversations || []).map(normalizeConversation);
+      const cachedId = globalThis.localStorage?.getItem(LAST_CONVERSATION_KEY);
+      const activeId = list.some((conversation) => conversation.sessionId === cachedId)
+        ? cachedId
+        : list[0]?.sessionId || null;
+      const activeConversation = activeId ? normalizeConversation(await api.getConversation(activeId)) : null;
+      const conversations = activeConversation
+        ? list.map((conversation) => conversation.sessionId === activeId ? activeConversation : conversation)
+        : list;
+      dispatch({ type: 'conversations/loaded', conversations, activeSessionId: activeId });
+      if (activeId) globalThis.localStorage?.setItem(LAST_CONVERSATION_KEY, activeId);
+    } catch (error) {
+      dispatch({ type: 'conversations/failed', error: error.message });
+    }
+  }, [api]);
+
+  const startNewConversation = useCallback(async () => {
+    const conversation = normalizeConversation(await api.createConversation({ title: 'New chat', metadata: { source: 'workspace' } }));
+    dispatch({ type: 'conversations/upserted', conversation, select: true });
+    globalThis.localStorage?.setItem(LAST_CONVERSATION_KEY, conversation.sessionId);
+    return conversation;
+  }, [api]);
+
+  const renameConversation = useCallback(async (sessionId, title) => {
+    const conversation = normalizeConversation(await api.renameConversation(sessionId, title));
+    dispatch({ type: 'conversations/upserted', conversation });
+    return conversation;
+  }, [api]);
+
+  const pinConversation = useCallback(async (sessionId, pinned) => {
+    const conversation = normalizeConversation(await api.pinConversation(sessionId, pinned));
+    dispatch({ type: 'conversations/upserted', conversation });
+    return conversation;
+  }, [api]);
+
+  const archiveConversation = useCallback(async (sessionId) => {
+    const conversation = normalizeConversation(await api.archiveConversation(sessionId));
+    dispatch({ type: 'conversations/upserted', conversation });
+    return conversation;
+  }, [api]);
+
+  const deleteConversation = useCallback(async (sessionId) => {
+    await api.deleteConversation(sessionId);
+    dispatch({ type: 'sessions/deleted', sessionId });
+    if (state.activeSessionId === sessionId) {
+      globalThis.localStorage?.removeItem(LAST_CONVERSATION_KEY);
+      await loadConversations();
+    }
+  }, [api, loadConversations, state.activeSessionId]);
+
+  const duplicateConversation = useCallback(async (sessionId) => {
+    const cached = state.sessions.find((session) => session.sessionId === sessionId);
+    const source = cached?.messages ? cached : await api.getConversation(sessionId).then(normalizeConversation);
+    const duplicate = await api.createConversation({ title: `${source.title || 'Conversation'} copy`, summary: source.summary, metadata: { ...source.metadata, duplicatedFrom: sessionId } });
+    const normalized = normalizeConversation(duplicate);
+    for (const message of source.messages || []) {
+      await api.addConversationMessage(normalized.sessionId, {
+        messageId: createWorkspaceId('message'),
+        role: message.role,
+        content: message.content,
+        status: message.status,
+        sections: message.sections,
+        metadata: message.metadata,
+        error: message.error
+      });
+    }
+    return selectConversation(normalized.sessionId);
+  }, [api, selectConversation, state.sessions]);
+
   useEffect(() => {
     if (initialState) return undefined;
     refreshInsights();
+    loadConversations();
     return undefined;
-  }, [initialState, refreshInsights]);
+  }, [initialState, refreshInsights, loadConversations]);
+
+  useEffect(() => {
+    if (initialState) return undefined;
+    const query = state.searchQuery.trim();
+    const timeout = globalThis.setTimeout(async () => {
+      if (!query) {
+        loadConversations();
+        return;
+      }
+      try {
+        const payload = await api.searchConversations(query);
+        const conversations = (payload.conversations || []).map(normalizeConversation);
+        dispatch({ type: 'conversations/loaded', conversations, activeSessionId: state.activeSessionId });
+      } catch (error) {
+        dispatch({ type: 'conversations/failed', error: error.message });
+      }
+    }, 250);
+    return () => globalThis.clearTimeout(timeout);
+  }, [api, initialState, loadConversations, state.activeSessionId, state.searchQuery]);
 
   useEffect(() => {
     if (initialState || !globalThis.WebSocket || !globalThis.localStorage?.getItem('accessToken')) return undefined;
@@ -186,46 +314,82 @@ export function AiCoachWorkspaceProvider({ apiClient, initialState, children }) 
   }, [initialState, refreshInsights, state.contextualInsights.userId]);
 
   const submitQuestion = useCallback(async (question) => {
-    const sessionId = state.activeSessionId;
-    const session = state.sessions.find((item) => item.sessionId === sessionId);
+    const activeConversation = state.activeSessionId
+      ? state.sessions.find((item) => item.sessionId === state.activeSessionId)
+      : null;
+    const ensuredSession = activeConversation || await startNewConversation();
+    const sessionId = ensuredSession.sessionId;
+    const session = ensuredSession.messages ? ensuredSession : state.sessions.find((item) => item.sessionId === sessionId);
     const conversationHistory = conversationHistoryForSession(session);
+    const userMessageId = createWorkspaceId('message');
     const coachMessageId = createWorkspaceId('message');
     const abortController = new AbortController();
     abortRef.current = abortController;
-    dispatch({ type: 'messages/userSubmitted', question, coachMessageId });
+    dispatch({ type: 'messages/userSubmitted', question, userMessageId, coachMessageId });
     try {
+      await api.addConversationMessage(sessionId, {
+        messageId: userMessageId,
+        role: 'user',
+        content: question,
+        status: 'completed',
+        metadata: { source: 'workspace' }
+      });
+      await api.addConversationMessage(sessionId, {
+        messageId: coachMessageId,
+        role: 'coach',
+        content: '',
+        status: 'queued',
+        metadata: { question }
+      });
       const result = await executeCoachPipeline({ api, question, signal: abortController.signal, dispatch, sessionId, coachMessageId, conversationHistory });
+      const completedMessage = {
+        content: result.validated.validatedResponse.summary,
+        sections: {
+          response: result.validated.validatedResponse,
+          quality: result.validated.qualityReport,
+          reasoning: result.reasoningContext,
+          evidence: result.evidencePackage.evidence,
+          recommendations: result.validated.validatedResponse.recommendations,
+          references: result.validated.validatedResponse.citations,
+          actionItems: result.validated.validatedResponse.recommendations
+        },
+        metadata: {
+          question,
+          validationId: result.validated.validationId,
+          executionPlanId: result.executionPlan.executionPlanId,
+          evidencePackageId: result.evidencePackage.packageId
+        }
+      };
       dispatch({
         type: 'messages/completed',
         sessionId,
         messageId: coachMessageId,
-        message: {
-          content: result.validated.validatedResponse.summary,
-          sections: {
-            response: result.validated.validatedResponse,
-            quality: result.validated.qualityReport,
-            reasoning: result.reasoningContext,
-            evidence: result.evidencePackage.evidence,
-            recommendations: result.validated.validatedResponse.recommendations,
-            references: result.validated.validatedResponse.citations,
-            actionItems: result.validated.validatedResponse.recommendations
-          },
-          metadata: {
-            question,
-            validationId: result.validated.validationId,
-            executionPlanId: result.executionPlan.executionPlanId,
-            evidencePackageId: result.evidencePackage.packageId
-          }
-        }
+        message: completedMessage
       });
+      await api.addConversationMessage(sessionId, {
+        messageId: coachMessageId,
+        role: 'coach',
+        status: 'completed',
+        ...completedMessage
+      });
+      const refreshedConversation = normalizeConversation(await api.getConversation(sessionId));
+      dispatch({ type: 'conversations/upserted', conversation: refreshedConversation, select: true });
     } catch (error) {
       if (abortController.signal.aborted) {
         dispatch({ type: 'messages/aborted', sessionId, messageId: coachMessageId });
         return;
       }
       dispatch({ type: 'messages/failed', sessionId, messageId: coachMessageId, error: error.message });
+      await api.addConversationMessage(sessionId, {
+        messageId: coachMessageId,
+        role: 'coach',
+        content: '',
+        status: 'failed',
+        error: error.message,
+        metadata: { question }
+      }).catch(() => {});
     }
-  }, [api, state.activeSessionId]);
+  }, [api, startNewConversation, state.activeSessionId, state.sessions]);
 
   const abortGeneration = useCallback(() => {
     abortRef.current?.abort();
@@ -244,8 +408,17 @@ export function AiCoachWorkspaceProvider({ apiClient, initialState, children }) 
     submitQuestion,
     abortGeneration,
     refreshInsights,
+    loadConversations,
+    startNewConversation,
+    selectConversation,
+    renameConversation,
+    pinConversation,
+    archiveConversation,
+    deleteConversation,
+    duplicateConversation,
+    draftStorageKey: DRAFT_KEY,
     api
-  }), [state, submitQuestion, abortGeneration, refreshInsights, api]);
+  }), [state, submitQuestion, abortGeneration, refreshInsights, loadConversations, startNewConversation, selectConversation, renameConversation, pinConversation, archiveConversation, deleteConversation, duplicateConversation, api]);
 
   return (
     <AiCoachWorkspaceContext.Provider value={value}>

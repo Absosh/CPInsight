@@ -16,6 +16,7 @@ const reasoningRoutes = require('./reasoningRoutes');
 const taskRoutes = require('./taskRoutes');
 const runtimeRoutes = require('./runtimeRoutes');
 const qualityRoutes = require('./qualityRoutes');
+const conversationRoutes = require('./conversationRoutes');
 const reviewRoutes = require('./reviewRoutes');
 
 const router = express.Router();
@@ -35,6 +36,7 @@ router.use('/api/ai/planner', plannerRoutes);
 router.use('/api/ai/retrieval', retrievalRoutes);
 router.use('/api/ai/reasoning', reasoningRoutes);
 router.use('/api/ai/runtime', runtimeRoutes);
+router.use('/api/ai', conversationRoutes);
 router.use('/api/ai', taskRoutes);
 router.use('/api/ai', qualityRoutes);
 router.use('/api/reviews', reviewRoutes);
