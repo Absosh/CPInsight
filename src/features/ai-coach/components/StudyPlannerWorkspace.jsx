@@ -105,7 +105,6 @@ function DailyPlan({ tasks, actions, onOpenProblemBank }) {
                 <dt>Difficulty</dt><dd>{task.difficulty}</dd>
                 <dt>Priority</dt><dd>{task.priority}</dd>
               </dl>
-              <button className="ai-button ai-focusable" type="button" onClick={(event) => { event.stopPropagation(); onOpenProblemBank({ type: 'daily-task', label: task.title, topic: task.topic, difficulty: task.difficulty, estimatedTime: task.duration }); }}>Problem Bank</button>
             </article>
           );
         })}
@@ -137,7 +136,6 @@ function WeeklyRoadmap({ days, onOpenProblemBank }) {
               <dt>Goal</dt><dd>{day.goal}</dd>
             </dl>
             <ProgressBar label="Completion" value={day.completion} />
-            <button className="ai-button ai-focusable" type="button" onClick={() => onOpenProblemBank({ type: 'weekly-roadmap', label: day.day, topic: day.focusTopic, estimatedTime: day.estimatedTime, confidence: day.confidence })}>Open Problem Bank</button>
           </details>
         ))}
       </div>
