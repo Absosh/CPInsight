@@ -2404,57 +2404,7 @@ body:has(#aiCoachRoot),
   padding: 0.35rem 0.62rem;
 }
 
-/* Study Planner polish: keep cards readable and remove repeated CTA labels. */
-.study-planner-surface {
-  box-sizing: border-box;
-  inline-size: min(840px, 100%);
-  padding: clamp(1.35rem, 3vw, 2.4rem) clamp(1.6rem, 4vw, 3rem) clamp(2rem, 4vw, 3rem);
-}
-
-.study-planner-header {
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 1rem;
-  margin-block-end: 0.35rem;
-}
-
-.study-planner-header h1 {
-  max-inline-size: 540px;
-  font-size: clamp(2rem, 4vw, 3.25rem);
-  line-height: 1.05;
-  overflow-wrap: anywhere;
-}
-
-.study-planner-header p:not(.study-eyebrow) {
-  max-inline-size: 620px;
-  line-height: 1.55;
-}
-
-.study-focus-card {
-  grid-template-columns: minmax(0, 1fr) minmax(170px, 220px);
-  gap: clamp(1.25rem, 3vw, 2.25rem);
-  align-items: center;
-  padding: clamp(1.35rem, 3vw, 2rem);
-}
-
-.study-focus-card h2 {
-  max-inline-size: 520px;
-  font-size: clamp(1.8rem, 3.4vw, 2.55rem);
-  line-height: 1.12;
-  overflow-wrap: anywhere;
-}
-
-.study-focus-meta {
-  align-content: center;
-  gap: 0.8rem;
-  justify-items: start;
-  min-inline-size: 0;
-}
-
-.study-focus-card > .ai-button {
-  grid-column: 1 / -1;
-  justify-self: stretch;
-}
-
+/* Study Planner card internals: keep the original layout, improve alignment. */
 .study-clickable::after {
   content: none;
   display: none;
@@ -2466,20 +2416,38 @@ body:has(#aiCoachRoot),
 .study-impact-card,
 .study-milestone-card {
   min-inline-size: 0;
-  overflow: hidden;
+  overflow: clip;
+}
+
+.study-focus-card > div:first-child,
+.study-task-card > div,
+.study-day-card summary,
+.study-topic-card > div:nth-child(2),
+.study-impact-card {
+  min-inline-size: 0;
 }
 
 .study-task-card h3,
 .study-day-card strong,
-.study-topic-card h3 {
+.study-topic-card h3,
+.study-focus-card h2 {
   overflow-wrap: anywhere;
+}
+
+.study-focus-meta {
+  justify-items: start;
+  text-align: start;
 }
 
 .study-task-card dl,
 .study-day-card dl,
 .study-topic-card dl,
 .study-impact-card dl {
+  justify-self: start;
+  inline-size: 100%;
+  max-inline-size: 220px;
   grid-template-columns: minmax(70px, max-content) minmax(0, 1fr);
+  text-align: start;
 }
 
 .study-task-card dd,
@@ -2488,15 +2456,4 @@ body:has(#aiCoachRoot),
 .study-impact-card dd {
   min-inline-size: 0;
   overflow-wrap: anywhere;
-}
-
-@media (max-width: 1180px) {
-  .study-planner-surface {
-    inline-size: min(760px, 100%);
-    padding-inline: 1.35rem 2rem;
-  }
-
-  .study-focus-card {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
