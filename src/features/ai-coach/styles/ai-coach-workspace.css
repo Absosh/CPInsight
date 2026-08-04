@@ -2491,3 +2491,59 @@ body:has(#aiCoachRoot),
 .study-progress-line {
   padding: 0.9rem 0;
 }
+
+.study-planner-focused {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.study-planner-focused > .study-section {
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: 1.45rem;
+}
+
+.study-planner-focused > .study-section .study-section-header {
+  box-sizing: border-box;
+  inline-size: 100%;
+  margin-block-end: 1.15rem;
+  padding-inline: 0.1rem;
+}
+
+.study-planner-focused > .study-section .study-section-header > div {
+  min-inline-size: 0;
+}
+
+.study-planner-focused > .study-section .study-section-header h2 {
+  max-inline-size: 100%;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.study-planner-focused > .study-section .study-section-header p {
+  max-inline-size: 100%;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.study-planner-focused .study-task-list,
+.study-planner-focused .study-week-grid,
+.study-planner-focused .study-time-grid,
+.study-planner-focused .study-progress-grid {
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.study-planner-focused .study-task-card,
+.study-planner-focused .study-day-card,
+.study-planner-focused .study-metric,
+.study-planner-focused .study-progress-line {
+  inline-size: 100%;
+}
+
+@media (max-width: 980px) {
+  .study-planner-focused {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
