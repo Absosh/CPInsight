@@ -19,7 +19,7 @@ const schema = Joi.object({
   LEETCODE_GRAPHQL_ENDPOINT: Joi.string().uri().default('https://leetcode.com/graphql'),
   CODECHEF_BASE_URL: Joi.string().uri().default('https://www.codechef.com'),
   LLM_PROVIDER: Joi.string().valid('openai', 'anthropic', 'gemini', 'azure_openai', 'openrouter', 'ollama', 'vllm').default('gemini'),
-  LLM_MODEL: Joi.string().default('gemini-flash-latest'),
+  LLM_MODEL: Joi.string().default('gemini-2.5-flash'),
   GEMINI_API_KEY: Joi.string().allow('').default(''),
   GEMINI_BASE_URL: Joi.string().uri().default('https://generativelanguage.googleapis.com/v1beta'),
   OUTBOX_RELAY_ENABLED: Joi.boolean().truthy('true').falsy('false').default(true),

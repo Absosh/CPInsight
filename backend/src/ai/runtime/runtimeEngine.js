@@ -87,7 +87,15 @@ class LLMRuntimeEngine {
       }
     }
     const error = new Error('All LLM providers failed or were rate limited');
+    error.status = 503;
+    error.code = 'LLM_PROVIDER_UNAVAILABLE';
     error.attempted = attempted;
+    error.details = attempted.map((attempt) => ({
+      provider: attempt.provider,
+      model: attempt.model,
+      status: attempt.status,
+      error: attempt.error
+    }));
     throw error;
   }
 
@@ -111,4 +119,3 @@ class LLMRuntimeEngine {
 }
 
 module.exports = { LLMRuntimeEngine };
-

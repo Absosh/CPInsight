@@ -14,6 +14,13 @@ class ModelSelectionEngine {
     const preferred = this.modelRegistry.preferredFromEnv && this.modelRegistry.preferredFromEnv();
     if (preferred) {
       const health = this.providerRegistry.health().find((item) => item.provider === preferred.provider);
+      if (health && !health.configured) {
+        const error = new Error(`${preferred.provider} provider is not configured`);
+        error.status = 503;
+        error.code = 'LLM_PROVIDER_NOT_CONFIGURED';
+        error.details = [{ provider: preferred.provider, model: preferred.name, status: 'not_configured' }];
+        throw error;
+      }
       if (health && health.healthy && !health.circuitOpen) {
         return { model: preferred, reason: 'environment_preference' };
       }
