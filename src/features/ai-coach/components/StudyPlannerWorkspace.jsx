@@ -137,7 +137,7 @@ function WeeklyRoadmap({ days, onOpenProblemBank }) {
               <dt>Goal</dt><dd>{day.goal}</dd>
             </dl>
             <ProgressBar label="Completion" value={day.completion} />
-            <button className="ai-button ai-focusable" type="button" onClick={() => onOpenProblemBank({ type: 'weekly-roadmap', label: day.day, topic: day.focusTopic, estimatedTime: day.estimatedTime, confidence: day.confidence })}>Open Problem Bank</button>
+            <button className="ai-button ai-focusable" type="button" onClick={() => onOpenProblemBank({ type: 'weekly-roadmap', label: day.day, topic: day.focusTopic, estimatedTime: day.estimatedTime, confidence: day.confidence })}>Problem Bank</button>
           </details>
         ))}
       </div>

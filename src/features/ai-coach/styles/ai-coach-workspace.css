@@ -581,15 +581,8 @@
 }
 
 .study-clickable::after {
-  content: 'Open Problem Bank';
-  justify-self: start;
-  border: 1px solid var(--ai-border);
-  border-radius: var(--ai-radius-pill, 999px);
-  background: var(--ai-surface-hover);
-  color: var(--ai-highlight);
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 0.28rem 0.58rem;
+  content: none;
+  display: none;
 }
 
 .study-focus-card::after,
@@ -2409,4 +2402,92 @@ body:has(#aiCoachRoot),
   line-height: 1.25;
   overflow-wrap: anywhere;
   padding: 0.35rem 0.62rem;
+}
+
+/* Focused Study Planner spacing polish. Keep the existing layout; fix inner spacing only. */
+.study-planner-header h1 {
+  font-size: clamp(2.15rem, 4.2vw, 3.45rem);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.study-planner-header p:not(.study-eyebrow) {
+  line-height: 1.55;
+}
+
+.study-clickable::after {
+  content: none;
+  display: none;
+}
+
+.study-task-card,
+.study-day-card,
+.study-topic-card,
+.study-impact-card,
+.study-metric,
+.study-rating-control,
+.study-milestone-card {
+  box-sizing: border-box;
+  padding: 1.15rem;
+}
+
+.study-task-card {
+  grid-template-columns: minmax(0, 1fr) minmax(104px, auto);
+  column-gap: 1.15rem;
+}
+
+.study-task-card > div,
+.study-day-card summary,
+.study-topic-card > div:nth-child(2),
+.study-impact-card,
+.study-metric {
+  min-inline-size: 0;
+}
+
+.study-task-card h3,
+.study-day-card strong,
+.study-topic-card h3,
+.study-focus-card h2 {
+  overflow-wrap: anywhere;
+}
+
+.study-task-card dl,
+.study-day-card dl,
+.study-topic-card dl,
+.study-impact-card dl {
+  justify-self: start;
+  inline-size: 100%;
+  max-inline-size: 220px;
+  grid-template-columns: minmax(72px, max-content) minmax(0, 1fr);
+  gap: 0.35rem 0.85rem;
+  text-align: start;
+}
+
+.study-task-card dd,
+.study-day-card dd,
+.study-topic-card dd,
+.study-impact-card dd,
+.study-metric strong {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.study-task-card > .ai-button,
+.study-day-card > .ai-button {
+  justify-self: stretch;
+  min-inline-size: 0;
+}
+
+.study-day-card {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.study-time-grid,
+.study-progress-grid {
+  gap: 1rem;
+}
+
+.study-progress-line {
+  padding: 0.9rem 0;
 }
