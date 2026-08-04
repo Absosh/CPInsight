@@ -287,9 +287,27 @@
 }
 
 .coach-session-actions button {
-  min-block-size: 28px;
-  padding: 0 var(--ai-space-sm);
-  font-size: 0.75rem;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 30px;
+  block-size: 30px;
+  min-block-size: 30px;
+  border: 1px solid color-mix(in srgb, var(--ai-border) 44%, transparent);
+  border-radius: var(--ai-radius-md);
+  background: color-mix(in srgb, var(--ai-surface) 54%, transparent);
+  color: var(--ai-text-muted);
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.coach-session-actions button:hover {
+  color: var(--ai-heading);
+}
+
+.coach-session-actions button[data-danger="true"]:hover {
+  background: color-mix(in srgb, #ef4444 14%, transparent);
+  color: #fecaca;
 }
 
 .coach-center-panel {
@@ -1357,6 +1375,29 @@
   border-color: transparent;
   background: var(--ai-surface-hover);
   box-shadow: 0 10px 28px color-mix(in srgb, var(--ai-primary) 10%, transparent);
+}
+
+.coach-session-actions .coach-session-icon-button {
+  inline-size: 30px;
+  block-size: 30px;
+  min-block-size: 30px;
+  border: 1px solid color-mix(in srgb, var(--ai-border) 44%, transparent);
+  background: color-mix(in srgb, var(--ai-surface) 54%, transparent);
+  color: var(--ai-text-muted);
+  padding: 0;
+}
+
+.coach-session-actions .coach-session-icon-button:hover {
+  border-color: color-mix(in srgb, var(--ai-primary) 22%, transparent);
+  background: color-mix(in srgb, var(--ai-primary) 10%, transparent);
+  color: var(--ai-heading);
+  box-shadow: none;
+}
+
+.coach-session-actions .coach-session-icon-button[data-danger="true"]:hover {
+  border-color: color-mix(in srgb, #ef4444 28%, transparent);
+  background: color-mix(in srgb, #ef4444 14%, transparent);
+  color: #fecaca;
 }
 
 .coach-left-sidebar header > button,

@@ -24,6 +24,14 @@ export function SessionList() {
     if (globalThis.confirm?.(`Delete "${session.title}"?`)) await deleteConversation(session.sessionId);
   }
 
+  const actions = (session) => [
+    { label: 'Rename conversation', icon: '✎', onClick: () => handleRename(session) },
+    { label: session.pinned ? 'Unpin conversation' : 'Pin conversation', icon: session.pinned ? '⌾' : '⌖', onClick: () => pinConversation(session.sessionId, !session.pinned) },
+    { label: 'Duplicate conversation', icon: '⧉', onClick: () => duplicateConversation(session.sessionId) },
+    { label: 'Archive conversation', icon: '⌄', onClick: () => archiveConversation(session.sessionId) },
+    { label: 'Delete conversation', icon: '×', onClick: () => handleDelete(session), danger: true }
+  ];
+
   return (
     <section className="coach-session-list" aria-label="Session history">
       {sessions.map((session) => (
@@ -33,11 +41,19 @@ export function SessionList() {
             <span>{session.preview || session.summary || dateFormatter.format(new Date(session.updatedAt))}</span>
           </button>
           <div className="coach-session-actions">
-            <button type="button" aria-label="Rename conversation" onClick={() => handleRename(session)}>Rename</button>
-            <button type="button" aria-label="Pin conversation" onClick={() => pinConversation(session.sessionId, !session.pinned)}>{session.pinned ? 'Unpin' : 'Pin'}</button>
-            <button type="button" aria-label="Duplicate conversation" onClick={() => duplicateConversation(session.sessionId)}>Duplicate</button>
-            <button type="button" aria-label="Archive conversation" onClick={() => archiveConversation(session.sessionId)}>Archive</button>
-            <button type="button" aria-label="Delete conversation" onClick={() => handleDelete(session)}>Delete</button>
+            {actions(session).map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                className="coach-session-icon-button"
+                data-danger={action.danger ? 'true' : undefined}
+                aria-label={action.label}
+                title={action.label}
+                onClick={action.onClick}
+              >
+                <span aria-hidden="true">{action.icon}</span>
+              </button>
+            ))}
           </div>
         </article>
       ))}
