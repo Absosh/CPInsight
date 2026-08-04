@@ -106,7 +106,7 @@
 
 .coach-left-sidebar button,
 .coach-composer button,
-.coach-session-actions button {
+.coach-session-menu button {
   border: 0;
   border-radius: var(--ai-radius-md);
   background: transparent;
@@ -120,7 +120,7 @@
 
 .coach-left-sidebar button:hover,
 .coach-composer button:hover,
-.coach-session-actions button:hover {
+.coach-session-menu button:hover {
   background: color-mix(in srgb, var(--ai-primary) 10%, transparent);
   box-shadow: none;
   transform: none;
@@ -254,10 +254,15 @@
 }
 
 .coach-session-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ai-space-xs);
   border: 0;
   border-radius: var(--ai-radius-md);
   background: transparent;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: none;
 }
 
@@ -265,48 +270,122 @@
   background: color-mix(in srgb, var(--ai-primary) 10%, transparent);
 }
 
-.coach-session-row > button {
+.coach-session-title-button {
   display: grid;
   inline-size: 100%;
+  min-width: 0;
   min-block-size: auto;
   border: 0;
   border-radius: 0;
-  padding: var(--ai-space-md);
+  padding: var(--ai-space-sm) var(--ai-space-md);
   text-align: start;
 }
 
-.coach-session-row span {
-  color: var(--ai-text-muted);
-  font-size: 0.75rem;
+.coach-session-title-button strong {
+  overflow: hidden;
+  color: var(--ai-heading);
+  font-size: 0.93rem;
+  font-weight: 650;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.coach-session-actions {
+.coach-session-row-tools {
+  position: relative;
   display: flex;
+  align-items: center;
   gap: var(--ai-space-xs);
-  padding: 0 var(--ai-space-md) var(--ai-space-md);
+  padding-inline-end: var(--ai-space-xs);
+  opacity: 0;
+  transition: opacity var(--ai-transition-normal);
 }
 
-.coach-session-actions button {
-  display: inline-grid;
+.coach-session-row:hover .coach-session-row-tools,
+.coach-session-row[data-active="true"] .coach-session-row-tools,
+.coach-session-row-tools:focus-within {
+  opacity: 1;
+}
+
+.coach-session-pin,
+.coach-session-menu-button {
+  display: grid;
   place-items: center;
-  inline-size: 30px;
-  block-size: 30px;
-  min-block-size: 30px;
-  border: 1px solid color-mix(in srgb, var(--ai-border) 44%, transparent);
+  inline-size: 28px;
+  block-size: 28px;
+  min-block-size: 28px;
+  border: 0;
   border-radius: var(--ai-radius-md);
-  background: color-mix(in srgb, var(--ai-surface) 54%, transparent);
+  background: transparent;
   color: var(--ai-text-muted);
-  font-size: 0.95rem;
+  font-size: 0.86rem;
+  font-weight: 800;
   line-height: 1;
   padding: 0;
 }
 
-.coach-session-actions button:hover {
+.coach-session-pin svg,
+.coach-session-menu-button svg,
+.coach-session-menu svg {
+  inline-size: 16px;
+  block-size: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.coach-session-menu-button:hover {
+  background: color-mix(in srgb, var(--ai-primary) 12%, transparent);
   color: var(--ai-heading);
 }
 
-.coach-session-actions button[data-danger="true"]:hover {
-  background: color-mix(in srgb, #ef4444 14%, transparent);
+.coach-session-pin {
+  opacity: 0.86;
+  pointer-events: none;
+}
+
+.coach-session-menu {
+  position: absolute;
+  z-index: 20;
+  inset-block-start: calc(100% + 6px);
+  inset-inline-end: 0;
+  display: grid;
+  min-inline-size: 178px;
+  border: 1px solid color-mix(in srgb, var(--ai-border) 58%, transparent);
+  border-radius: var(--ai-radius-lg);
+  background: color-mix(in srgb, #1d2430 94%, black 6%);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+  padding: var(--ai-space-xs);
+}
+
+.coach-session-menu button {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ai-space-sm);
+  min-block-size: 38px;
+  border: 0;
+  border-radius: var(--ai-radius-md);
+  background: transparent;
+  color: var(--ai-text);
+  font-size: 0.92rem;
+  padding: 0 var(--ai-space-sm);
+  text-align: start;
+}
+
+.coach-session-menu button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+
+.coach-session-menu button[data-danger="true"] {
+  color: #f87171;
+}
+
+.coach-session-menu button[data-danger="true"]:hover {
+  background: color-mix(in srgb, #ef4444 16%, transparent);
   color: #fecaca;
 }
 
@@ -1363,41 +1442,16 @@
   box-shadow: 0 16px 40px color-mix(in srgb, var(--ai-primary) 26%, transparent);
 }
 
-.coach-left-sidebar button,
-.coach-session-actions button {
+.coach-left-sidebar button {
   border-color: transparent;
   background: transparent;
   box-shadow: none;
 }
 
-.coach-left-sidebar button:hover,
-.coach-session-actions button:hover {
+.coach-left-sidebar button:hover {
   border-color: transparent;
   background: var(--ai-surface-hover);
   box-shadow: 0 10px 28px color-mix(in srgb, var(--ai-primary) 10%, transparent);
-}
-
-.coach-session-actions .coach-session-icon-button {
-  inline-size: 30px;
-  block-size: 30px;
-  min-block-size: 30px;
-  border: 1px solid color-mix(in srgb, var(--ai-border) 44%, transparent);
-  background: color-mix(in srgb, var(--ai-surface) 54%, transparent);
-  color: var(--ai-text-muted);
-  padding: 0;
-}
-
-.coach-session-actions .coach-session-icon-button:hover {
-  border-color: color-mix(in srgb, var(--ai-primary) 22%, transparent);
-  background: color-mix(in srgb, var(--ai-primary) 10%, transparent);
-  color: var(--ai-heading);
-  box-shadow: none;
-}
-
-.coach-session-actions .coach-session-icon-button[data-danger="true"]:hover {
-  border-color: color-mix(in srgb, #ef4444 28%, transparent);
-  background: color-mix(in srgb, #ef4444 14%, transparent);
-  color: #fecaca;
 }
 
 .coach-left-sidebar header > button,
@@ -1838,8 +1892,8 @@
 
 .coach-session-list,
 .coach-session-row,
-.coach-session-row > button,
-.coach-session-actions {
+.coach-session-title-button,
+.coach-session-row-tools {
   background: transparent;
   box-shadow: none;
 }
@@ -2243,7 +2297,7 @@ body:has(#aiCoachRoot),
 
 .coach-nav button,
 .coach-session-row,
-.coach-session-row > button {
+.coach-session-title-button {
   border-radius: 12px;
 }
 
