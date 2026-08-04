@@ -5,6 +5,7 @@ const MODELS = Object.freeze([
   { name: 'gemini-2.5-flash', provider: 'gemini', contextWindow: 1000000, supportsStreaming: true, supportsJSON: true, supportsTools: false, supportsVision: false, maxOutputTokens: 8192, pricing: { promptPer1k: 0.0003, completionPer1k: 0.0025 }, status: 'available' },
   { name: 'gemini-2.5-flash-lite', provider: 'gemini', contextWindow: 1000000, supportsStreaming: true, supportsJSON: true, supportsTools: false, supportsVision: false, maxOutputTokens: 8192, pricing: { promptPer1k: 0.000075, completionPer1k: 0.0003 }, status: 'available' },
   { name: 'gemini-2.5-pro', provider: 'gemini', contextWindow: 1000000, supportsStreaming: true, supportsJSON: true, supportsTools: false, supportsVision: false, maxOutputTokens: 8192, pricing: { promptPer1k: 0.00125, completionPer1k: 0.005 }, status: 'available' },
+  { name: 'gemini-3-flash-preview', provider: 'gemini', contextWindow: 1000000, supportsStreaming: true, supportsJSON: true, supportsTools: false, supportsVision: false, maxOutputTokens: 8192, pricing: { promptPer1k: 0.0003, completionPer1k: 0.0025 }, status: 'preview' },
   { name: 'gemini-flash-latest', provider: 'gemini', contextWindow: 1000000, supportsStreaming: true, supportsJSON: true, supportsTools: false, supportsVision: false, maxOutputTokens: 8192, pricing: { promptPer1k: 0.0003, completionPer1k: 0.0025 }, status: 'available' },
   { name: 'gemini-flash-lite-latest', provider: 'gemini', contextWindow: 1000000, supportsStreaming: true, supportsJSON: true, supportsTools: false, supportsVision: false, maxOutputTokens: 8192, pricing: { promptPer1k: 0.000075, completionPer1k: 0.0003 }, status: 'available' },
   { name: 'gemini-pro-latest', provider: 'gemini', contextWindow: 1000000, supportsStreaming: true, supportsJSON: true, supportsTools: false, supportsVision: false, maxOutputTokens: 8192, pricing: { promptPer1k: 0.00125, completionPer1k: 0.005 }, status: 'available' },
@@ -33,7 +34,7 @@ class ModelRegistry {
 
   preferredFromEnv() {
     const provider = process.env.LLM_PROVIDER || 'gemini';
-    const model = process.env.LLM_MODEL || 'gemini-2.5-flash';
+    const model = process.env.LLM_MODEL || 'gemini-3-flash-preview';
     return this.find(provider, model);
   }
 }
