@@ -1,14 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { BehaviorOverview, ReflectionFeed, RecommendationList } from '../../../components/ai/index.js';
 import { useAiCoachWorkspace } from '../state/AiCoachWorkspaceProvider.jsx';
 
 function Metric({ label, value }) {
   return (
     <div className="coach-context-metric">
-      <i aria-hidden="true" />
       <span>{label}</span>
       <strong>{value ?? 'Not available'}</strong>
     </div>
+  );
+}
+
+function TopicList({ title, topics }) {
+  const items = (topics || []).slice(0, 4);
+  if (!items.length) return null;
+  return (
+    <section className="coach-topic-section">
+      <h3>{title}</h3>
+      <ul>{items.map((topic) => <li key={topic.name || topic}>{topic.name || topic}</li>)}</ul>
+    </section>
   );
 }
 
@@ -84,23 +93,18 @@ export function RightSidebar() {
   const insights = state.contextualInsights;
   if (state.activeView === 'studyPlans') return <StudyNavigationPanel insights={insights} />;
   return (
-    <aside className="coach-right-sidebar" aria-label="Contextual AI insights">
+    <aside className="coach-right-sidebar coach-right-sidebar-minimal" aria-label="Contextual AI insights">
       <section className="coach-context-card">
-        <h2><span aria-hidden="true">CX</span> Context</h2>
+        <h2>Context</h2>
         <Metric label="Current Rating" value={insights.currentRating} />
         <Metric label="Target Rating" value={insights.targetRating} />
         <Metric label="Current Goal" value={insights.currentGoal} />
         <Metric label="Learning Velocity" value={insights.learningVelocity} />
       </section>
-      <BehaviorOverview profile={{ confidence: 0.74, window: 'Behavior summary', behaviors: insights.behaviorSummary }} />
       <section className="coach-topic-grid">
-        <h3>Weakest Topics</h3>
-        <ul>{(insights.weakestTopics || []).map((topic) => <li key={topic.name || topic}>{topic.name || topic}</li>)}</ul>
-        <h3>Strongest Topics</h3>
-        <ul>{(insights.strongestTopics || []).map((topic) => <li key={topic.name || topic}>{topic.name || topic}</li>)}</ul>
+        <TopicList title="Weakest Topics" topics={insights.weakestTopics} />
+        <TopicList title="Strongest Topics" topics={insights.strongestTopics} />
       </section>
-      <RecommendationList recommendations={insights.todaysRecommendations} />
-      <ReflectionFeed reflections={insights.recentReflections} />
     </aside>
   );
 }
