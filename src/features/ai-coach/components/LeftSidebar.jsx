@@ -7,10 +7,12 @@ const navItems = [
   ['conversation', 'Sessions', 'Continue coaching threads', 'CH'],
   ['contestReviews', 'Contest Reviews', 'Review completed contests', 'CR'],
   ['studyPlans', 'Study Planner', 'Prioritized practice plan', 'SP'],
-  ['reflections', 'Reflection Timeline', 'Validated behavior memory', 'RT'],
-  ['savedReports', 'Reports', 'Exported coach outputs', 'RP'],
-  ['settings', 'Settings', 'Workspace preferences', 'ST']
+  ['reflections', 'Reflection Timeline', 'Validated behavior memory', 'RT']
 ];
+
+function returnToDashboard() {
+  window.location.href = 'dashboard.html';
+}
 
 export function LeftSidebar({ searchInputRef }) {
   const { state, dispatch } = useAiCoachWorkspace();
@@ -58,6 +60,13 @@ export function LeftSidebar({ searchInputRef }) {
           </button>
         ))}
       </nav>
+      <button type="button" className="coach-return-button" onClick={returnToDashboard}>
+        <span className="coach-nav-icon" aria-hidden="true">←</span>
+        <span>
+          <strong>Return</strong>
+          <small>Back to dashboard</small>
+        </span>
+      </button>
       <SessionList />
     </aside>
   );

@@ -219,6 +219,35 @@
   box-shadow: inset 3px 0 0 var(--ai-primary);
 }
 
+.coach-return-button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ai-space-sm);
+  inline-size: 100%;
+  border: 1px solid color-mix(in srgb, var(--ai-border) 48%, transparent);
+  border-radius: var(--ai-radius-lg);
+  background: color-mix(in srgb, var(--ai-surface) 54%, transparent);
+  color: var(--ai-text);
+  margin-block: 0 1rem;
+  min-block-size: 48px;
+  padding: 0 var(--ai-space-md);
+  text-align: start;
+}
+
+.coach-return-button strong {
+  display: block;
+  color: var(--ai-heading);
+  font-size: 0.92rem;
+}
+
+.coach-return-button small {
+  display: block;
+  color: var(--ai-text-muted);
+  font-size: 0.74rem;
+  margin-block-start: 2px;
+}
+
 .coach-session-list {
   display: grid;
   gap: var(--ai-space-sm);
@@ -2273,4 +2302,33 @@ body:has(#aiCoachRoot),
   background: transparent;
   box-shadow: none;
   padding: 0 0 1.25rem;
+}
+
+.coach-nav {
+  margin-block-end: 0.85rem;
+}
+
+.coach-return-button {
+  border-radius: 14px;
+  background: transparent;
+}
+
+.coach-return-button:hover {
+  background: color-mix(in srgb, var(--ai-primary) 9%, transparent);
+}
+
+.study-navigation-sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  min-block-size: 100vh;
+}
+
+.study-navigation-sidebar .study-nav-card {
+  flex: 0 0 auto;
+}
+
+.study-navigation-sidebar .study-nav-problem-bank {
+  flex: 0 0 auto;
 }
