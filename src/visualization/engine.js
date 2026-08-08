@@ -131,7 +131,9 @@ function seriesFromDataset(data, typeConfig, selectedKey) {
       itemStyle: {
         color: (params) => {
           const key = params.name || rows[params.dataIndex]?.label;
-          return selectedKey && key === selectedKey ? visualizationPalette.amber : colorAt(params.dataIndex + datasetIndex);
+          return selectedKey && key === selectedKey
+            ? visualizationPalette.amber
+            : (dataset.color || dataset.itemStyle?.color || colorAt(datasetIndex));
         },
         borderColor: selectedKey ? visualizationPalette.text : undefined,
         borderWidth: selectedKey ? 1 : 0

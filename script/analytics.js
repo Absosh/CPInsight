@@ -873,6 +873,7 @@ const activityData = computeActivityAnalytics(submissions);
 
     const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const WEEKDAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const PLATFORM_SERIES_COLORS = ['#10b981', '#0ea5e9', '#8b5cf6'];
 
     function setupRadarChartObserver(labels, data) {
         if (radarObserver) radarObserver.disconnect(); // Prevent duplicate triggers
@@ -918,8 +919,9 @@ const activityData = computeActivityAnalytics(submissions);
         const currentYear = new Date().getFullYear();
         const platformSources = analytics.platforms.length ? analytics.platforms : [analytics];
         const platformNames = Array.from(new Set(platformSources.map((source) => (source.platform || 'combined').toString())));
-        const datasets = platformNames.map((platform) => ({
+        const datasets = platformNames.map((platform, index) => ({
             name: platform.replace(/\b\w/g, (char) => char.toUpperCase()),
+            color: PLATFORM_SERIES_COLORS[index % PLATFORM_SERIES_COLORS.length],
             values: Array(12).fill(0)
         }));
 
