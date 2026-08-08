@@ -272,8 +272,20 @@
         </div>
 
         <div id="recentSubmissionsSection" class="glass rounded-3xl p-6 mb-10 w-full reveal">
-            <h2 class="text-2xl font-bold tracking-tight mb-6">Recent Submissions</h2>
-            <div id="recentSubmissionsList" class="space-y-3"></div>
+            <div class="flex items-center justify-between gap-4">
+                <h2 class="text-2xl font-bold tracking-tight">Recent Submissions</h2>
+                <button
+                    id="recentSubmissionsToggle"
+                    type="button"
+                    class="w-10 h-10 shrink-0 rounded-2xl border border-cyan-400/20 bg-black/20 text-cyan-200 text-2xl leading-none font-semibold hover:border-cyan-300/50 hover:text-white transition"
+                    aria-expanded="false"
+                    aria-controls="recentSubmissionsList"
+                    aria-label="Expand recent submissions"
+                >
+                    +
+                </button>
+            </div>
+            <div id="recentSubmissionsList" class="space-y-3 mt-6 hidden"></div>
         </div>
 
         <div class="glass rounded-3xl p-6 flex flex-col h-[450px] reveal">

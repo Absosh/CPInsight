@@ -5,6 +5,9 @@ let currentSort = { column: 'date', asc: false };
 let lastAnalyticsKey = null;
 let isRendering = false;
 let selectedHeatmapYear = 'all';
+let recentSubmissionsExpanded = false;
+let recentSubmissionsCache = [];
+let recentSubmissionsVisible = true;
 
 const CHART_COLORS = ['#10b981', '#6366f1', '#a855f7', '#f59e0b', '#0ea5e9', '#f43f5e'];
 const visualizationReady = window.CPVisualization
@@ -514,10 +517,32 @@ function populateHeatmapYearSelector(activityHeatmap) {
     }
 }
 
+function syncRecentSubmissionsToggle() {
+    const toggle = document.getElementById('recentSubmissionsToggle');
+    const list = document.getElementById('recentSubmissionsList');
+    if (!toggle || !list) return;
+
+    toggle.setAttribute('aria-expanded', String(recentSubmissionsExpanded));
+    toggle.setAttribute(
+        'aria-label',
+        recentSubmissionsExpanded ? 'Collapse recent submissions' : 'Expand recent submissions'
+    );
+    toggle.textContent = recentSubmissionsExpanded ? '-' : '+';
+    list.classList.toggle('hidden', !recentSubmissionsExpanded);
+}
+
+function toggleRecentSubmissions() {
+    recentSubmissionsExpanded = !recentSubmissionsExpanded;
+    renderRecentSubmissions(recentSubmissionsCache, recentSubmissionsVisible);
+}
+
 function renderRecentSubmissions(submissions, visible = true) {
     const section = document.getElementById('recentSubmissionsSection');
     const list = document.getElementById('recentSubmissionsList');
     if (!section || !list) return;
+
+    recentSubmissionsCache = Array.isArray(submissions) ? submissions : [];
+    recentSubmissionsVisible = visible;
 
     if (!visible) {
         section.classList.add('hidden');
@@ -525,12 +550,11 @@ function renderRecentSubmissions(submissions, visible = true) {
         return;
     }
 
-    const rows = Array.isArray(submissions)
-        ? submissions
-        : [];
+    const rows = recentSubmissionsCache;
     if (!rows.length) {
         section.classList.remove('hidden');
         list.innerHTML = '<p class="text-gray-400">Recent accepted submissions will appear here after sync.</p>';
+        syncRecentSubmissionsToggle();
         return;
     }
 
@@ -556,6 +580,7 @@ function renderRecentSubmissions(submissions, visible = true) {
             </a>
         `;
     }).join('');
+    syncRecentSubmissionsToggle();
 }
 
 function renderContestTable() {
@@ -868,6 +893,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    document.getElementById('recentSubmissionsToggle')?.addEventListener('click', toggleRecentSubmissions);
 });
 
 window.sortTable = sortTable;
