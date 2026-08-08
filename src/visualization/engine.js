@@ -271,7 +271,7 @@ function optionFor(type, data, state = {}) {
       return {
         ...theme,
         legend: { show: false },
-        grid: { left: 96, right: 34, top: 30, bottom: 36, containLabel: true },
+        grid: { left: 62, right: 34, top: 30, bottom: 36, containLabel: true },
         xAxis: {
           type: 'value',
           min: 0,
@@ -293,7 +293,7 @@ function optionFor(type, data, state = {}) {
             color: visualizationPalette.muted,
             fontSize: 12,
             fontWeight: 700,
-            margin: 12,
+            margin: 8,
             formatter(value) {
               return weekdays[Math.round(value)] || '';
             }
