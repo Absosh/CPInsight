@@ -866,6 +866,7 @@ const activityData = computeActivityAnalytics(submissions);
     let radarChartInstance = null;
     let diffChartInstance = null;
     let skillUniverseInstance = null;
+    let skillUniverseHasData = false;
     let platformContributionInstance = null;
     let weekdayActivityInstance = null;
     let radarObserver = null;
@@ -976,6 +977,87 @@ const activityData = computeActivityAnalytics(submissions);
         };
     }
 
+    function topicCategory(topic) {
+        const value = String(topic || '').toLowerCase();
+        if (/graph|dfs|shortest|dsu|flow|mst/.test(value)) return 'Graph Theory';
+        if (/dp|dynamic|bitmask/.test(value)) return 'Dynamic Programming';
+        if (/tree|trie|segment/.test(value)) return 'Tree Structures';
+        if (/string|hash|suffix/.test(value)) return 'Strings';
+        if (/math|number|combin|probab|geometry/.test(value)) return 'Math';
+        if (/binary|sort|two pointers|implementation|brute|greedy/.test(value)) return 'Foundations';
+        return 'General';
+    }
+
+    function skillUniverseRowsFromTopics(topics = []) {
+        return topics
+            .map((topic) => {
+                const name = topic.name || topic.topic || topic.label;
+                if (!name) return null;
+                const mastery = Math.round(Number(topic.score ?? topic.strength ?? topic.mastery ?? 0));
+                const solved = Number(topic.solved ?? topic.accepted ?? 0);
+                const attempts = Number(topic.attempts ?? topic.totalSubs ?? 0);
+                const roi = Math.max(20, Math.min(100, 100 - mastery + Math.min(20, solved * 2)));
+                return {
+                    key: name,
+                    label: name,
+                    topic: name,
+                    value: mastery,
+                    score: mastery,
+                    mastery,
+                    roi,
+                    priority: roi,
+                    confidence: Math.min(96, 52 + solved * 5 + Math.min(12, attempts)),
+                    solved,
+                    attempts,
+                    successRate: topic.successRate || (attempts ? Math.round((solved / attempts) * 100) : mastery),
+                    avgDiff: topic.avgDiff || 0,
+                    category: topicCategory(name),
+                    recentlyPracticed: topic.lastSolved && ((Date.now() / 1000) - topic.lastSolved < 60 * 60 * 24 * 21),
+                    insight: mastery < 45
+                        ? 'This topic currently has high improvement potential based on synced topic strength.'
+                        : 'This topic is supported by synced accepted submissions and can anchor adjacent practice.'
+                };
+            })
+            .filter(Boolean)
+            .sort((a, b) => b.roi - a.roi || a.label.localeCompare(b.label));
+    }
+
+    async function renderSkillUniverseRows(topics) {
+        const container = document.getElementById('skillUniverseViz');
+        if (!container) return;
+
+        if (!topics.length) {
+            if (!skillUniverseHasData) {
+                skillUniverseInstance?.destroy?.();
+                renderEmptyState('skillUniverseViz', 'No skill universe yet', 'Synced topic-strength data is required to build your learning graph.', '🧠');
+            }
+            return;
+        }
+        skillUniverseHasData = true;
+        skillUniverseInstance?.destroy?.();
+
+        const engine = await visualizationReady;
+        if (!engine) return;
+
+        skillUniverseInstance = engine.createVisualizationLab(container, {
+            id: 'analytics-skill-universe',
+            title: 'AI Skill Universe',
+            types: ['skillUniverse'],
+            defaultType: 'skillUniverse',
+            hideLegend: true,
+            scope: 'topic',
+            entityType: 'topic',
+            data: {
+                labels: topics.map((topic) => topic.label),
+                values: topics.map((topic) => topic.value),
+                rows: topics
+            },
+            onSelect(selection) {
+                window.dispatchEvent(new CustomEvent('cpinsight:topic-highlight', { detail: selection.payload }));
+            }
+        });
+    }
+
     async function renderAdvancedAnalyticsVisuals() {
         const platformContainer = document.getElementById('platformContributionViz');
         const weekdayContainer = document.getElementById('weekdayActivityViz');
@@ -1022,6 +1104,8 @@ const activityData = computeActivityAnalytics(submissions);
             } else if (weekdayContainer) {
                 renderEmptyState('weekdayActivityViz', 'No weekday activity yet', 'Activity by weekday appears after accepted submissions are synced.', '📈');
             }
+
+            renderSkillUniverseRows(skillUniverseRowsFromTopics(raw.topicStrength || []));
         } catch (error) {
             console.error('Advanced analytics visualization failed:', error);
             if (platformContainer) renderEmptyState('platformContributionViz', 'Unable to load platform contribution', error.message || 'Analytics request failed.', '!');
@@ -1029,71 +1113,8 @@ const activityData = computeActivityAnalytics(submissions);
         }
     }
 
-    function topicCategory(topic) {
-        const value = String(topic || '').toLowerCase();
-        if (/graph|dfs|shortest|dsu|flow|mst/.test(value)) return 'Graph Theory';
-        if (/dp|dynamic|bitmask/.test(value)) return 'Dynamic Programming';
-        if (/tree|trie|segment/.test(value)) return 'Tree Structures';
-        if (/string|hash|suffix/.test(value)) return 'Strings';
-        if (/math|number|combin|probab|geometry/.test(value)) return 'Math';
-        if (/binary|sort|two pointers|implementation|brute|greedy/.test(value)) return 'Foundations';
-        return 'General';
-    }
-
     async function renderSkillUniverse(topicData) {
-        const container = document.getElementById('skillUniverseViz');
-        if (!container) return;
-
-        const topics = (topicData?.topics || []).map((topic) => {
-            const mastery = Number(topic.score || 0);
-            const roi = Math.max(20, 100 - mastery + Math.min(20, Number(topic.solved || 0) * 2));
-            return {
-                key: topic.name,
-                label: topic.name,
-                topic: topic.name,
-                value: mastery,
-                score: mastery,
-                mastery,
-                roi,
-                priority: roi,
-                confidence: Math.min(96, 52 + Number(topic.solved || 0) * 5),
-                solved: topic.solved || 0,
-                successRate: topic.successRate || 0,
-                avgDiff: topic.avgDiff || 0,
-                category: topicCategory(topic.name),
-                recentlyPracticed: topic.lastSolved && ((Date.now() / 1000) - topic.lastSolved < 60 * 60 * 24 * 21),
-                insight: mastery < 45
-                    ? 'This topic currently has high improvement potential based on accepted-solve strength.'
-                    : 'This topic is supported by recent accepted submissions and can anchor adjacent practice.'
-            };
-        });
-
-        skillUniverseInstance?.destroy?.();
-        if (!topics.length) {
-            renderEmptyState('skillUniverseViz', 'No skill universe yet', 'Accepted submissions with topic tags are required to build your learning graph.', '🧠');
-            return;
-        }
-
-        const engine = await visualizationReady;
-        if (!engine) return;
-
-        skillUniverseInstance = engine.createVisualizationLab(container, {
-            id: 'analytics-skill-universe',
-            title: 'AI Skill Universe',
-            group: 'skillUniverse',
-            types: ['skillUniverse', 'forceGraph', 'table'],
-            defaultType: 'skillUniverse',
-            scope: 'topic',
-            entityType: 'topic',
-            data: {
-                labels: topics.map((topic) => topic.label),
-                values: topics.map((topic) => topic.value),
-                rows: topics
-            },
-            onSelect(selection) {
-                window.dispatchEvent(new CustomEvent('cpinsight:topic-highlight', { detail: selection.payload }));
-            }
-        });
+        return renderSkillUniverseRows(skillUniverseRowsFromTopics(topicData?.topics || []));
     }
 
     // --- CHART.JS CONFIGURATIONS ---
