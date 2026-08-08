@@ -270,15 +270,30 @@ function optionFor(type, data, state = {}) {
       const maxValue = Math.max(1, ...rows.map((row) => Number(row.value || 0)));
       return {
         ...theme,
-        grid: { left: 92, right: 18, top: 18, bottom: 32, containLabel: true },
-        xAxis: { type: 'value', min: 0, max: 100, axisLabel: { formatter: '{value}%' } },
+        legend: { show: false },
+        grid: { left: 96, right: 34, top: 30, bottom: 36, containLabel: true },
+        xAxis: {
+          type: 'value',
+          min: 0,
+          max: 100,
+          axisTick: { show: false },
+          axisLine: { lineStyle: { color: 'rgba(148, 163, 184, 0.24)' } },
+          splitLine: { lineStyle: { color: 'rgba(148, 163, 184, 0.09)' } },
+          axisLabel: { color: visualizationPalette.muted, formatter: '{value}%' }
+        },
         yAxis: {
           type: 'value',
           min: -0.2,
-          max: Math.max(1, weekdays.length),
+          max: Math.max(1, weekdays.length - 0.1),
           interval: 1,
+          axisTick: { show: false },
+          axisLine: { lineStyle: { color: 'rgba(148, 163, 184, 0.24)' } },
+          splitLine: { show: false },
           axisLabel: {
             color: visualizationPalette.muted,
+            fontSize: 12,
+            fontWeight: 700,
+            margin: 12,
             formatter(value) {
               return weekdays[Math.round(value)] || '';
             }
@@ -299,13 +314,13 @@ function optionFor(type, data, state = {}) {
             type: 'line',
             smooth: true,
             symbol: 'none',
-            areaStyle: { opacity: 0.22 },
+            areaStyle: { opacity: 0.16 },
             lineStyle: { width: 2 },
             data: Array.from({ length: 41 }, (_, index) => {
               const x = index * 2.5;
               const center = 52;
               const spread = 18;
-              const density = Math.exp(-Math.pow((x - center) / spread, 2)) * amplitude * 0.78;
+              const density = Math.exp(-Math.pow((x - center) / spread, 2)) * amplitude * 0.58;
               return {
                 name: row.weekday || row.label,
                 value: [x, rowIndex + density],
