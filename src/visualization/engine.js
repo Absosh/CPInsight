@@ -581,6 +581,106 @@ function renderInsightPanel(panel, raw = {}) {
   panel.querySelector('.viz-insight-close')?.addEventListener('click', () => panel.classList.add('hidden'));
 }
 
+function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
+  const rows = rowsFromData(data);
+  const categories = Array.from(new Set(rows.map((row) => row.category || groupLabel(row.label || row.topic || row.name))));
+  const width = Math.max(760, stage.clientWidth || 900);
+  const height = Math.max(390, stage.clientHeight || 460);
+  const centerX = width / 2;
+  const centerY = height / 2 + 12;
+  const ringRadius = Math.min(width, height) * 0.33;
+  const clusterRadius = Math.max(72, Math.min(116, ringRadius * 0.45));
+
+  const nodes = rows.map((row, index) => {
+    const category = row.category || groupLabel(row.label || row.topic || row.name);
+    const categoryIndex = Math.max(0, categories.indexOf(category));
+    const categoryAngle = (Math.PI * 2 * categoryIndex) / Math.max(1, categories.length) - Math.PI / 2;
+    const siblings = rows.filter((item) => (item.category || groupLabel(item.label || item.topic || item.name)) === category);
+    const siblingIndex = siblings.findIndex((item) => (item.label || item.topic || item.name) === (row.label || row.topic || row.name));
+    const localAngle = (Math.PI * 2 * Math.max(0, siblingIndex)) / Math.max(1, siblings.length);
+    const mastery = Number(row.mastery ?? row.score ?? row.value ?? 0);
+    const roi = Number(row.roi ?? Math.max(0, 100 - mastery));
+    const baseX = centerX + Math.cos(categoryAngle) * ringRadius;
+    const baseY = centerY + Math.sin(categoryAngle) * ringRadius * 0.68;
+    const radius = Math.max(18, Math.min(38, 18 + roi * 0.2));
+    return {
+      row,
+      category,
+      label: row.label || row.topic || row.name,
+      x: baseX + Math.cos(localAngle) * clusterRadius,
+      y: baseY + Math.sin(localAngle) * clusterRadius * 0.66,
+      radius,
+      mastery,
+      roi,
+      color: stateForTopic(row) === 'High ROI' ? visualizationPalette.amber : skillColor(category)
+    };
+  });
+
+  const links = nodes.flatMap((node, index) =>
+    nodes.slice(index + 1)
+      .filter((target) => target.category === node.category)
+      .slice(0, 2)
+      .map((target) => ({ source: node, target }))
+  );
+
+  stage.innerHTML = `
+    <div class="viz-skill-universe" style="--universe-width:${width}px">
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="AI Skill Universe topic graph">
+        <defs>
+          <filter id="skillGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+        ${categories.map((category, index) => {
+          const angle = (Math.PI * 2 * index) / Math.max(1, categories.length) - Math.PI / 2;
+          const x = centerX + Math.cos(angle) * ringRadius;
+          const y = centerY + Math.sin(angle) * ringRadius * 0.68;
+          return `
+            <g class="viz-skill-cluster">
+              <ellipse cx="${x}" cy="${y}" rx="${clusterRadius + 44}" ry="${clusterRadius * 0.72 + 34}" fill="${skillColor(category)}" />
+              <text x="${x}" y="${y - clusterRadius * 0.72 - 22}">${category}</text>
+            </g>
+          `;
+        }).join('')}
+        ${links.map((link) => `
+          <line class="viz-skill-link" x1="${link.source.x}" y1="${link.source.y}" x2="${link.target.x}" y2="${link.target.y}" />
+        `).join('')}
+        ${nodes.map((node, index) => `
+          <g class="viz-skill-node" data-index="${index}" tabindex="0" role="button" aria-label="${node.label}">
+            <circle cx="${node.x}" cy="${node.y}" r="${node.radius}" fill="${node.color}" filter="url(#skillGlow)" />
+            <circle cx="${node.x}" cy="${node.y}" r="${Math.max(6, node.radius * (node.mastery / 100))}" fill="rgba(255,255,255,0.18)" />
+            <text x="${node.x}" y="${node.y + node.radius + 16}">${node.label}</text>
+          </g>
+        `).join('')}
+      </svg>
+    </div>
+  `;
+
+  stage.querySelectorAll('.viz-skill-node').forEach((nodeElement) => {
+    const node = nodes[Number(nodeElement.dataset.index)];
+    const activate = () => {
+      const selection = selectVisualizationItem({
+        scope: state.scope,
+        sourceId: config.id,
+        entityType: config.entityType || 'topic',
+        key: node.row.key || node.label,
+        label: node.label,
+        payload: node.row
+      });
+      renderInsightPanel(insightPanel, node.row);
+      config.onSelect?.(selection);
+    };
+    nodeElement.addEventListener('click', activate);
+    nodeElement.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        activate();
+      }
+    });
+  });
+}
+
 function controlIcon(label) {
   const icons = {
     fullscreen: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" /></svg>',
@@ -680,6 +780,11 @@ export function createVisualizationLab(target, config = {}) {
 
     if (state.type === 'table') {
       renderTable(stage, data);
+      return;
+    }
+
+    if (state.type === 'skillUniverse') {
+      renderSkillUniverseStage(stage, data, insightPanel, config, state);
       return;
     }
 
