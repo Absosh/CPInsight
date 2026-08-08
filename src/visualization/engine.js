@@ -547,268 +547,6 @@ function renderTable(stage, data) {
   `;
 }
 
-function renderInsightPanel(panel, raw = {}) {
-  if (!panel) return;
-  const problems = Array.isArray(raw.problems) ? raw.problems : [];
-  panel.innerHTML = `
-    <div class="viz-insight-header">
-      <div>
-        <span>${raw.category || raw.state || 'Topic'}</span>
-        <strong>${raw.label || raw.topic || raw.name || 'Selected topic'}</strong>
-      </div>
-      <button type="button" class="viz-insight-close" aria-label="Close topic panel">x</button>
-    </div>
-    <div class="viz-insight-grid">
-      <div><span>Mastery</span><strong>${Math.round(raw.mastery ?? raw.score ?? raw.value ?? 0)}%</strong></div>
-      <div><span>ROI</span><strong>${Math.round(raw.roi ?? raw.priority ?? 0)}</strong></div>
-      <div><span>Confidence</span><strong>${Math.round(raw.confidence ?? 0)}%</strong></div>
-      <div><span>Solved</span><strong>${raw.solved ?? raw.accepted ?? 0}</strong></div>
-    </div>
-    <p>${raw.insight || raw.reason || 'This topic is linked to your current analytics evidence.'}</p>
-    <div class="viz-problem-bank">
-      <h4>Problem Bank</h4>
-      ${problems.length
-        ? problems.slice(0, 10).map((problem) => `
-          <a href="${problem.url || '#'}" ${problem.url ? 'target="_blank" rel="noopener noreferrer"' : ''}>
-            <span>${problem.platform || 'Platform'} · ${problem.difficulty || 'Mixed'}</span>
-            <strong>${problem.name || problem.title || 'Recommended problem'}</strong>
-          </a>
-        `).join('')
-        : '<p>No synced problem-bank entries are attached to this topic yet.</p>'}
-    </div>
-  `;
-  panel.classList.remove('hidden');
-  panel.querySelector('.viz-insight-close')?.addEventListener('click', () => panel.classList.add('hidden'));
-}
-
-function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
-  const rows = rowsFromData(data)
-    .map((row, index) => ({
-      ...row,
-      _sourceIndex: index,
-      category: row.category || groupLabel(row.label || row.topic || row.name)
-    }))
-    .sort((a, b) => {
-      const categoryCompare = a.category.localeCompare(b.category);
-      const roiCompare = Number(b.roi ?? b.priority ?? b.value ?? 0) - Number(a.roi ?? a.priority ?? a.value ?? 0);
-      return categoryCompare || roiCompare || String(a.label || a.topic || a.name).localeCompare(String(b.label || b.topic || b.name));
-    });
-  const categories = Array.from(new Set(rows.map((row) => row.category)));
-  const width = Math.max(760, stage.clientWidth || 900);
-  const height = Math.max(600, stage.clientHeight || 640);
-  const graphLeft = Math.max(42, width * 0.07);
-  const graphRight = width - graphLeft;
-  const graphTop = Math.max(28, height * 0.05);
-  const graphBottom = height - Math.max(26, height * 0.06);
-  const graphWidth = graphRight - graphLeft;
-  const graphHeight = graphBottom - graphTop;
-  const centerX = graphLeft + graphWidth / 2;
-  const centerY = graphTop + graphHeight / 2 + 8;
-  const labelLimit = width >= 960 ? 26 : 18;
-  const escapeAttr = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  }[char]));
-  const shortLabel = (value) => {
-    const text = String(value || 'Topic');
-    return text.length > labelLimit ? `${text.slice(0, labelLimit - 1)}...` : text;
-  };
-  const toPoint = (slot) => ({
-    x: graphLeft + slot.x * graphWidth,
-    y: graphTop + slot.y * graphHeight,
-    r: slot.r,
-    lx: slot.lx,
-    ly: slot.ly,
-    anchor: slot.anchor
-  });
-  const slotByCategory = {
-    'Tree Structures': [
-      { x: 0.12, y: 0.18, r: 12, lx: -28, ly: -24, anchor: 'end' },
-      { x: 0.16, y: 0.29, r: 11, lx: -38, ly: 0, anchor: 'end' },
-      { x: 0.21, y: 0.22, r: 10, lx: -20, ly: -34, anchor: 'end' },
-      { x: 0.24, y: 0.31, r: 15, lx: 22, ly: -18, anchor: 'start' }
-    ],
-    Math: [
-      { x: 0.20, y: 0.52, r: 26, lx: -34, ly: -4, anchor: 'end' },
-      { x: 0.14, y: 0.66, r: 11, lx: -30, ly: 10, anchor: 'end' },
-      { x: 0.18, y: 0.76, r: 18, lx: -34, ly: 22, anchor: 'end' },
-      { x: 0.27, y: 0.71, r: 13, lx: 26, ly: 12, anchor: 'start' },
-      { x: 0.27, y: 0.35, r: 18, lx: 22, ly: 0, anchor: 'start' },
-      { x: 0.36, y: 0.83, r: 12, lx: 28, ly: 22, anchor: 'start' }
-    ],
-    Foundations: [
-      { x: 0.43, y: 0.24, r: 11, lx: -18, ly: -44, anchor: 'end' },
-      { x: 0.50, y: 0.39, r: 30, lx: -22, ly: 12, anchor: 'end' },
-      { x: 0.59, y: 0.30, r: 20, lx: 16, ly: -38, anchor: 'start' },
-      { x: 0.64, y: 0.40, r: 20, lx: 24, ly: -18, anchor: 'start' },
-      { x: 0.69, y: 0.30, r: 11, lx: 24, ly: -30, anchor: 'start' }
-    ],
-    'Dynamic Programming': [
-      { x: 0.43, y: 0.60, r: 15, lx: -24, ly: -4, anchor: 'end' },
-      { x: 0.51, y: 0.66, r: 26, lx: 28, ly: -6, anchor: 'start' },
-      { x: 0.49, y: 0.80, r: 12, lx: -20, ly: 28, anchor: 'end' },
-      { x: 0.58, y: 0.86, r: 14, lx: 16, ly: 26, anchor: 'start' },
-      { x: 0.54, y: 0.72, r: 13, lx: 24, ly: 14, anchor: 'start' }
-    ],
-    'Graph Theory': [
-      { x: 0.73, y: 0.45, r: 20, lx: -26, ly: -16, anchor: 'end' },
-      { x: 0.85, y: 0.42, r: 13, lx: 24, ly: -26, anchor: 'start' },
-      { x: 0.90, y: 0.48, r: 14, lx: 28, ly: -8, anchor: 'start' },
-      { x: 0.84, y: 0.55, r: 11, lx: 28, ly: 14, anchor: 'start' },
-      { x: 0.89, y: 0.62, r: 16, lx: 28, ly: 20, anchor: 'start' }
-    ],
-    Strings: [
-      { x: 0.75, y: 0.62, r: 15, lx: -22, ly: 20, anchor: 'end' },
-      { x: 0.82, y: 0.76, r: 12, lx: 22, ly: 28, anchor: 'start' },
-      { x: 0.95, y: 0.62, r: 13, lx: 30, ly: 0, anchor: 'start' }
-    ],
-    General: [
-      { x: 0.13, y: 0.84, r: 19, lx: -28, ly: 4, anchor: 'end' },
-      { x: 0.31, y: 0.58, r: 12, lx: -28, ly: 10, anchor: 'end' },
-      { x: 0.35, y: 0.42, r: 12, lx: 24, ly: 2, anchor: 'start' }
-    ]
-  };
-  const fallbackSlots = Object.values(slotByCategory).flat();
-  const usedSlots = new Map();
-  const takeSlot = (category, index) => {
-    const slots = slotByCategory[category] || slotByCategory.General;
-    const used = usedSlots.get(category) || 0;
-    usedSlots.set(category, used + 1);
-    if (used < slots.length) return toPoint(slots[used]);
-    return toPoint(fallbackSlots[(index + used) % fallbackSlots.length]);
-  };
-  const categoryCenters = new Map(categories.map((category) => {
-    const slots = slotByCategory[category] || slotByCategory.General;
-    const center = slots.reduce((acc, slot) => ({
-      x: acc.x + slot.x / slots.length,
-      y: acc.y + slot.y / slots.length
-    }), { x: 0, y: 0 });
-    return [category, toPoint({ ...center, r: 1, lx: 0, ly: 0, anchor: 'middle' })];
-  }));
-
-  const nodes = rows.map((row, index) => {
-    const category = row.category;
-    const point = takeSlot(category, index);
-    const mastery = Number(row.mastery ?? row.score ?? row.value ?? 0);
-    const roi = Number(row.roi ?? Math.max(0, 100 - mastery));
-    const radius = Math.max(8, Math.min(point.r, point.r * 0.72 + roi * 0.13));
-    return {
-      index,
-      row,
-      category,
-      label: row.label || row.topic || row.name,
-      x: point.x,
-      y: point.y,
-      radius,
-      labelX: Math.min(graphRight - 10, Math.max(graphLeft + 10, point.x + point.lx)),
-      labelY: Math.min(graphBottom - 10, Math.max(graphTop + 10, point.y + point.ly)),
-      labelAnchor: point.anchor,
-      labelLineX: point.x + Math.sign(point.lx || 1) * (radius + 3),
-      labelLineY: point.y,
-      mastery,
-      roi,
-      depth: index / Math.max(1, rows.length - 1),
-      color: stateForTopic(row) === 'High ROI' ? visualizationPalette.amber : skillColor(category)
-    };
-  });
-
-  const nearest = (node, count, predicate = () => true) => nodes
-    .filter((target) => target !== node && predicate(target))
-    .map((target) => ({ target, distance: Math.hypot(target.x - node.x, target.y - node.y) }))
-    .sort((a, b) => a.distance - b.distance)
-    .slice(0, count)
-    .map(({ target }) => target);
-  const linkKeys = new Set();
-  const links = [];
-  const addLink = (source, target, strength = 1) => {
-    if (!source || !target || source === target) return;
-    const key = [source.index, target.index].sort((a, b) => a - b).join(':');
-    if (linkKeys.has(key)) return;
-    linkKeys.add(key);
-    links.push({ source, target, strength });
-  };
-  nodes.forEach((node) => {
-    nearest(node, 2, (target) => target.category === node.category).forEach((target) => addLink(node, target, 1.25));
-    nearest(node, node.roi >= 65 ? 2 : 1, (target) => target.category !== node.category).forEach((target) => addLink(node, target, 0.75));
-  });
-  nodes.slice(0, 10).forEach((node, index) => {
-    addLink(node, nodes[(index * 3 + 5) % nodes.length], 0.9);
-  });
-  const visualNodes = [...nodes].sort((a, b) => a.depth - b.depth);
-  const linkPath = (link) => {
-    const midX = (link.source.x + link.target.x) / 2;
-    const midY = (link.source.y + link.target.y) / 2;
-    const dx = link.target.x - link.source.x;
-    const dy = link.target.y - link.source.y;
-    const bend = Math.min(72, Math.hypot(dx, dy) * 0.18) * (link.source.index % 2 ? 1 : -1);
-    const controlX = midX - dy * 0.12 + (centerX - midX) * 0.12;
-    const controlY = midY + dx * 0.12 + bend;
-    return `M ${link.source.x} ${link.source.y} Q ${controlX} ${controlY} ${link.target.x} ${link.target.y}`;
-  };
-
-  stage.innerHTML = `
-    <div class="viz-skill-universe" style="--universe-width:${width}px">
-      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="AI Skill Universe topic graph">
-        <defs>
-          <filter id="skillGlow" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="1.1" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-        </defs>
-        ${categories.map((category) => {
-          const { x, y } = categoryCenters.get(category) || { x: centerX, y: centerY };
-          return `
-            <g class="viz-skill-cluster">
-              <ellipse cx="${x}" cy="${y}" rx="${Math.min(128, graphWidth * 0.12)}" ry="${Math.min(76, graphHeight * 0.11)}" fill="${skillColor(category)}" />
-            </g>
-          `;
-        }).join('')}
-        ${links.map((link) => `
-          <path class="viz-skill-link" d="${linkPath(link)}" style="stroke-width:${0.5 + link.strength * 0.35}px;opacity:${0.36 + link.strength * 0.12}" />
-        `).join('')}
-        ${visualNodes.map((node) => `
-          <line class="viz-skill-label-line" x1="${node.labelLineX}" y1="${node.labelLineY}" x2="${node.labelX}" y2="${node.labelY - 4}" />
-        `).join('')}
-        ${visualNodes.map((node) => `
-          <g class="viz-skill-node" data-index="${node.index}" tabindex="0" role="button" aria-label="${escapeAttr(node.label)}">
-            <circle cx="${node.x}" cy="${node.y}" r="${node.radius}" fill="${node.color}" filter="url(#skillGlow)" opacity="${0.78 + Math.max(0, node.depth) * 0.18}" />
-            <circle cx="${node.x}" cy="${node.y}" r="${Math.max(5, node.radius * (node.mastery / 100))}" fill="rgba(255,255,255,0.16)" />
-          </g>
-        `).join('')}
-        ${visualNodes.map((node) => `
-          <text class="viz-skill-label" data-index="${node.index}" x="${node.labelX}" y="${node.labelY}" text-anchor="${node.labelAnchor}">${escapeAttr(shortLabel(node.label))}</text>
-        `).join('')}
-      </svg>
-    </div>
-  `;
-
-  stage.querySelectorAll('.viz-skill-node, .viz-skill-label').forEach((nodeElement) => {
-    const node = nodes[Number(nodeElement.dataset.index)];
-    const activate = () => {
-      const selection = selectVisualizationItem({
-        scope: state.scope,
-        sourceId: config.id,
-        entityType: config.entityType || 'topic',
-        key: node.row.key || node.label,
-        label: node.label,
-        payload: node.row
-      });
-      renderInsightPanel(insightPanel, node.row);
-      config.onSelect?.(selection);
-    };
-    nodeElement.addEventListener('click', activate);
-    nodeElement.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        activate();
-      }
-    });
-  });
-}
-
 function controlIcon(label) {
   const icons = {
     fullscreen: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" /></svg>',
@@ -867,7 +605,6 @@ export function createVisualizationLab(target, config = {}) {
       </div>
     </div>
     <div class="viz-stage" role="img" aria-label="${config.title || 'Interactive visualization'}"></div>
-    <aside class="viz-insight-panel hidden" aria-live="polite"></aside>
     <div class="viz-empty hidden">
       <strong>No matching data</strong>
       <span>Try a different search or filter.</span>
@@ -878,7 +615,6 @@ export function createVisualizationLab(target, config = {}) {
   const typeSelect = shell.querySelector('.viz-type');
   const search = shell.querySelector('.viz-search');
   const stage = shell.querySelector('.viz-stage');
-  const insightPanel = shell.querySelector('.viz-insight-panel');
   const empty = shell.querySelector('.viz-empty');
   if (typeSelect) typeSelect.value = state.type;
 
@@ -911,11 +647,6 @@ export function createVisualizationLab(target, config = {}) {
       return;
     }
 
-    if (state.type === 'skillUniverse') {
-      renderSkillUniverseStage(stage, data, insightPanel, config, state);
-      return;
-    }
-
     const echarts = await loadEcharts();
     chart = echarts.init(stage, state.darkMode ? 'dark' : null, { renderer: 'svg' });
     chart.setOption(optionFor(state.type, { ...data, scope: state.scope }, state), true);
@@ -929,9 +660,6 @@ export function createVisualizationLab(target, config = {}) {
         label: raw.label || raw.name || params.name,
         payload: raw
       });
-      if (state.type === 'skillUniverse') {
-        renderInsightPanel(insightPanel, raw);
-      }
       config.onSelect?.(selection);
     });
     chart.on('dblclick', (params) => {

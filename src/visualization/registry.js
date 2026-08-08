@@ -22,10 +22,6 @@ export const VISUALIZATION_GROUPS = Object.freeze({
   advancedAnalytics: {
     label: 'Advanced Analytics',
     types: ['stackedBar', 'bar', 'calendarHeatmap', 'table']
-  },
-  skillUniverse: {
-    label: 'AI Skill Universe',
-    types: ['skillUniverse', 'forceGraph', 'radialGraph', 'table']
   }
 });
 
@@ -67,8 +63,7 @@ export const CHART_REGISTRY = Object.freeze({
   radialGraph: { label: 'Radial Graph', engine: 'echarts', seriesType: 'tree', radial: true },
   clusterGraph: { label: 'Cluster Graph', engine: 'echarts', seriesType: 'graph', layout: 'force' },
   marimekko: { label: 'Marimekko', engine: 'echarts', seriesType: 'custom', custom: 'marimekko' },
-  ridgeline: { label: 'Ridgeline', engine: 'echarts', seriesType: 'custom', custom: 'ridgeline' },
-  skillUniverse: { label: 'Skill Universe', engine: 'echarts', seriesType: 'graph', layout: 'force', universe: true }
+  ridgeline: { label: 'Ridgeline', engine: 'echarts', seriesType: 'custom', custom: 'ridgeline' }
 });
 
 export function resolveVisualizationTypes(group, explicitTypes = []) {
