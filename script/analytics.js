@@ -1003,8 +1003,8 @@ const activityData = computeActivityAnalytics(submissions);
                 weekdayActivityInstance = engine.createVisualizationLab(weekdayContainer, {
                     id: 'analytics-weekday-activity',
                     title: 'Daily Activity Density',
-                    types: ['bar'],
-                    defaultType: 'bar',
+                    types: ['ridgeline'],
+                    defaultType: 'ridgeline',
                     scope: 'activity',
                     entityType: 'weekday',
                     data: weekdayData

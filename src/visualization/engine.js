@@ -265,6 +265,58 @@ function optionFor(type, data, state = {}) {
 
   if (typeConfig.custom === 'ridgeline') {
     const rows = rowsFromData(data);
+    if (rows.some((row) => row.weekday)) {
+      const weekdays = rows.map((row) => row.weekday || row.label);
+      const maxValue = Math.max(1, ...rows.map((row) => Number(row.value || 0)));
+      return {
+        ...theme,
+        grid: { left: 92, right: 18, top: 18, bottom: 32, containLabel: true },
+        xAxis: { type: 'value', min: 0, max: 100, axisLabel: { formatter: '{value}%' } },
+        yAxis: {
+          type: 'value',
+          min: -0.2,
+          max: Math.max(1, weekdays.length),
+          interval: 1,
+          axisLabel: {
+            color: visualizationPalette.muted,
+            formatter(value) {
+              return weekdays[Math.round(value)] || '';
+            }
+          }
+        },
+        tooltip: {
+          ...theme.tooltip,
+          formatter(params) {
+            const raw = params.data.raw || {};
+            return `<strong>${raw.weekday || raw.label}</strong><br>${raw.value || 0} accepted submissions`;
+          }
+        },
+        series: rows.map((row, rowIndex) => {
+          const activity = Number(row.value || 0);
+          const amplitude = activity / maxValue;
+          return {
+            name: row.weekday || row.label,
+            type: 'line',
+            smooth: true,
+            symbol: 'none',
+            areaStyle: { opacity: 0.22 },
+            lineStyle: { width: 2 },
+            data: Array.from({ length: 41 }, (_, index) => {
+              const x = index * 2.5;
+              const center = 52;
+              const spread = 18;
+              const density = Math.exp(-Math.pow((x - center) / spread, 2)) * amplitude * 0.78;
+              return {
+                name: row.weekday || row.label,
+                value: [x, rowIndex + density],
+                raw: row
+              };
+            })
+          };
+        })
+      };
+    }
+
     const dates = Array.from(new Set(rows.map((row) => row.date))).slice(-28);
     const maxDensity = Math.max(1, ...rows.map((row) => Number(row.value || 0)));
     return {
@@ -546,7 +598,7 @@ export function createVisualizationLab(target, config = {}) {
           ? `<select class="viz-control viz-type" aria-label="Switch visualization type">
               ${types.map((type) => `<option value="${type}">${CHART_REGISTRY[type].label}</option>`).join('')}
             </select>`
-          : `<span class="viz-fixed-type">${CHART_REGISTRY[defaultType]?.label || 'Visualization'}</span>`}
+          : ''}
         <label class="viz-search-wrap">
           <span>Search</span>
           <input class="viz-control viz-search" type="search" placeholder="Filter data" aria-label="Search visualization data">
