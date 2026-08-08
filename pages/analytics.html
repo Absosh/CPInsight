@@ -12,6 +12,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="../css/shared.css" />
+  <script type="module" src="../src/visualization/index.js"></script>
   <script src="../script/shared.js"></script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -110,8 +111,8 @@
                     <div class="absolute inset-[30%] rounded-full skeleton opacity-60" style="--delay:-0.5s"></div>
                 </div>
             </div>
-            <div class="flex-1 relative w-full flex items-center justify-center min-h-[300px] hidden" id="radarWrapper">
-                <canvas id="radarChart" class="absolute inset-0"></canvas>
+            <div class="flex-1 relative w-full flex items-center justify-center min-h-[330px] hidden" id="radarWrapper">
+                <div id="radarChart" class="absolute inset-0"></div>
             </div>
         </div>
 
@@ -130,8 +131,8 @@
                 <div class="skeleton h-5 w-[55%] rounded-r-md" style="--delay: -0.6s"></div>
             </div>
             
-            <div class="flex-1 relative w-full mb-6 min-h-[200px] hidden" id="diffWrapper">
-                <canvas id="difficultyChart" class="absolute inset-0"></canvas>
+            <div class="flex-1 relative w-full mb-6 min-h-[300px] hidden" id="diffWrapper">
+                <div id="difficultyChart" class="absolute inset-0"></div>
             </div>
 
             <div class="grid grid-cols-3 gap-3 shrink-0">
@@ -151,6 +152,14 @@
         </div>
 
       </div>
+
+      <section class="glass rounded-3xl p-6 mb-10 reveal min-h-[560px] flex flex-col">
+        <div class="mb-5">
+          <h2 class="text-xl font-bold tracking-tight text-white">AI Skill Universe</h2>
+          <p class="text-sm text-gray-400">Interactive topic ecosystem built from your actual topic performance.</p>
+        </div>
+        <div id="skillUniverseViz" class="flex-1 min-h-[450px]"></div>
+      </section>
 
       <h2 class="text-xl font-bold mb-4 tracking-tight text-white reveal">Contest Analytics</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10 reveal">

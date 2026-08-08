@@ -1,5 +1,7 @@
 let ratingChartInstance = null;
 let sparkInstances = {};
+let platformContributionInstance = null;
+let dailyRidgelineInstance = null;
 let currentRows = [];
 let currentSort = { column: 'date', asc: false };
 let lastAnalyticsKey = null;
@@ -7,6 +9,11 @@ let isRendering = false;
 let selectedHeatmapYear = 'all';
 
 const CHART_COLORS = ['#10b981', '#6366f1', '#a855f7', '#f59e0b', '#0ea5e9', '#f43f5e'];
+const visualizationReady = window.CPVisualization
+    ? Promise.resolve(window.CPVisualization)
+    : new Promise((resolve) => {
+        window.addEventListener('cpinsight:visualization-ready', (event) => resolve(event.detail), { once: true });
+    });
 
 const KPI_CARD_IDS = {
     current: 'kpiCardCurrent',
@@ -132,12 +139,17 @@ function updateSortIcons() {
 
 function destroyCharts() {
     if (ratingChartInstance) {
-        ratingChartInstance.destroy();
+        ratingChartInstance.destroy?.();
         ratingChartInstance = null;
     }
 
     Object.values(sparkInstances).forEach((instance) => instance.destroy());
     sparkInstances = {};
+
+    platformContributionInstance?.destroy?.();
+    platformContributionInstance = null;
+    dailyRidgelineInstance?.destroy?.();
+    dailyRidgelineInstance = null;
 }
 
 function resetVisualState() {
@@ -339,12 +351,12 @@ function createSparkline(id, data, color) {
 
 function resetChartZoom() {
     if (ratingChartInstance) {
-        ratingChartInstance.resetZoom();
+        ratingChartInstance.resetView?.();
     }
 }
 
-function createChart(points, layout) {
-    if (ratingChartInstance) ratingChartInstance.destroy();
+async function createChart(points, layout) {
+    if (ratingChartInstance) ratingChartInstance.destroy?.();
 
     const chart = document.getElementById('ratingChart');
     if (!chart) return;
@@ -400,54 +412,48 @@ function createChart(points, layout) {
         };
     });
 
-    ratingChartInstance = new Chart(chart, {
-        type: 'line',
+    const rows = labels.map((label, index) => {
+        const sourcePoint = datasets
+            .map((dataset) => dataset.metaPoints?.[index])
+            .find(Boolean);
+
+        return {
+            key: sourcePoint?.contestName || label,
+            label,
+            date: label,
+            contestName: sourcePoint?.contestName || 'Contest',
+            platform: sourcePoint?.platform || layout?.platform || 'combined',
+            value: sourcePoint?.rating ?? null,
+            rating: sourcePoint?.rating ?? null,
+            delta: sourcePoint?.delta ?? 0,
+            rank: sourcePoint?.rank ?? null
+        };
+    });
+
+    const engine = await visualizationReady;
+    if (!engine) return;
+
+    ratingChartInstance = engine.createVisualizationLab(chart, {
+        id: 'dashboard-rating-progression',
+        title: 'Rating Progression',
+        group: 'contestProgress',
+        types: ['line', 'area', 'bar', 'timeline', 'candlestick', 'table'],
+        defaultType: 'line',
+        scope: 'contest',
+        entityType: 'contest',
         data: {
             labels,
-            datasets
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: {
-                    display: datasets.length > 1,
-                    labels: { color: '#d1d5db', usePointStyle: true }
-                },
-                zoom: {
-                    zoom: { wheel: { enabled: true, speed: 0.05 }, pinch: { enabled: true }, mode: 'x' },
-                    pan: { enabled: true, mode: 'x' }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                    titleColor: '#fff',
-                    bodyColor: '#d1d5db',
-                    displayColors: false,
-                    callbacks: {
-                        title(context) {
-                            return context[0].label;
-                        },
-                        label(context) {
-                            return `${context.dataset.label}: ${context.raw}`;
-                        },
-                        afterLabel(context) {
-                            const point = context.dataset.metaPoints?.[context.dataIndex];
-                            return point?.contestName || '';
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: { ticks: { display: false }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-            }
+            rows,
+            datasets: datasets.map((dataset) => ({
+                name: dataset.label,
+                values: dataset.data
+            }))
         }
     });
 
     document.getElementById('chartLoader').classList.add('hidden');
     document.getElementById('ratingChart').classList.remove('hidden');
-    document.getElementById('resetZoomBtn').classList.remove('hidden');
+    document.getElementById('resetZoomBtn')?.classList.remove('hidden');
 }
 
 function renderHeatmap(activityHeatmap) {
@@ -488,6 +494,130 @@ function renderHeatmap(activityHeatmap) {
 
     document.getElementById('heatmapLoader')?.classList.add('hidden');
     document.getElementById('heatmapContainer')?.classList.remove('hidden');
+}
+
+function monthKey(dateKey) {
+    return String(dateKey || '').slice(0, 7);
+}
+
+function buildPlatformContributionRows(analytics) {
+    const platformSources = Array.isArray(analytics?.platforms) && analytics.platforms.length
+        ? analytics.platforms
+        : [analytics].filter(Boolean);
+    const monthly = new Map();
+
+    platformSources.forEach((source) => {
+        const platform = capitalize(source.platform || 'combined');
+        Object.entries(source.activityHeatmap || {}).forEach(([day, count]) => {
+            const value = Number(count || 0);
+            if (!value) return;
+            const month = monthKey(day);
+            const key = `${month}|${platform}`;
+            monthly.set(key, {
+                month,
+                platform,
+                value: (monthly.get(key)?.value || 0) + value
+            });
+        });
+    });
+
+    const monthTotals = {};
+    Array.from(monthly.values()).forEach((row) => {
+        monthTotals[row.month] = (monthTotals[row.month] || 0) + row.value;
+    });
+
+    return Array.from(monthly.values())
+        .filter((row) => row.month)
+        .sort((a, b) => a.month.localeCompare(b.month) || a.platform.localeCompare(b.platform))
+        .map((row) => ({
+            ...row,
+            total: monthTotals[row.month] || row.value,
+            percent: Math.round((row.value / Math.max(1, monthTotals[row.month] || row.value)) * 100),
+            color: getPlatformColor(row.platform)
+        }));
+}
+
+function buildRidgelineRows(analytics) {
+    const rows = [];
+    (analytics?.recentSubmissions || []).forEach((submission) => {
+        const stamp = submission.submittedAt || submission.creationTime || submission.createdAt;
+        if (!stamp) return;
+        const date = new Date(stamp);
+        if (Number.isNaN(date.getTime())) return;
+        rows.push({
+            date: date.toISOString().slice(0, 10),
+            hour: date.getHours(),
+            value: 1,
+            platform: capitalize(submission.platform || analytics.platform || 'Platform'),
+            contest: submission.contestName || submission.contest || '',
+            problem: submission.problemName || submission.problemKey || submission.problem || 'Problem'
+        });
+    });
+
+    const buckets = new Map();
+    rows.forEach((row) => {
+        const key = `${row.date}|${row.hour}|${row.platform}`;
+        const existing = buckets.get(key) || { ...row, value: 0, problems: [] };
+        existing.value += row.value;
+        existing.problems.push(row.problem);
+        buckets.set(key, existing);
+    });
+
+    return Array.from(buckets.values()).sort((a, b) => a.date.localeCompare(b.date) || a.hour - b.hour);
+}
+
+async function renderAdvancedDashboardVisualizations(analytics) {
+    const engine = await visualizationReady;
+    if (!engine) return;
+
+    const platformRows = buildPlatformContributionRows(analytics);
+    const platformContainer = document.getElementById('platformContributionViz');
+    platformContributionInstance?.destroy?.();
+    if (platformRows.length && platformContainer) {
+        platformContributionInstance = engine.createVisualizationLab(platformContainer, {
+            id: 'dashboard-platform-contribution',
+            title: 'Platform Contribution',
+            group: 'advancedAnalytics',
+            types: ['marimekko', 'bar', 'table'],
+            defaultType: 'marimekko',
+            scope: 'platform',
+            entityType: 'platform',
+            data: {
+                labels: platformRows.map((row) => `${row.month} ${row.platform}`),
+                rows: platformRows,
+                values: platformRows.map((row) => row.value)
+            },
+            onSelect(selection) {
+                if (selection?.payload?.platform) {
+                    window.dispatchEvent(new CustomEvent('cpinsight:platform-highlight', { detail: selection.payload }));
+                }
+            }
+        });
+    } else if (platformContainer) {
+        renderEmptyState('platformContributionViz', 'No platform contribution yet', 'Monthly platform split appears after synced platform activity exists.', '📊');
+    }
+
+    const ridgelineRows = buildRidgelineRows(analytics);
+    const ridgelineContainer = document.getElementById('dailyRidgelineViz');
+    dailyRidgelineInstance?.destroy?.();
+    if (ridgelineRows.length && ridgelineContainer) {
+        dailyRidgelineInstance = engine.createVisualizationLab(ridgelineContainer, {
+            id: 'dashboard-daily-ridgeline',
+            title: 'Daily Activity Density',
+            group: 'advancedAnalytics',
+            types: ['ridgeline', 'heatmap', 'table'],
+            defaultType: 'ridgeline',
+            scope: 'activity',
+            entityType: 'activity-hour',
+            data: {
+                labels: ridgelineRows.map((row) => `${row.date} ${row.hour}:00`),
+                rows: ridgelineRows,
+                values: ridgelineRows.map((row) => row.value)
+            }
+        });
+    } else if (ridgelineContainer) {
+        renderEmptyState('dailyRidgelineViz', 'No hourly submission density yet', 'Ridgeline needs timestamped recent submissions from synced analytics.', '🕒');
+    }
 }
 
 function populateHeatmapYearSelector(activityHeatmap) {
@@ -721,6 +851,7 @@ function renderDeepStats(analytics, layout) {
     populateHeatmapYearSelector(analytics.activityHeatmap || {});
     renderHeatmap(analytics.activityHeatmap || {});
     renderRecentSubmissions(analytics.recentSubmissions || [], layout.showRecentSubmissions);
+    renderAdvancedDashboardVisualizations(analytics);
 
     const heatmap = analytics.activityHeatmap || {};
     const yearlySolved = analytics.solvedLastYear || 0;

@@ -1,5 +1,10 @@
 
-   
+    const visualizationReady = window.CPVisualization
+        ? Promise.resolve(window.CPVisualization)
+        : new Promise((resolve) => {
+            window.addEventListener('cpinsight:visualization-ready', (event) => resolve(event.detail), { once: true });
+        });
+
     // --- NEON PARTICLE BACKGROUND SYSTEM ---
     initParticles();
    
@@ -319,6 +324,13 @@
             "📈"
         );
 
+        renderEmptyState(
+            "skillUniverseViz",
+            "No skill universe yet",
+            "Accepted submissions with topic tags are required to build your learning graph.",
+            "🧠"
+        );
+
         document.getElementById("radarLoader")?.classList.add("hidden");
         document.getElementById("diffLoader")?.classList.add("hidden");
 
@@ -366,6 +378,13 @@
         "📈"
     );
 
+    renderEmptyState(
+        "skillUniverseViz",
+        "No skill universe yet",
+        "Accepted submissions with topic tags are required to build your learning graph.",
+        "🧠"
+    );
+
     document.getElementById("radarLoader")?.classList.add("hidden");
     document.getElementById("diffLoader")?.classList.add("hidden");
 
@@ -382,6 +401,7 @@ const activityData = computeActivityAnalytics(submissions);
     const difficultyData = computeDifficultyAnalytics(submissions);
 
     renderTopicIntelligence(topicData);
+    renderSkillUniverse(topicData);
     renderActivityAnalytics(activityData);
     renderDifficultyAnalytics(difficultyData);
 
@@ -534,7 +554,7 @@ const activityData = computeActivityAnalytics(submissions);
         console.log("Filtered Out Tags:", Array.from(filteredTags));
         console.log("Allowed Topics Processed:", computedTopics.map(t => t.name));
 
-        return { strongest, weakest, mostPracticed, mostNeglected, radarLabels: radarTags, radarScores };
+        return { strongest, weakest, mostPracticed, mostNeglected, topics: computedTopics, radarLabels: radarTags, radarScores };
     }
 
     function computeActivityAnalytics(submissions) {
@@ -843,6 +863,7 @@ const activityData = computeActivityAnalytics(submissions);
     // --- STRICT SINGLETON OBSERVERS ---
     let radarChartInstance = null;
     let diffChartInstance = null;
+    let skillUniverseInstance = null;
     let radarObserver = null;
     let diffObserver = null;
 
@@ -878,102 +899,127 @@ const activityData = computeActivityAnalytics(submissions);
         diffObserver.observe(wrapper.parentElement);
     }
 
-    // --- CHART.JS CONFIGURATIONS ---
-
-    function drawRadarChart(labels, data) {
-        if (radarChartInstance) radarChartInstance.destroy(); // Clear old canvas memory
-        
-        const ctx = document.getElementById('radarChart').getContext('2d');
-        const capitalizedLabels = labels.map(l => l.toUpperCase());
-        
-        radarChartInstance = new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: capitalizedLabels,
-                datasets: [{
-                    label: 'Score',
-                    data: Array(data.length).fill(0), // Initialize with 0s for expanding animation
-                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                    borderColor: '#10b981',
-                    pointBackgroundColor: '#10b981',
-                    pointBorderColor: '#fff',
-                    borderWidth: 2,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true, 
-                maintainAspectRatio: false,
-                animation: {
-                    duration: 2000,
-                    easing: 'easeOutQuart'
-                },
-                scales: {
-                    r: {
-                        min: 0, max: 100,
-                        angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        pointLabels: { color: '#d1d5db', font: { size: 10, weight: '600' } },
-                        ticks: { display: false }
-                    }
-                },
-                plugins: { 
-                    legend: { display: false }, 
-                    tooltip: { backgroundColor: 'rgba(17, 24, 39, 0.9)', cornerRadius: 8 } 
-                }
-            }
-        });
-
-        // Animate from center radially to final values
-        setTimeout(() => {
-            if (radarChartInstance) {
-                radarChartInstance.data.datasets[0].data = data;
-                radarChartInstance.update();
-            }
-        }, 150);
+    function topicCategory(topic) {
+        const value = String(topic || '').toLowerCase();
+        if (/graph|dfs|shortest|dsu|flow|mst/.test(value)) return 'Graph Theory';
+        if (/dp|dynamic|bitmask/.test(value)) return 'Dynamic Programming';
+        if (/tree|trie|segment/.test(value)) return 'Tree Structures';
+        if (/string|hash|suffix/.test(value)) return 'Strings';
+        if (/math|number|combin|probab|geometry/.test(value)) return 'Math';
+        if (/binary|sort|two pointers|implementation|brute|greedy/.test(value)) return 'Foundations';
+        return 'General';
     }
 
-    function drawDifficultyChart(data) {
-        if (diffChartInstance) diffChartInstance.destroy(); // Clear old canvas memory
-        
-        const ctx = document.getElementById('difficultyChart').getContext('2d');
-        const grad = ctx.createLinearGradient(0, 0, 400, 0);
-        grad.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
-        grad.addColorStop(1, 'rgba(16, 185, 129, 0.9)');
+    async function renderSkillUniverse(topicData) {
+        const container = document.getElementById('skillUniverseViz');
+        if (!container) return;
 
-        diffChartInstance = new Chart(ctx, {
-            type: 'bar',
+        const topics = (topicData?.topics || []).map((topic) => {
+            const mastery = Number(topic.score || 0);
+            const roi = Math.max(20, 100 - mastery + Math.min(20, Number(topic.solved || 0) * 2));
+            return {
+                key: topic.name,
+                label: topic.name,
+                topic: topic.name,
+                value: mastery,
+                score: mastery,
+                mastery,
+                roi,
+                priority: roi,
+                confidence: Math.min(96, 52 + Number(topic.solved || 0) * 5),
+                solved: topic.solved || 0,
+                successRate: topic.successRate || 0,
+                avgDiff: topic.avgDiff || 0,
+                category: topicCategory(topic.name),
+                recentlyPracticed: topic.lastSolved && ((Date.now() / 1000) - topic.lastSolved < 60 * 60 * 24 * 21),
+                insight: mastery < 45
+                    ? 'This topic currently has high improvement potential based on accepted-solve strength.'
+                    : 'This topic is supported by recent accepted submissions and can anchor adjacent practice.'
+            };
+        });
+
+        skillUniverseInstance?.destroy?.();
+        if (!topics.length) {
+            renderEmptyState('skillUniverseViz', 'No skill universe yet', 'Accepted submissions with topic tags are required to build your learning graph.', '🧠');
+            return;
+        }
+
+        const engine = await visualizationReady;
+        if (!engine) return;
+
+        skillUniverseInstance = engine.createVisualizationLab(container, {
+            id: 'analytics-skill-universe',
+            title: 'AI Skill Universe',
+            group: 'skillUniverse',
+            types: ['skillUniverse', 'forceGraph', 'table'],
+            defaultType: 'skillUniverse',
+            scope: 'topic',
+            entityType: 'topic',
             data: {
-                labels: ['<=900', '1000-1199', '1200-1399', '1400-1599', '1600-1799', '1800-1999', '2000+'],
-                datasets: [{ data: data, backgroundColor: grad, borderRadius: 4 }]
+                labels: topics.map((topic) => topic.label),
+                values: topics.map((topic) => topic.value),
+                rows: topics
             },
-            options: {
-                indexAxis: 'y', 
-                responsive: true, 
-                maintainAspectRatio: false,
-                animation: { duration: 1500 }, // Required global fallback
-                animations: {
-                    x: {
-                        duration: 3000,
-                        easing: 'easeOutQuart',
-                        from: 0,
-                        delay: (context) => {
-                            // Cascading Stagger Effect
-                            if (context.type === 'data') {
-                                return context.dataIndex * 150; 
-                            }
-                            return 0;
-                        }
-                    }
-                },
-                plugins: { 
-                    legend: { display: false }, 
-                    tooltip: { backgroundColor: 'rgba(17, 24, 39, 0.9)', cornerRadius: 8 } 
-                },
-                scales: {
-                    x: { grid: { display: false, color: 'rgba(255,255,255,0.05)' }, border: { display: false } },
-                    y: { grid: { display: false }, border: { display: false }, ticks: { font: { weight: 'bold', size: 10 }, color: '#d1d5db' } }
-                }
+            onSelect(selection) {
+                window.dispatchEvent(new CustomEvent('cpinsight:topic-highlight', { detail: selection.payload }));
+            }
+        });
+    }
+
+    // --- CHART.JS CONFIGURATIONS ---
+
+    async function drawRadarChart(labels, data) {
+        if (radarChartInstance) radarChartInstance.destroy?.(); // Clear old chart memory
+
+        const engine = await visualizationReady;
+        if (!engine) return;
+
+        radarChartInstance = engine.createVisualizationLab(document.getElementById('radarChart'), {
+            id: 'analytics-topic-performance',
+            title: 'Topic Performance',
+            group: 'topicPerformance',
+            types: ['radar', 'bar', 'treemap', 'sunburst', 'heatmap', 'bubble', 'table'],
+            defaultType: 'radar',
+            scope: 'topic',
+            entityType: 'topic',
+            data: {
+                labels,
+                values: data,
+                rows: labels.map((label, index) => ({
+                    key: label,
+                    label,
+                    value: data[index],
+                    score: data[index],
+                    size: data[index]
+                }))
+            }
+        });
+    }
+
+    async function drawDifficultyChart(data) {
+        if (diffChartInstance) diffChartInstance.destroy?.(); // Clear old chart memory
+
+        const engine = await visualizationReady;
+        if (!engine) return;
+
+        const labels = ['<=900', '1000-1199', '1200-1399', '1400-1599', '1600-1799', '1800-1999', '2000+'];
+        diffChartInstance = engine.createVisualizationLab(document.getElementById('difficultyChart'), {
+            id: 'analytics-difficulty-distribution',
+            title: 'Difficulty Distribution',
+            group: 'distribution',
+            types: ['horizontalBar', 'bar', 'histogram', 'heatmap', 'table'],
+            defaultType: 'horizontalBar',
+            scope: 'difficulty',
+            entityType: 'difficulty-bucket',
+            data: {
+                labels,
+                values: data,
+                rows: labels.map((label, index) => ({
+                    key: label,
+                    label,
+                    value: data[index],
+                    count: data[index]
+                }))
             }
         });
     }

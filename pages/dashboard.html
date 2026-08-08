@@ -13,7 +13,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="stylesheet" href="../css/shared.css?v=3" />
+  <link rel="stylesheet" href="../css/shared.css?v=3" />
+    <script type="module" src="../src/visualization/index.js"></script>
     <script src="../script/auth.js?v=2"></script>
     <script src="../script/shared.js?v=2"></script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -193,17 +194,14 @@
 
          <div class="grid grid-cols-1 gap-6 mb-10 reveal visible">
           <div class="glass rounded-3xl p-6 min-w-0 flex flex-col">
-              <div class="flex justify-between items-center mb-8 shrink-0">
+              <div class="flex justify-between items-center mb-6 shrink-0">
                   <h2 class="text-2xl font-bold tracking-tight">Rating Progression</h2>
-                  <button onclick="resetChartZoom()" class="text-sm bg-white/5 border border-white/10 hover:bg-white/10 hover:border-emerald-500/50 px-4 py-2 rounded-xl transition text-emerald-400 font-semibold hidden" id="resetZoomBtn">
-                      Reset Zoom
-                  </button>
               </div>
               <div id="chartLoader" class="skeleton w-full flex-1 min-h-[350px] rounded-3xl flex items-center justify-center">
                   <div class="loader"></div>
               </div>
-              <div class="w-full flex-1 relative min-h-[350px]">
-                  <canvas id="ratingChart" class="hidden absolute inset-0"></canvas>
+              <div class="w-full flex-1 relative min-h-[420px]">
+                  <div id="ratingChart" class="hidden absolute inset-0"></div>
               </div>
           </div>
 
@@ -271,6 +269,24 @@
                     <p class="text-gray-400 mt-2 text-lg">solved for the last month</p>
                 </div>
             </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-10 reveal">
+          <section class="glass rounded-3xl p-6 min-w-0 flex flex-col min-h-[430px]">
+            <div class="mb-5">
+              <h2 class="text-2xl font-bold tracking-tight">Platform Contribution</h2>
+              <p class="text-sm text-gray-400 mt-1">Monthly activity share by connected platform.</p>
+            </div>
+            <div id="platformContributionViz" class="flex-1 min-h-[330px]"></div>
+          </section>
+
+          <section class="glass rounded-3xl p-6 min-w-0 flex flex-col min-h-[430px]">
+            <div class="mb-5">
+              <h2 class="text-2xl font-bold tracking-tight">Daily Activity Density</h2>
+              <p class="text-sm text-gray-400 mt-1">Submission intensity by hour using synced timestamps.</p>
+            </div>
+            <div id="dailyRidgelineViz" class="flex-1 min-h-[330px]"></div>
+          </section>
         </div>
 
         <div id="recentSubmissionsSection" class="glass rounded-3xl p-6 mb-10 w-full reveal">

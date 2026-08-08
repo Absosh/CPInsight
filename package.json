@@ -14,8 +14,12 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "d3": "^7.9.0",
+    "echarts": "^6.1.0",
+    "framer-motion": "^13.0.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "vis-network": "^10.1.1"
   },
   "devDependencies": {
     "@storybook/addon-a11y": "^8.6.14",
