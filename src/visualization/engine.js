@@ -585,20 +585,19 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
   const rows = rowsFromData(data);
   const categories = Array.from(new Set(rows.map((row) => row.category || groupLabel(row.label || row.topic || row.name))));
   const width = Math.max(760, stage.clientWidth || 900);
-  const height = Math.max(390, stage.clientHeight || 460);
+  const height = Math.max(600, stage.clientHeight || 640);
   const graphLeft = Math.max(26, width * 0.045);
   const graphRight = width - graphLeft;
-  const graphTop = 34;
-  const graphBottom = height - 30;
+  const graphTop = 28;
+  const graphBottom = height - 26;
   const graphWidth = graphRight - graphLeft;
   const graphHeight = graphBottom - graphTop;
   const centerX = graphLeft + graphWidth / 2;
-  const centerY = graphTop + graphHeight / 2 + 6;
-  const globeRadiusX = Math.max(250, graphWidth * 0.38);
-  const globeRadiusY = Math.max(150, graphHeight * 0.34);
-  const ringX = globeRadiusX * 0.7;
-  const ringY = globeRadiusY * 0.54;
-  const clusterRadius = Math.max(46, Math.min(86, Math.min(graphWidth, graphHeight) * 0.2));
+  const centerY = graphTop + graphHeight / 2 + 8;
+  const globeRadius = Math.min(graphWidth * 0.43, graphHeight * 0.46);
+  const globeRadiusX = globeRadius * 1.12;
+  const globeRadiusY = globeRadius * 0.84;
+  const clusterRadius = Math.max(54, Math.min(104, globeRadius * 0.25));
   const labelLimit = width >= 960 ? 24 : 18;
   const escapeAttr = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;',
@@ -611,35 +610,59 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
     const text = String(value || 'Topic');
     return text.length > labelLimit ? `${text.slice(0, labelLimit - 1)}...` : text;
   };
+  const projectGlobePoint = (longitude, latitude) => {
+    const cosLatitude = Math.cos(latitude);
+    const depth = Math.cos(longitude) * cosLatitude;
+    return {
+      x: centerX + Math.sin(longitude) * cosLatitude * globeRadiusX,
+      y: centerY - Math.sin(latitude) * globeRadiusY,
+      depth
+    };
+  };
   const categoryCenters = new Map(categories.map((category, index) => {
-    const angle = (Math.PI * 2 * index) / Math.max(1, categories.length) - Math.PI / 2;
-    const latitude = 0.82 + (index % 2) * 0.18;
+    const spread = Math.max(1, categories.length - 1);
+    const longitude = categories.length === 1 ? 0 : -Math.PI * 0.72 + (Math.PI * 1.44 * index) / spread;
+    const latitude = Math.sin((index / Math.max(1, categories.length)) * Math.PI * 2) * 0.42;
+    const point = projectGlobePoint(longitude, latitude);
     return [category, {
-      x: centerX + Math.cos(angle) * ringX * latitude,
-      y: centerY + Math.sin(angle) * ringY,
-      angle
+      ...point,
+      longitude,
+      latitude
     }];
   }));
 
   const nodes = rows.map((row, index) => {
     const category = row.category || groupLabel(row.label || row.topic || row.name);
-    const categoryCenter = categoryCenters.get(category) || { x: centerX, y: centerY, angle: 0 };
+    const categoryCenter = categoryCenters.get(category) || {
+      x: centerX,
+      y: centerY,
+      longitude: 0,
+      latitude: 0,
+      depth: 1
+    };
     const siblings = rows.filter((item) => (item.category || groupLabel(item.label || item.topic || item.name)) === category);
     const siblingIndex = siblings.findIndex((item) => (item.label || item.topic || item.name) === (row.label || row.topic || row.name));
-    const localAngle = categoryCenter.angle + ((Math.PI * 2 * Math.max(0, siblingIndex)) / Math.max(1, siblings.length));
-    const orbit = siblings.length <= 1 ? 0 : clusterRadius * (0.72 + (siblingIndex % 3) * 0.22);
+    const localAngle = (Math.PI * 2 * Math.max(0, siblingIndex)) / Math.max(1, siblings.length);
+    const orbit = siblings.length <= 1 ? 0 : 0.19 + (siblingIndex % 3) * 0.035;
+    const point = projectGlobePoint(
+      categoryCenter.longitude + Math.cos(localAngle) * orbit,
+      categoryCenter.latitude + Math.sin(localAngle) * orbit * 0.72
+    );
     const mastery = Number(row.mastery ?? row.score ?? row.value ?? 0);
     const roi = Number(row.roi ?? Math.max(0, 100 - mastery));
-    const radius = Math.max(10, Math.min(23, 10 + roi * 0.12));
+    const depthScale = 0.88 + Math.max(0, point.depth) * 0.14;
+    const radius = Math.max(9, Math.min(21, (9 + roi * 0.11) * depthScale));
     return {
+      index,
       row,
       category,
       label: row.label || row.topic || row.name,
-      x: categoryCenter.x + Math.cos(localAngle) * orbit,
-      y: categoryCenter.y + Math.sin(localAngle) * orbit * 0.62,
+      x: point.x,
+      y: point.y,
       radius,
       mastery,
       roi,
+      depth: point.depth,
       color: stateForTopic(row) === 'High ROI' ? visualizationPalette.amber : skillColor(category)
     };
   });
@@ -650,7 +673,7 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
         const dx = target.x - source.x;
         const dy = target.y - source.y;
         const distance = Math.max(0.01, Math.hypot(dx, dy));
-        const minimum = source.radius + target.radius + 52;
+        const minimum = source.radius + target.radius + 58;
         if (distance < minimum) {
           const force = (minimum - distance) / distance / 2;
           const offsetX = dx * force;
@@ -663,10 +686,10 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
       });
       const dx = source.x - centerX;
       const dy = source.y - centerY;
-      const globeDistance = Math.hypot(dx / globeRadiusX, dy / globeRadiusY);
+      const globeDistance = Math.hypot(dx / (globeRadiusX * 0.98), dy / (globeRadiusY * 0.98));
       if (globeDistance > 1) {
-        source.x = centerX + (dx / globeDistance) * globeRadiusX;
-        source.y = centerY + (dy / globeDistance) * globeRadiusY;
+        source.x = centerX + (dx / globeDistance) * 0.98;
+        source.y = centerY + (dy / globeDistance) * 0.98;
       }
       const paddedRadius = source.radius + 24;
       source.x = Math.min(graphRight - paddedRadius, Math.max(graphLeft + paddedRadius, source.x));
@@ -679,7 +702,7 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
     const dy = node.y - centerY;
     const distance = Math.max(1, Math.hypot(dx, dy));
     const side = dx < 0 ? -1 : 1;
-    const labelDistance = node.radius + 22 + Math.min(20, distance * 0.025);
+    const labelDistance = node.radius + 28 + Math.min(24, distance * 0.03);
     const stagger = ((index % 4) - 1.5) * 5;
     node.labelX = Math.min(graphRight - 10, Math.max(graphLeft + 10, node.x + (dx / distance) * labelDistance + side * 8));
     node.labelY = Math.min(graphBottom - 10, Math.max(graphTop + 10, node.y + (dy / distance) * labelDistance + stagger));
@@ -691,16 +714,24 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
   const links = nodes.flatMap((node, index) =>
     nodes.slice(index + 1)
       .filter((target) => target.category === node.category)
-      .slice(0, 2)
+      .slice(0, 3)
       .map((target) => ({ source: node, target }))
   );
+  const visualNodes = [...nodes].sort((a, b) => a.depth - b.depth);
+  const linkPath = (link) => {
+    const midX = (link.source.x + link.target.x) / 2;
+    const midY = (link.source.y + link.target.y) / 2;
+    const controlX = midX + (centerX - midX) * 0.34;
+    const controlY = midY + (centerY - midY) * 0.34;
+    return `M ${link.source.x} ${link.source.y} Q ${controlX} ${controlY} ${link.target.x} ${link.target.y}`;
+  };
 
   stage.innerHTML = `
     <div class="viz-skill-universe" style="--universe-width:${width}px">
       <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="AI Skill Universe topic graph">
         <defs>
-          <filter id="skillGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="blur" />
+          <filter id="skillGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="1.8" result="blur" />
             <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
           <radialGradient id="skillGlobe" cx="50%" cy="42%" r="60%">
@@ -723,19 +754,19 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
           `;
         }).join('')}
         ${links.map((link) => `
-          <line class="viz-skill-link" x1="${link.source.x}" y1="${link.source.y}" x2="${link.target.x}" y2="${link.target.y}" />
+          <path class="viz-skill-link" d="${linkPath(link)}" />
         `).join('')}
-        ${nodes.map((node) => `
+        ${visualNodes.map((node) => `
           <line class="viz-skill-label-line" x1="${node.labelLineX}" y1="${node.labelLineY}" x2="${node.labelX}" y2="${node.labelY - 4}" />
         `).join('')}
-        ${nodes.map((node, index) => `
-          <g class="viz-skill-node" data-index="${index}" tabindex="0" role="button" aria-label="${escapeAttr(node.label)}">
-            <circle cx="${node.x}" cy="${node.y}" r="${node.radius}" fill="${node.color}" filter="url(#skillGlow)" />
-            <circle cx="${node.x}" cy="${node.y}" r="${Math.max(6, node.radius * (node.mastery / 100))}" fill="rgba(255,255,255,0.18)" />
+        ${visualNodes.map((node) => `
+          <g class="viz-skill-node" data-index="${node.index}" tabindex="0" role="button" aria-label="${escapeAttr(node.label)}">
+            <circle cx="${node.x}" cy="${node.y}" r="${node.radius}" fill="${node.color}" filter="url(#skillGlow)" opacity="${0.78 + Math.max(0, node.depth) * 0.18}" />
+            <circle cx="${node.x}" cy="${node.y}" r="${Math.max(5, node.radius * (node.mastery / 100))}" fill="rgba(255,255,255,0.16)" />
           </g>
         `).join('')}
-        ${nodes.map((node, index) => `
-          <text class="viz-skill-label" data-index="${index}" x="${node.labelX}" y="${node.labelY}" text-anchor="${node.labelAnchor}">${escapeAttr(shortLabel(node.label))}</text>
+        ${visualNodes.map((node) => `
+          <text class="viz-skill-label" data-index="${node.index}" x="${node.labelX}" y="${node.labelY}" text-anchor="${node.labelAnchor}">${escapeAttr(shortLabel(node.label))}</text>
         `).join('')}
       </svg>
     </div>
