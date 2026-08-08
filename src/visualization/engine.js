@@ -582,23 +582,29 @@ function renderInsightPanel(panel, raw = {}) {
 }
 
 function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
-  const rows = rowsFromData(data);
-  const categories = Array.from(new Set(rows.map((row) => row.category || groupLabel(row.label || row.topic || row.name))));
+  const rows = rowsFromData(data)
+    .map((row, index) => ({
+      ...row,
+      _sourceIndex: index,
+      category: row.category || groupLabel(row.label || row.topic || row.name)
+    }))
+    .sort((a, b) => {
+      const categoryCompare = a.category.localeCompare(b.category);
+      const roiCompare = Number(b.roi ?? b.priority ?? b.value ?? 0) - Number(a.roi ?? a.priority ?? a.value ?? 0);
+      return categoryCompare || roiCompare || String(a.label || a.topic || a.name).localeCompare(String(b.label || b.topic || b.name));
+    });
+  const categories = Array.from(new Set(rows.map((row) => row.category)));
   const width = Math.max(760, stage.clientWidth || 900);
   const height = Math.max(600, stage.clientHeight || 640);
-  const graphLeft = Math.max(26, width * 0.045);
+  const graphLeft = Math.max(42, width * 0.07);
   const graphRight = width - graphLeft;
-  const graphTop = 28;
-  const graphBottom = height - 26;
+  const graphTop = Math.max(28, height * 0.05);
+  const graphBottom = height - Math.max(26, height * 0.06);
   const graphWidth = graphRight - graphLeft;
   const graphHeight = graphBottom - graphTop;
   const centerX = graphLeft + graphWidth / 2;
   const centerY = graphTop + graphHeight / 2 + 8;
-  const globeRadius = Math.min(graphWidth * 0.46, graphHeight * 0.48);
-  const globeRadiusX = globeRadius * 1.2;
-  const globeRadiusY = globeRadius * 0.8;
-  const clusterRadius = Math.max(58, Math.min(116, globeRadius * 0.28));
-  const labelLimit = width >= 960 ? 24 : 18;
+  const labelLimit = width >= 960 ? 26 : 18;
   const escapeAttr = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;',
     '<': '&lt;',
@@ -610,48 +616,85 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
     const text = String(value || 'Topic');
     return text.length > labelLimit ? `${text.slice(0, labelLimit - 1)}...` : text;
   };
-  const projectGlobePoint = (longitude, latitude) => {
-    const cosLatitude = Math.cos(latitude);
-    const depth = Math.cos(longitude) * cosLatitude;
-    return {
-      x: centerX + Math.sin(longitude) * cosLatitude * globeRadiusX,
-      y: centerY - Math.sin(latitude) * globeRadiusY,
-      depth
-    };
+  const toPoint = (slot) => ({
+    x: graphLeft + slot.x * graphWidth,
+    y: graphTop + slot.y * graphHeight,
+    r: slot.r,
+    lx: slot.lx,
+    ly: slot.ly,
+    anchor: slot.anchor
+  });
+  const slotByCategory = {
+    'Tree Structures': [
+      { x: 0.12, y: 0.18, r: 12, lx: -28, ly: -24, anchor: 'end' },
+      { x: 0.16, y: 0.29, r: 11, lx: -38, ly: 0, anchor: 'end' },
+      { x: 0.21, y: 0.22, r: 10, lx: -20, ly: -34, anchor: 'end' },
+      { x: 0.24, y: 0.31, r: 15, lx: 22, ly: -18, anchor: 'start' }
+    ],
+    Math: [
+      { x: 0.20, y: 0.52, r: 26, lx: -34, ly: -4, anchor: 'end' },
+      { x: 0.14, y: 0.66, r: 11, lx: -30, ly: 10, anchor: 'end' },
+      { x: 0.18, y: 0.76, r: 18, lx: -34, ly: 22, anchor: 'end' },
+      { x: 0.27, y: 0.71, r: 13, lx: 26, ly: 12, anchor: 'start' },
+      { x: 0.27, y: 0.35, r: 18, lx: 22, ly: 0, anchor: 'start' },
+      { x: 0.36, y: 0.83, r: 12, lx: 28, ly: 22, anchor: 'start' }
+    ],
+    Foundations: [
+      { x: 0.43, y: 0.24, r: 11, lx: -18, ly: -44, anchor: 'end' },
+      { x: 0.50, y: 0.39, r: 30, lx: -22, ly: 12, anchor: 'end' },
+      { x: 0.59, y: 0.30, r: 20, lx: 16, ly: -38, anchor: 'start' },
+      { x: 0.64, y: 0.40, r: 20, lx: 24, ly: -18, anchor: 'start' },
+      { x: 0.69, y: 0.30, r: 11, lx: 24, ly: -30, anchor: 'start' }
+    ],
+    'Dynamic Programming': [
+      { x: 0.43, y: 0.60, r: 15, lx: -24, ly: -4, anchor: 'end' },
+      { x: 0.51, y: 0.66, r: 26, lx: 28, ly: -6, anchor: 'start' },
+      { x: 0.49, y: 0.80, r: 12, lx: -20, ly: 28, anchor: 'end' },
+      { x: 0.58, y: 0.86, r: 14, lx: 16, ly: 26, anchor: 'start' },
+      { x: 0.54, y: 0.72, r: 13, lx: 24, ly: 14, anchor: 'start' }
+    ],
+    'Graph Theory': [
+      { x: 0.73, y: 0.45, r: 20, lx: -26, ly: -16, anchor: 'end' },
+      { x: 0.85, y: 0.42, r: 13, lx: 24, ly: -26, anchor: 'start' },
+      { x: 0.90, y: 0.48, r: 14, lx: 28, ly: -8, anchor: 'start' },
+      { x: 0.84, y: 0.55, r: 11, lx: 28, ly: 14, anchor: 'start' },
+      { x: 0.89, y: 0.62, r: 16, lx: 28, ly: 20, anchor: 'start' }
+    ],
+    Strings: [
+      { x: 0.75, y: 0.62, r: 15, lx: -22, ly: 20, anchor: 'end' },
+      { x: 0.82, y: 0.76, r: 12, lx: 22, ly: 28, anchor: 'start' },
+      { x: 0.95, y: 0.62, r: 13, lx: 30, ly: 0, anchor: 'start' }
+    ],
+    General: [
+      { x: 0.13, y: 0.84, r: 19, lx: -28, ly: 4, anchor: 'end' },
+      { x: 0.31, y: 0.58, r: 12, lx: -28, ly: 10, anchor: 'end' },
+      { x: 0.35, y: 0.42, r: 12, lx: 24, ly: 2, anchor: 'start' }
+    ]
   };
-  const categoryCenters = new Map(categories.map((category, index) => {
-    const spread = Math.max(1, categories.length - 1);
-    const longitude = categories.length === 1 ? 0 : -Math.PI * 0.82 + (Math.PI * 1.64 * index) / spread;
-    const latitude = Math.sin((index / Math.max(1, categories.length)) * Math.PI * 2 + 0.65) * 0.5;
-    const point = projectGlobePoint(longitude, latitude);
-    return [category, {
-      ...point,
-      longitude,
-      latitude
-    }];
+  const fallbackSlots = Object.values(slotByCategory).flat();
+  const usedSlots = new Map();
+  const takeSlot = (category, index) => {
+    const slots = slotByCategory[category] || slotByCategory.General;
+    const used = usedSlots.get(category) || 0;
+    usedSlots.set(category, used + 1);
+    if (used < slots.length) return toPoint(slots[used]);
+    return toPoint(fallbackSlots[(index + used) % fallbackSlots.length]);
+  };
+  const categoryCenters = new Map(categories.map((category) => {
+    const slots = slotByCategory[category] || slotByCategory.General;
+    const center = slots.reduce((acc, slot) => ({
+      x: acc.x + slot.x / slots.length,
+      y: acc.y + slot.y / slots.length
+    }), { x: 0, y: 0 });
+    return [category, toPoint({ ...center, r: 1, lx: 0, ly: 0, anchor: 'middle' })];
   }));
 
   const nodes = rows.map((row, index) => {
-    const category = row.category || groupLabel(row.label || row.topic || row.name);
-    const categoryCenter = categoryCenters.get(category) || {
-      x: centerX,
-      y: centerY,
-      longitude: 0,
-      latitude: 0,
-      depth: 1
-    };
-    const siblings = rows.filter((item) => (item.category || groupLabel(item.label || item.topic || item.name)) === category);
-    const siblingIndex = siblings.findIndex((item) => (item.label || item.topic || item.name) === (row.label || row.topic || row.name));
-    const localAngle = (Math.PI * 2 * Math.max(0, siblingIndex)) / Math.max(1, siblings.length);
-    const orbit = siblings.length <= 1 ? 0 : 0.22 + (siblingIndex % 4) * 0.04;
-    const point = projectGlobePoint(
-      categoryCenter.longitude + Math.cos(localAngle) * orbit,
-      categoryCenter.latitude + Math.sin(localAngle) * orbit * 0.72
-    );
+    const category = row.category;
+    const point = takeSlot(category, index);
     const mastery = Number(row.mastery ?? row.score ?? row.value ?? 0);
     const roi = Number(row.roi ?? Math.max(0, 100 - mastery));
-    const depthScale = 0.88 + Math.max(0, point.depth) * 0.14;
-    const radius = Math.max(9, Math.min(21, (9 + roi * 0.11) * depthScale));
+    const radius = Math.max(8, Math.min(point.r, point.r * 0.72 + roi * 0.13));
     return {
       index,
       row,
@@ -660,69 +703,49 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
       x: point.x,
       y: point.y,
       radius,
+      labelX: Math.min(graphRight - 10, Math.max(graphLeft + 10, point.x + point.lx)),
+      labelY: Math.min(graphBottom - 10, Math.max(graphTop + 10, point.y + point.ly)),
+      labelAnchor: point.anchor,
+      labelLineX: point.x + Math.sign(point.lx || 1) * (radius + 3),
+      labelLineY: point.y,
       mastery,
       roi,
-      depth: point.depth,
+      depth: index / Math.max(1, rows.length - 1),
       color: stateForTopic(row) === 'High ROI' ? visualizationPalette.amber : skillColor(category)
     };
   });
 
-  for (let pass = 0; pass < 58; pass += 1) {
-    nodes.forEach((source, sourceIndex) => {
-      nodes.slice(sourceIndex + 1).forEach((target) => {
-        const dx = target.x - source.x;
-        const dy = target.y - source.y;
-        const distance = Math.max(0.01, Math.hypot(dx, dy));
-        const minimum = source.radius + target.radius + 36;
-        if (distance < minimum) {
-          const force = (minimum - distance) / distance / 2;
-          const offsetX = dx * force;
-          const offsetY = dy * force;
-          source.x -= offsetX;
-          source.y -= offsetY;
-          target.x += offsetX;
-          target.y += offsetY;
-        }
-      });
-      const dx = source.x - centerX;
-      const dy = source.y - centerY;
-      const globeDistance = Math.hypot(dx / (globeRadiusX * 0.96), dy / (globeRadiusY * 0.96));
-      if (globeDistance > 1) {
-        source.x = centerX + (dx / globeDistance) * 0.98;
-        source.y = centerY + (dy / globeDistance) * 0.98;
-      }
-      const paddedRadius = source.radius + 24;
-      source.x = Math.min(graphRight - paddedRadius, Math.max(graphLeft + paddedRadius, source.x));
-      source.y = Math.min(graphBottom - paddedRadius, Math.max(graphTop + paddedRadius, source.y));
-    });
-  }
-
-  nodes.forEach((node, index) => {
-    const dx = node.x - centerX;
-    const dy = node.y - centerY;
-    const distance = Math.max(1, Math.hypot(dx, dy));
-    const side = dx < 0 ? -1 : 1;
-    const labelDistance = node.radius + 28 + Math.min(24, distance * 0.03);
-    const stagger = ((index % 4) - 1.5) * 5;
-    node.labelX = Math.min(graphRight - 10, Math.max(graphLeft + 10, node.x + (dx / distance) * labelDistance + side * 8));
-    node.labelY = Math.min(graphBottom - 10, Math.max(graphTop + 10, node.y + (dy / distance) * labelDistance + stagger));
-    node.labelAnchor = side < 0 ? 'end' : 'start';
-    node.labelLineX = node.x + (dx / distance) * (node.radius + 5);
-    node.labelLineY = node.y + (dy / distance) * (node.radius + 5);
+  const nearest = (node, count, predicate = () => true) => nodes
+    .filter((target) => target !== node && predicate(target))
+    .map((target) => ({ target, distance: Math.hypot(target.x - node.x, target.y - node.y) }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, count)
+    .map(({ target }) => target);
+  const linkKeys = new Set();
+  const links = [];
+  const addLink = (source, target, strength = 1) => {
+    if (!source || !target || source === target) return;
+    const key = [source.index, target.index].sort((a, b) => a - b).join(':');
+    if (linkKeys.has(key)) return;
+    linkKeys.add(key);
+    links.push({ source, target, strength });
+  };
+  nodes.forEach((node) => {
+    nearest(node, 2, (target) => target.category === node.category).forEach((target) => addLink(node, target, 1.25));
+    nearest(node, node.roi >= 65 ? 2 : 1, (target) => target.category !== node.category).forEach((target) => addLink(node, target, 0.75));
   });
-
-  const links = nodes.flatMap((node, index) =>
-    nodes.slice(index + 1)
-      .filter((target) => target.category === node.category)
-      .slice(0, 3)
-      .map((target) => ({ source: node, target }))
-  );
+  nodes.slice(0, 10).forEach((node, index) => {
+    addLink(node, nodes[(index * 3 + 5) % nodes.length], 0.9);
+  });
   const visualNodes = [...nodes].sort((a, b) => a.depth - b.depth);
   const linkPath = (link) => {
     const midX = (link.source.x + link.target.x) / 2;
     const midY = (link.source.y + link.target.y) / 2;
-    const controlX = midX + (centerX - midX) * 0.34;
-    const controlY = midY + (centerY - midY) * 0.34;
+    const dx = link.target.x - link.source.x;
+    const dy = link.target.y - link.source.y;
+    const bend = Math.min(72, Math.hypot(dx, dy) * 0.18) * (link.source.index % 2 ? 1 : -1);
+    const controlX = midX - dy * 0.12 + (centerX - midX) * 0.12;
+    const controlY = midY + dx * 0.12 + bend;
     return `M ${link.source.x} ${link.source.y} Q ${controlX} ${controlY} ${link.target.x} ${link.target.y}`;
   };
 
@@ -734,23 +757,17 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
             <feGaussianBlur stdDeviation="1.1" result="blur" />
             <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
-          <radialGradient id="skillGlobe" cx="50%" cy="42%" r="60%">
-            <stop offset="0%" stop-color="rgba(20,184,166,0.055)" />
-            <stop offset="58%" stop-color="rgba(14,165,233,0.028)" />
-            <stop offset="100%" stop-color="rgba(15,23,42,0)" />
-          </radialGradient>
         </defs>
-        <ellipse class="viz-skill-globe" cx="${centerX}" cy="${centerY}" rx="${globeRadiusX}" ry="${globeRadiusY}" fill="url(#skillGlobe)" />
         ${categories.map((category) => {
           const { x, y } = categoryCenters.get(category) || { x: centerX, y: centerY };
           return `
             <g class="viz-skill-cluster">
-              <ellipse cx="${x}" cy="${y}" rx="${clusterRadius + 28}" ry="${clusterRadius * 0.72 + 18}" fill="${skillColor(category)}" />
+              <ellipse cx="${x}" cy="${y}" rx="${Math.min(128, graphWidth * 0.12)}" ry="${Math.min(76, graphHeight * 0.11)}" fill="${skillColor(category)}" />
             </g>
           `;
         }).join('')}
         ${links.map((link) => `
-          <path class="viz-skill-link" d="${linkPath(link)}" />
+          <path class="viz-skill-link" d="${linkPath(link)}" style="stroke-width:${0.5 + link.strength * 0.35}px;opacity:${0.36 + link.strength * 0.12}" />
         `).join('')}
         ${visualNodes.map((node) => `
           <line class="viz-skill-label-line" x1="${node.labelLineX}" y1="${node.labelLineY}" x2="${node.labelX}" y2="${node.labelY - 4}" />
