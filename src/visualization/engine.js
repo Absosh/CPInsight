@@ -594,10 +594,10 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
   const graphHeight = graphBottom - graphTop;
   const centerX = graphLeft + graphWidth / 2;
   const centerY = graphTop + graphHeight / 2 + 8;
-  const globeRadius = Math.min(graphWidth * 0.43, graphHeight * 0.46);
-  const globeRadiusX = globeRadius * 1.12;
-  const globeRadiusY = globeRadius * 0.84;
-  const clusterRadius = Math.max(54, Math.min(104, globeRadius * 0.25));
+  const globeRadius = Math.min(graphWidth * 0.46, graphHeight * 0.48);
+  const globeRadiusX = globeRadius * 1.2;
+  const globeRadiusY = globeRadius * 0.8;
+  const clusterRadius = Math.max(58, Math.min(116, globeRadius * 0.28));
   const labelLimit = width >= 960 ? 24 : 18;
   const escapeAttr = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;',
@@ -621,8 +621,8 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
   };
   const categoryCenters = new Map(categories.map((category, index) => {
     const spread = Math.max(1, categories.length - 1);
-    const longitude = categories.length === 1 ? 0 : -Math.PI * 0.72 + (Math.PI * 1.44 * index) / spread;
-    const latitude = Math.sin((index / Math.max(1, categories.length)) * Math.PI * 2) * 0.42;
+    const longitude = categories.length === 1 ? 0 : -Math.PI * 0.82 + (Math.PI * 1.64 * index) / spread;
+    const latitude = Math.sin((index / Math.max(1, categories.length)) * Math.PI * 2 + 0.65) * 0.5;
     const point = projectGlobePoint(longitude, latitude);
     return [category, {
       ...point,
@@ -643,7 +643,7 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
     const siblings = rows.filter((item) => (item.category || groupLabel(item.label || item.topic || item.name)) === category);
     const siblingIndex = siblings.findIndex((item) => (item.label || item.topic || item.name) === (row.label || row.topic || row.name));
     const localAngle = (Math.PI * 2 * Math.max(0, siblingIndex)) / Math.max(1, siblings.length);
-    const orbit = siblings.length <= 1 ? 0 : 0.19 + (siblingIndex % 3) * 0.035;
+    const orbit = siblings.length <= 1 ? 0 : 0.22 + (siblingIndex % 4) * 0.04;
     const point = projectGlobePoint(
       categoryCenter.longitude + Math.cos(localAngle) * orbit,
       categoryCenter.latitude + Math.sin(localAngle) * orbit * 0.72
@@ -667,13 +667,13 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
     };
   });
 
-  for (let pass = 0; pass < 90; pass += 1) {
+  for (let pass = 0; pass < 58; pass += 1) {
     nodes.forEach((source, sourceIndex) => {
       nodes.slice(sourceIndex + 1).forEach((target) => {
         const dx = target.x - source.x;
         const dy = target.y - source.y;
         const distance = Math.max(0.01, Math.hypot(dx, dy));
-        const minimum = source.radius + target.radius + 58;
+        const minimum = source.radius + target.radius + 36;
         if (distance < minimum) {
           const force = (minimum - distance) / distance / 2;
           const offsetX = dx * force;
@@ -686,7 +686,7 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
       });
       const dx = source.x - centerX;
       const dy = source.y - centerY;
-      const globeDistance = Math.hypot(dx / (globeRadiusX * 0.98), dy / (globeRadiusY * 0.98));
+      const globeDistance = Math.hypot(dx / (globeRadiusX * 0.96), dy / (globeRadiusY * 0.96));
       if (globeDistance > 1) {
         source.x = centerX + (dx / globeDistance) * 0.98;
         source.y = centerY + (dy / globeDistance) * 0.98;
@@ -731,25 +731,21 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
       <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="AI Skill Universe topic graph">
         <defs>
           <filter id="skillGlow" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="1.8" result="blur" />
+            <feGaussianBlur stdDeviation="1.1" result="blur" />
             <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
           <radialGradient id="skillGlobe" cx="50%" cy="42%" r="60%">
-            <stop offset="0%" stop-color="rgba(20,184,166,0.12)" />
-            <stop offset="55%" stop-color="rgba(14,165,233,0.06)" />
+            <stop offset="0%" stop-color="rgba(20,184,166,0.055)" />
+            <stop offset="58%" stop-color="rgba(14,165,233,0.028)" />
             <stop offset="100%" stop-color="rgba(15,23,42,0)" />
           </radialGradient>
         </defs>
         <ellipse class="viz-skill-globe" cx="${centerX}" cy="${centerY}" rx="${globeRadiusX}" ry="${globeRadiusY}" fill="url(#skillGlobe)" />
-        <ellipse class="viz-skill-globe-line" cx="${centerX}" cy="${centerY}" rx="${globeRadiusX * 0.72}" ry="${globeRadiusY}" />
-        <ellipse class="viz-skill-globe-line" cx="${centerX}" cy="${centerY}" rx="${globeRadiusX}" ry="${globeRadiusY * 0.52}" />
-        <line class="viz-skill-globe-line" x1="${centerX - globeRadiusX}" y1="${centerY}" x2="${centerX + globeRadiusX}" y2="${centerY}" />
         ${categories.map((category) => {
           const { x, y } = categoryCenters.get(category) || { x: centerX, y: centerY };
           return `
             <g class="viz-skill-cluster">
               <ellipse cx="${x}" cy="${y}" rx="${clusterRadius + 28}" ry="${clusterRadius * 0.72 + 18}" fill="${skillColor(category)}" />
-              <text x="${x}" y="${y - clusterRadius * 0.72 - 20}">${escapeAttr(category)}</text>
             </g>
           `;
         }).join('')}

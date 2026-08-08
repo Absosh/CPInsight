@@ -389,27 +389,24 @@
 }
 
 .viz-skill-globe {
-  opacity: 0.95;
-  stroke: rgba(148, 163, 184, 0.12);
-  stroke-width: 1;
+  opacity: 1;
+  stroke: none;
 }
 
 .viz-skill-globe-line {
   fill: none;
-  stroke: rgba(148, 163, 184, 0.08);
+  stroke: rgba(148, 163, 184, 0.035);
   stroke-width: 1;
-  stroke-dasharray: 8 12;
+  stroke-dasharray: 10 18;
 }
 
 .viz-skill-cluster ellipse {
-  opacity: 0.04;
-  stroke: rgba(255, 255, 255, 0.12);
-  stroke-width: 1;
-  stroke-dasharray: 5 9;
+  opacity: 0.022;
+  stroke: none;
 }
 
 .viz-skill-cluster text {
-  fill: rgba(203, 213, 225, 0.78);
+  fill: rgba(203, 213, 225, 0.46);
   font-size: 10px;
   font-weight: 800;
   text-anchor: middle;
@@ -418,13 +415,13 @@
 
 .viz-skill-link {
   fill: none;
-  stroke: rgba(148, 163, 184, 0.18);
-  stroke-width: 0.9;
+  stroke: rgba(148, 163, 184, 0.14);
+  stroke-width: 0.8;
 }
 
 .viz-skill-label-line {
-  stroke: rgba(148, 163, 184, 0.34);
-  stroke-width: 1;
+  stroke: rgba(148, 163, 184, 0.24);
+  stroke-width: 0.8;
 }
 
 .viz-skill-node {
@@ -433,16 +430,16 @@
 }
 
 .viz-skill-node circle:first-child {
-  stroke: rgba(255, 255, 255, 0.48);
-  stroke-width: 1.2;
-  filter: drop-shadow(0 0 4px rgba(20, 184, 166, 0.16));
+  stroke: rgba(255, 255, 255, 0.32);
+  stroke-width: 0.9;
+  filter: drop-shadow(0 0 2px rgba(20, 184, 166, 0.14));
   transition: stroke 160ms ease, stroke-width 160ms ease, transform 160ms ease;
 }
 
 .viz-skill-node:hover circle:first-child,
 .viz-skill-node:focus circle:first-child {
   stroke: #ecfeff;
-  stroke-width: 2.5;
+  stroke-width: 1.8;
 }
 
 .viz-skill-label {
@@ -452,8 +449,8 @@
   font-weight: 800;
   text-transform: capitalize;
   paint-order: stroke;
-  stroke: rgba(7, 11, 23, 0.9);
-  stroke-width: 4px;
+  stroke: rgba(7, 11, 23, 0.82);
+  stroke-width: 3px;
   stroke-linejoin: round;
 }
 
