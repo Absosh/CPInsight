@@ -893,10 +893,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    document.getElementById('recentSubmissionsToggle')?.addEventListener('click', toggleRecentSubmissions);
 });
 
 window.sortTable = sortTable;
 window.resetChartZoom = resetChartZoom;
+window.toggleRecentSubmissions = toggleRecentSubmissions;
  
