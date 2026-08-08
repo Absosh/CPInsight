@@ -586,34 +586,92 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
   const categories = Array.from(new Set(rows.map((row) => row.category || groupLabel(row.label || row.topic || row.name))));
   const width = Math.max(760, stage.clientWidth || 900);
   const height = Math.max(390, stage.clientHeight || 460);
-  const centerX = width / 2;
-  const centerY = height / 2 + 12;
-  const ringRadius = Math.min(width, height) * 0.33;
-  const clusterRadius = Math.max(72, Math.min(116, ringRadius * 0.45));
+  const panelReserve = width >= 960 ? 320 : 0;
+  const graphLeft = 44;
+  const graphRight = Math.max(graphLeft + 420, width - panelReserve - 36);
+  const graphTop = 50;
+  const graphBottom = height - 42;
+  const graphWidth = graphRight - graphLeft;
+  const graphHeight = graphBottom - graphTop;
+  const centerX = graphLeft + graphWidth / 2;
+  const centerY = graphTop + graphHeight / 2 + 10;
+  const ringX = Math.max(150, graphWidth * 0.34);
+  const ringY = Math.max(98, graphHeight * 0.27);
+  const clusterRadius = Math.max(42, Math.min(74, Math.min(graphWidth, graphHeight) * 0.18));
+  const labelLimit = width >= 960 ? 20 : 16;
+  const escapeAttr = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+  const shortLabel = (value) => {
+    const text = String(value || 'Topic');
+    return text.length > labelLimit ? `${text.slice(0, labelLimit - 1)}...` : text;
+  };
+  const categoryCenters = new Map(categories.map((category, index) => {
+    const angle = (Math.PI * 2 * index) / Math.max(1, categories.length) - Math.PI / 2;
+    return [category, {
+      x: centerX + Math.cos(angle) * ringX,
+      y: centerY + Math.sin(angle) * ringY,
+      angle
+    }];
+  }));
 
   const nodes = rows.map((row, index) => {
     const category = row.category || groupLabel(row.label || row.topic || row.name);
-    const categoryIndex = Math.max(0, categories.indexOf(category));
-    const categoryAngle = (Math.PI * 2 * categoryIndex) / Math.max(1, categories.length) - Math.PI / 2;
+    const categoryCenter = categoryCenters.get(category) || { x: centerX, y: centerY, angle: 0 };
     const siblings = rows.filter((item) => (item.category || groupLabel(item.label || item.topic || item.name)) === category);
     const siblingIndex = siblings.findIndex((item) => (item.label || item.topic || item.name) === (row.label || row.topic || row.name));
-    const localAngle = (Math.PI * 2 * Math.max(0, siblingIndex)) / Math.max(1, siblings.length);
+    const localAngle = categoryCenter.angle + ((Math.PI * 2 * Math.max(0, siblingIndex)) / Math.max(1, siblings.length));
+    const orbit = siblings.length <= 1 ? 0 : clusterRadius * (0.62 + (siblingIndex % 3) * 0.16);
     const mastery = Number(row.mastery ?? row.score ?? row.value ?? 0);
     const roi = Number(row.roi ?? Math.max(0, 100 - mastery));
-    const baseX = centerX + Math.cos(categoryAngle) * ringRadius;
-    const baseY = centerY + Math.sin(categoryAngle) * ringRadius * 0.68;
-    const radius = Math.max(18, Math.min(38, 18 + roi * 0.2));
+    const radius = Math.max(11, Math.min(25, 11 + roi * 0.13));
     return {
       row,
       category,
       label: row.label || row.topic || row.name,
-      x: baseX + Math.cos(localAngle) * clusterRadius,
-      y: baseY + Math.sin(localAngle) * clusterRadius * 0.66,
+      x: categoryCenter.x + Math.cos(localAngle) * orbit,
+      y: categoryCenter.y + Math.sin(localAngle) * orbit * 0.72,
       radius,
       mastery,
       roi,
       color: stateForTopic(row) === 'High ROI' ? visualizationPalette.amber : skillColor(category)
     };
+  });
+
+  for (let pass = 0; pass < 90; pass += 1) {
+    nodes.forEach((source, sourceIndex) => {
+      nodes.slice(sourceIndex + 1).forEach((target) => {
+        const dx = target.x - source.x;
+        const dy = target.y - source.y;
+        const distance = Math.max(0.01, Math.hypot(dx, dy));
+        const minimum = source.radius + target.radius + 42;
+        if (distance < minimum) {
+          const force = (minimum - distance) / distance / 2;
+          const offsetX = dx * force;
+          const offsetY = dy * force;
+          source.x -= offsetX;
+          source.y -= offsetY;
+          target.x += offsetX;
+          target.y += offsetY;
+        }
+      });
+      const paddedRadius = source.radius + 28;
+      source.x = Math.min(graphRight - paddedRadius, Math.max(graphLeft + paddedRadius, source.x));
+      source.y = Math.min(graphBottom - paddedRadius, Math.max(graphTop + paddedRadius, source.y));
+    });
+  }
+
+  nodes.forEach((node, index) => {
+    const side = node.x < centerX ? -1 : 1;
+    const stagger = ((index % 5) - 2) * 4;
+    node.labelX = Math.min(graphRight - 8, Math.max(graphLeft + 8, node.x + side * (node.radius + 18)));
+    node.labelY = Math.min(graphBottom - 8, Math.max(graphTop + 8, node.y + stagger));
+    node.labelAnchor = side < 0 ? 'end' : 'start';
+    node.labelLineX = node.x + side * (node.radius + 5);
   });
 
   const links = nodes.flatMap((node, index) =>
@@ -632,32 +690,35 @@ function renderSkillUniverseStage(stage, data, insightPanel, config, state) {
             <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
         </defs>
-        ${categories.map((category, index) => {
-          const angle = (Math.PI * 2 * index) / Math.max(1, categories.length) - Math.PI / 2;
-          const x = centerX + Math.cos(angle) * ringRadius;
-          const y = centerY + Math.sin(angle) * ringRadius * 0.68;
+        ${categories.map((category) => {
+          const { x, y } = categoryCenters.get(category) || { x: centerX, y: centerY };
           return `
             <g class="viz-skill-cluster">
-              <ellipse cx="${x}" cy="${y}" rx="${clusterRadius + 44}" ry="${clusterRadius * 0.72 + 34}" fill="${skillColor(category)}" />
-              <text x="${x}" y="${y - clusterRadius * 0.72 - 22}">${category}</text>
+              <ellipse cx="${x}" cy="${y}" rx="${clusterRadius + 28}" ry="${clusterRadius * 0.72 + 18}" fill="${skillColor(category)}" />
+              <text x="${x}" y="${y - clusterRadius * 0.72 - 20}">${escapeAttr(category)}</text>
             </g>
           `;
         }).join('')}
         ${links.map((link) => `
           <line class="viz-skill-link" x1="${link.source.x}" y1="${link.source.y}" x2="${link.target.x}" y2="${link.target.y}" />
         `).join('')}
+        ${nodes.map((node) => `
+          <line class="viz-skill-label-line" x1="${node.labelLineX}" y1="${node.y}" x2="${node.labelX}" y2="${node.labelY - 4}" />
+        `).join('')}
         ${nodes.map((node, index) => `
-          <g class="viz-skill-node" data-index="${index}" tabindex="0" role="button" aria-label="${node.label}">
+          <g class="viz-skill-node" data-index="${index}" tabindex="0" role="button" aria-label="${escapeAttr(node.label)}">
             <circle cx="${node.x}" cy="${node.y}" r="${node.radius}" fill="${node.color}" filter="url(#skillGlow)" />
             <circle cx="${node.x}" cy="${node.y}" r="${Math.max(6, node.radius * (node.mastery / 100))}" fill="rgba(255,255,255,0.18)" />
-            <text x="${node.x}" y="${node.y + node.radius + 16}">${node.label}</text>
           </g>
+        `).join('')}
+        ${nodes.map((node, index) => `
+          <text class="viz-skill-label" data-index="${index}" x="${node.labelX}" y="${node.labelY}" text-anchor="${node.labelAnchor}">${escapeAttr(shortLabel(node.label))}</text>
         `).join('')}
       </svg>
     </div>
   `;
 
-  stage.querySelectorAll('.viz-skill-node').forEach((nodeElement) => {
+  stage.querySelectorAll('.viz-skill-node, .viz-skill-label').forEach((nodeElement) => {
     const node = nodes[Number(nodeElement.dataset.index)];
     const activate = () => {
       const selection = selectVisualizationItem({
