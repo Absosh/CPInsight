@@ -542,9 +542,11 @@ export function createVisualizationLab(target, config = {}) {
   shell.innerHTML = `
     <div class="viz-toolbar">
       <div class="viz-toolbar-main">
-        <select class="viz-control viz-type" aria-label="Switch visualization type">
-          ${types.map((type) => `<option value="${type}">${CHART_REGISTRY[type].label}</option>`).join('')}
-        </select>
+        ${types.length > 1
+          ? `<select class="viz-control viz-type" aria-label="Switch visualization type">
+              ${types.map((type) => `<option value="${type}">${CHART_REGISTRY[type].label}</option>`).join('')}
+            </select>`
+          : `<span class="viz-fixed-type">${CHART_REGISTRY[defaultType]?.label || 'Visualization'}</span>`}
         <label class="viz-search-wrap">
           <span>Search</span>
           <input class="viz-control viz-search" type="search" placeholder="Filter data" aria-label="Search visualization data">
@@ -577,7 +579,7 @@ export function createVisualizationLab(target, config = {}) {
   const stage = shell.querySelector('.viz-stage');
   const insightPanel = shell.querySelector('.viz-insight-panel');
   const empty = shell.querySelector('.viz-empty');
-  typeSelect.value = state.type;
+  if (typeSelect) typeSelect.value = state.type;
 
   let chart = null;
   const resizeObserver = new ResizeObserver(() => chart?.resize?.());
@@ -641,7 +643,7 @@ export function createVisualizationLab(target, config = {}) {
     render();
   }
 
-  typeSelect.addEventListener('change', () => {
+  typeSelect?.addEventListener('change', () => {
     state.type = typeSelect.value;
     render();
   });

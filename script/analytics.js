@@ -23,6 +23,7 @@
         const codeforcesAccount = accounts.find(account => account.platform === 'codeforces' && account.handle);
         if (!codeforcesAccount) {
             renderCodeforcesNotConnected();
+            renderAdvancedAnalyticsVisuals();
             return;
         }
 
@@ -47,6 +48,7 @@
         }
         
         loadAnalyticsData();
+        renderAdvancedAnalyticsVisuals();
     }
 
     function renderCodeforcesNotConnected() {
@@ -864,8 +866,13 @@ const activityData = computeActivityAnalytics(submissions);
     let radarChartInstance = null;
     let diffChartInstance = null;
     let skillUniverseInstance = null;
+    let platformContributionInstance = null;
+    let weekdayActivityInstance = null;
     let radarObserver = null;
     let diffObserver = null;
+
+    const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const WEEKDAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
     function setupRadarChartObserver(labels, data) {
         if (radarObserver) radarObserver.disconnect(); // Prevent duplicate triggers
@@ -897,6 +904,119 @@ const activityData = computeActivityAnalytics(submissions);
         }, { threshold: 0.2 });
         
         diffObserver.observe(wrapper.parentElement);
+    }
+
+    function normalizeAnalyticsPayload(data) {
+        return {
+            platform: data?.platform || 'combined',
+            activityHeatmap: data?.activityHeatmap || {},
+            platforms: Array.isArray(data?.platforms) ? data.platforms : []
+        };
+    }
+
+    function buildMonthlyPlatformContribution(analytics) {
+        const currentYear = new Date().getFullYear();
+        const platformSources = analytics.platforms.length ? analytics.platforms : [analytics];
+        const platformNames = Array.from(new Set(platformSources.map((source) => (source.platform || 'combined').toString())));
+        const datasets = platformNames.map((platform) => ({
+            name: platform.replace(/\b\w/g, (char) => char.toUpperCase()),
+            values: Array(12).fill(0)
+        }));
+
+        platformSources.forEach((source) => {
+            const platform = (source.platform || 'combined').toString();
+            const dataset = datasets.find((item) => item.name.toLowerCase() === platform.toLowerCase());
+            Object.entries(source.activityHeatmap || {}).forEach(([dateKey, count]) => {
+                const year = Number(dateKey.slice(0, 4));
+                const month = Number(dateKey.slice(5, 7)) - 1;
+                if (year !== currentYear || month < 0 || month > 11) return;
+                dataset.values[month] += Number(count || 0);
+            });
+        });
+
+        const rows = MONTH_LABELS.map((label, monthIndex) => {
+            const row = { label, month: label };
+            datasets.forEach((dataset) => {
+                row[dataset.name] = dataset.values[monthIndex];
+            });
+            row.value = datasets.reduce((sum, dataset) => sum + dataset.values[monthIndex], 0);
+            return row;
+        });
+
+        return { labels: MONTH_LABELS, datasets, rows };
+    }
+
+    function buildWeekdayActivity(analytics) {
+        const totals = Array(7).fill(0);
+        Object.entries(analytics.activityHeatmap || {}).forEach(([dateKey, count]) => {
+            const date = new Date(`${dateKey}T00:00:00`);
+            if (Number.isNaN(date.getTime())) return;
+            totals[date.getDay()] += Number(count || 0);
+        });
+        return {
+            labels: WEEKDAY_LABELS,
+            values: totals,
+            rows: WEEKDAY_LABELS.map((label, index) => ({
+                key: label,
+                label,
+                weekday: label,
+                value: totals[index],
+                activity: totals[index]
+            }))
+        };
+    }
+
+    async function renderAdvancedAnalyticsVisuals() {
+        const platformContainer = document.getElementById('platformContributionViz');
+        const weekdayContainer = document.getElementById('weekdayActivityViz');
+        if (!platformContainer && !weekdayContainer) return;
+
+        try {
+            const [engine, raw] = await Promise.all([
+                visualizationReady,
+                httpClient.get('/analytics/combined')
+            ]);
+            if (!engine) return;
+
+            const analytics = normalizeAnalyticsPayload(raw);
+            const platformData = buildMonthlyPlatformContribution(analytics);
+            const hasPlatformActivity = platformData.rows.some((row) => row.value > 0);
+            platformContributionInstance?.destroy?.();
+            if (platformContainer && hasPlatformActivity) {
+                platformContributionInstance = engine.createVisualizationLab(platformContainer, {
+                    id: 'analytics-platform-contribution',
+                    title: 'Platform Contribution',
+                    types: ['stackedBar'],
+                    defaultType: 'stackedBar',
+                    scope: 'platform',
+                    entityType: 'platform-month',
+                    data: platformData
+                });
+            } else if (platformContainer) {
+                renderEmptyState('platformContributionViz', 'No platform contribution yet', 'Monthly stacked activity appears after synced platform activity exists.', '📊');
+            }
+
+            const weekdayData = buildWeekdayActivity(analytics);
+            const hasWeekdayActivity = weekdayData.values.some((value) => value > 0);
+            weekdayActivityInstance?.destroy?.();
+            if (weekdayContainer && hasWeekdayActivity) {
+                weekdayActivityInstance = engine.createVisualizationLab(weekdayContainer, {
+                    id: 'analytics-weekday-activity',
+                    title: 'Daily Activity Density',
+                    types: ['bar'],
+                    defaultType: 'bar',
+                    scope: 'activity',
+                    entityType: 'weekday',
+                    data: weekdayData
+                });
+            } else if (weekdayContainer) {
+                renderEmptyState('weekdayActivityViz', 'No weekday activity yet', 'Activity by weekday appears after accepted submissions are synced.', '📈');
+            }
+        } catch (error) {
+            console.error('Advanced analytics visualization failed:', error);
+            if (platformContainer) renderEmptyState('platformContributionViz', 'Unable to load platform contribution', error.message || 'Analytics request failed.', '!');
+            if (weekdayContainer) renderEmptyState('weekdayActivityViz', 'Unable to load weekday activity', error.message || 'Analytics request failed.', '!');
+        }
     }
 
     function topicCategory(topic) {

@@ -1,7 +1,5 @@
 let ratingChartInstance = null;
 let sparkInstances = {};
-let platformContributionInstance = null;
-let dailyRidgelineInstance = null;
 let currentRows = [];
 let currentSort = { column: 'date', asc: false };
 let lastAnalyticsKey = null;
@@ -146,10 +144,6 @@ function destroyCharts() {
     Object.values(sparkInstances).forEach((instance) => instance.destroy());
     sparkInstances = {};
 
-    platformContributionInstance?.destroy?.();
-    platformContributionInstance = null;
-    dailyRidgelineInstance?.destroy?.();
-    dailyRidgelineInstance = null;
 }
 
 function resetVisualState() {
@@ -496,130 +490,6 @@ function renderHeatmap(activityHeatmap) {
     document.getElementById('heatmapContainer')?.classList.remove('hidden');
 }
 
-function monthKey(dateKey) {
-    return String(dateKey || '').slice(0, 7);
-}
-
-function buildPlatformContributionRows(analytics) {
-    const platformSources = Array.isArray(analytics?.platforms) && analytics.platforms.length
-        ? analytics.platforms
-        : [analytics].filter(Boolean);
-    const monthly = new Map();
-
-    platformSources.forEach((source) => {
-        const platform = capitalize(source.platform || 'combined');
-        Object.entries(source.activityHeatmap || {}).forEach(([day, count]) => {
-            const value = Number(count || 0);
-            if (!value) return;
-            const month = monthKey(day);
-            const key = `${month}|${platform}`;
-            monthly.set(key, {
-                month,
-                platform,
-                value: (monthly.get(key)?.value || 0) + value
-            });
-        });
-    });
-
-    const monthTotals = {};
-    Array.from(monthly.values()).forEach((row) => {
-        monthTotals[row.month] = (monthTotals[row.month] || 0) + row.value;
-    });
-
-    return Array.from(monthly.values())
-        .filter((row) => row.month)
-        .sort((a, b) => a.month.localeCompare(b.month) || a.platform.localeCompare(b.platform))
-        .map((row) => ({
-            ...row,
-            total: monthTotals[row.month] || row.value,
-            percent: Math.round((row.value / Math.max(1, monthTotals[row.month] || row.value)) * 100),
-            color: getPlatformColor(row.platform)
-        }));
-}
-
-function buildRidgelineRows(analytics) {
-    const rows = [];
-    (analytics?.recentSubmissions || []).forEach((submission) => {
-        const stamp = submission.submittedAt || submission.creationTime || submission.createdAt;
-        if (!stamp) return;
-        const date = new Date(stamp);
-        if (Number.isNaN(date.getTime())) return;
-        rows.push({
-            date: date.toISOString().slice(0, 10),
-            hour: date.getHours(),
-            value: 1,
-            platform: capitalize(submission.platform || analytics.platform || 'Platform'),
-            contest: submission.contestName || submission.contest || '',
-            problem: submission.problemName || submission.problemKey || submission.problem || 'Problem'
-        });
-    });
-
-    const buckets = new Map();
-    rows.forEach((row) => {
-        const key = `${row.date}|${row.hour}|${row.platform}`;
-        const existing = buckets.get(key) || { ...row, value: 0, problems: [] };
-        existing.value += row.value;
-        existing.problems.push(row.problem);
-        buckets.set(key, existing);
-    });
-
-    return Array.from(buckets.values()).sort((a, b) => a.date.localeCompare(b.date) || a.hour - b.hour);
-}
-
-async function renderAdvancedDashboardVisualizations(analytics) {
-    const engine = await visualizationReady;
-    if (!engine) return;
-
-    const platformRows = buildPlatformContributionRows(analytics);
-    const platformContainer = document.getElementById('platformContributionViz');
-    platformContributionInstance?.destroy?.();
-    if (platformRows.length && platformContainer) {
-        platformContributionInstance = engine.createVisualizationLab(platformContainer, {
-            id: 'dashboard-platform-contribution',
-            title: 'Platform Contribution',
-            group: 'advancedAnalytics',
-            types: ['marimekko', 'bar', 'table'],
-            defaultType: 'marimekko',
-            scope: 'platform',
-            entityType: 'platform',
-            data: {
-                labels: platformRows.map((row) => `${row.month} ${row.platform}`),
-                rows: platformRows,
-                values: platformRows.map((row) => row.value)
-            },
-            onSelect(selection) {
-                if (selection?.payload?.platform) {
-                    window.dispatchEvent(new CustomEvent('cpinsight:platform-highlight', { detail: selection.payload }));
-                }
-            }
-        });
-    } else if (platformContainer) {
-        renderEmptyState('platformContributionViz', 'No platform contribution yet', 'Monthly platform split appears after synced platform activity exists.', '📊');
-    }
-
-    const ridgelineRows = buildRidgelineRows(analytics);
-    const ridgelineContainer = document.getElementById('dailyRidgelineViz');
-    dailyRidgelineInstance?.destroy?.();
-    if (ridgelineRows.length && ridgelineContainer) {
-        dailyRidgelineInstance = engine.createVisualizationLab(ridgelineContainer, {
-            id: 'dashboard-daily-ridgeline',
-            title: 'Daily Activity Density',
-            group: 'advancedAnalytics',
-            types: ['ridgeline', 'heatmap', 'table'],
-            defaultType: 'ridgeline',
-            scope: 'activity',
-            entityType: 'activity-hour',
-            data: {
-                labels: ridgelineRows.map((row) => `${row.date} ${row.hour}:00`),
-                rows: ridgelineRows,
-                values: ridgelineRows.map((row) => row.value)
-            }
-        });
-    } else if (ridgelineContainer) {
-        renderEmptyState('dailyRidgelineViz', 'No hourly submission density yet', 'Ridgeline needs timestamped recent submissions from synced analytics.', '🕒');
-    }
-}
-
 function populateHeatmapYearSelector(activityHeatmap) {
     const select = document.getElementById('heatmapYearSelect');
     if (!select) return;
@@ -851,7 +721,6 @@ function renderDeepStats(analytics, layout) {
     populateHeatmapYearSelector(analytics.activityHeatmap || {});
     renderHeatmap(analytics.activityHeatmap || {});
     renderRecentSubmissions(analytics.recentSubmissions || [], layout.showRecentSubmissions);
-    renderAdvancedDashboardVisualizations(analytics);
 
     const heatmap = analytics.activityHeatmap || {};
     const yearlySolved = analytics.solvedLastYear || 0;

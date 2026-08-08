@@ -21,7 +21,7 @@ export const VISUALIZATION_GROUPS = Object.freeze({
   },
   advancedAnalytics: {
     label: 'Advanced Analytics',
-    types: ['marimekko', 'ridgeline', 'calendarHeatmap', 'table']
+    types: ['stackedBar', 'bar', 'calendarHeatmap', 'table']
   },
   skillUniverse: {
     label: 'AI Skill Universe',
@@ -35,6 +35,7 @@ export const CHART_REGISTRY = Object.freeze({
   area: { label: 'Area Chart', engine: 'echarts', seriesType: 'line', area: true },
   stackedArea: { label: 'Stacked Area', engine: 'echarts', seriesType: 'line', area: true, stack: true },
   bar: { label: 'Bar Chart', engine: 'echarts', seriesType: 'bar' },
+  stackedBar: { label: 'Stacked Bar', engine: 'echarts', seriesType: 'bar', stack: true },
   horizontalBar: { label: 'Horizontal Bar', engine: 'echarts', seriesType: 'bar', horizontal: true },
   groupedBar: { label: 'Grouped Bar', engine: 'echarts', seriesType: 'bar', grouped: true },
   pie: { label: 'Pie', engine: 'echarts', seriesType: 'pie' },
