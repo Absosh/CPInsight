@@ -116,7 +116,6 @@
     nodes: [],
     edges: [],
     selected: null,
-    transform: { x: 0, y: 0, scale: 1 },
     timeline: 1
   };
 
@@ -219,7 +218,7 @@
           x,
           y,
           size: isBoss ? 'boss' : isMilestone ? 'milestone' : index % 2 ? 'topic' : 'concept',
-          radius: isBoss ? 42 : isMilestone ? 34 : index % 2 ? 27 : 21,
+          radius: isBoss ? 50 : isMilestone ? 40 : index % 2 ? 32 : 25,
           mastery,
           effectiveMastery,
           confidence: mastery === null ? 0 : Math.min(97, Math.round(52 + effectiveMastery * 0.44)),
@@ -244,15 +243,15 @@
 
   function branchLabelPosition(branch) {
     return {
-      x: 80 + branch.x * 1240,
-      y: 708
+      x: 70 + branch.x * 1260,
+      y: 728
     };
   }
 
   function svgPoint(node) {
     return {
-      x: 80 + node.x * 1240,
-      y: 48 + node.y * 626
+      x: 70 + node.x * 1260,
+      y: 46 + node.y * 650
     };
   }
 
@@ -264,8 +263,8 @@
     return `M ${a.x} ${a.y + from.radius} C ${a.x + offset} ${midY}, ${b.x - offset} ${midY}, ${b.x} ${b.y - to.radius}`;
   }
 
-  function renderPageShell(main) {
-    main.innerHTML = `
+  function renderPageShell(container) {
+    container.innerHTML = `
       <section class="skill-tree-page">
         <div class="skill-tree-hero reveal visible">
           <div class="skill-tree-title">
@@ -296,10 +295,9 @@
                 <span id="treeTimeLabel">Current</span>
                 <input id="skillTreeTimeline" type="range" min="0" max="2" step="1" value="1" aria-label="Timeline">
               </label>
-              <button id="treeReset" type="button">Reset View</button>
             </div>
           </div>
-          <div id="skillTreeViewport" class="skill-tree-viewport">
+          <div id="skillTreeViewport" class="skill-tree-viewport" aria-label="Fixed AI adaptive skill tree">
             <svg id="skillTreeSvg" class="skill-tree-svg" viewBox="0 0 1400 760" role="img" aria-label="AI adaptive competitive programming skill tree"></svg>
           </div>
           <div id="treePreview" class="tree-preview hidden"></div>
@@ -314,7 +312,7 @@
       particle.style.left = `${8 + (index * 37) % 88}%`;
       particle.style.top = `${18 + (index * 19) % 72}%`;
       particle.style.animationDelay = `${index * -0.42}s`;
-      main.querySelector('.skill-tree-shell').appendChild(particle);
+      container.querySelector('.skill-tree-shell').appendChild(particle);
     });
   }
 
@@ -333,7 +331,6 @@
 
   function renderTree() {
     const svg = document.getElementById('skillTreeSvg');
-    const { x, y, scale } = treeState.transform;
     const nodeMap = new Map(treeState.nodes.map((node) => [node.id, node]));
     const edges = treeState.edges.map((edge) => {
       const from = nodeMap.get(edge.from);
@@ -359,20 +356,20 @@
         <g class="tree-node ${node.state}${isSelected ? ' is-selected' : ''}" data-id="${node.id}" tabindex="0" role="button" aria-label="${escapeHtml(`${node.name}, ${state}`)}">
           <circle class="tree-node-ring" cx="${point.x}" cy="${point.y}" r="${node.radius}" style="color:${stateColors[node.state] || node.color};stroke:${stateColors[node.state] || node.color}"></circle>
           <circle class="tree-progress" cx="${point.x}" cy="${point.y}" r="${node.radius + 6}" stroke="${stateColors[node.state] || node.color}" stroke-width="3" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"></circle>
-          <text x="${point.x}" y="${point.y + 5}" text-anchor="middle" fill="#e0f2fe" font-size="${node.radius > 34 ? 17 : 13}" font-weight="950">${escapeHtml(node.name.slice(0, 2).toUpperCase())}</text>
-          <text class="tree-node-label" x="${point.x}" y="${point.y + node.radius + 25}" text-anchor="middle">${escapeHtml(node.name)}</text>
-          <text class="tree-node-meta" x="${point.x}" y="${point.y + node.radius + 42}" text-anchor="middle">${node.mastery === null ? state : `${node.effectiveMastery}%`}</text>
+          <text x="${point.x}" y="${point.y + 6}" text-anchor="middle" fill="#e0f2fe" font-size="${node.radius > 40 ? 19 : 15}" font-weight="950">${escapeHtml(node.name.slice(0, 2).toUpperCase())}</text>
+          <text class="tree-node-label" x="${point.x}" y="${point.y + node.radius + 28}" text-anchor="middle">${escapeHtml(node.name)}</text>
+          <text class="tree-node-meta" x="${point.x}" y="${point.y + node.radius + 47}" text-anchor="middle">${node.mastery === null ? state : `${node.effectiveMastery}%`}</text>
         </g>
       `;
     }).join('');
 
-    svg.innerHTML = `<g transform="translate(${x} ${y}) scale(${scale})">${edges}${labels}${nodes}</g>`;
+    svg.innerHTML = `<g>${edges}${labels}${nodes}</g>`;
     svg.querySelectorAll('.tree-node').forEach((element) => {
       element.addEventListener('pointerenter', showPreview);
       element.addEventListener('pointermove', movePreview);
       element.addEventListener('pointerleave', hidePreview);
       element.addEventListener('click', () => selectNode(element.dataset.id));
-      element.addEventListener('dblclick', () => focusNode(element.dataset.id));
+      element.addEventListener('dblclick', () => selectNode(element.dataset.id));
       element.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
@@ -498,53 +495,12 @@
   function focusNode(id) {
     const node = treeState.nodes.find((item) => item.id === id);
     if (!node) return;
-    const point = svgPoint(node);
-    treeState.transform = {
-      scale: 1.45,
-      x: 800 - point.x * 1.45,
-      y: 410 - point.y * 1.45
-    };
     selectNode(id);
   }
 
-  function resetView() {
-    treeState.transform = { x: 0, y: 0, scale: 1 };
-    document.getElementById('skillTreeSearch').value = '';
-    treeState.selected = null;
-    document.getElementById('treePanel')?.classList.add('hidden');
-    renderTree();
-  }
-
   function setupInteractions() {
-    const viewport = document.getElementById('skillTreeViewport');
     const search = document.getElementById('skillTreeSearch');
     const timeline = document.getElementById('skillTreeTimeline');
-    let dragging = false;
-    let start = null;
-
-    viewport.addEventListener('wheel', (event) => {
-      event.preventDefault();
-      const nextScale = Math.max(0.68, Math.min(1.85, treeState.transform.scale + (event.deltaY > 0 ? -0.08 : 0.08)));
-      treeState.transform.scale = nextScale;
-      renderTree();
-    }, { passive: false });
-
-    viewport.addEventListener('pointerdown', (event) => {
-      dragging = true;
-      start = { x: event.clientX, y: event.clientY, tx: treeState.transform.x, ty: treeState.transform.y };
-      viewport.classList.add('is-dragging');
-      viewport.setPointerCapture(event.pointerId);
-    });
-    viewport.addEventListener('pointermove', (event) => {
-      if (!dragging || !start) return;
-      treeState.transform.x = start.tx + event.clientX - start.x;
-      treeState.transform.y = start.ty + event.clientY - start.y;
-      renderTree();
-    });
-    viewport.addEventListener('pointerup', () => {
-      dragging = false;
-      viewport.classList.remove('is-dragging');
-    });
 
     search.addEventListener('input', () => {
       const query = normalize(search.value);
@@ -566,7 +522,6 @@
       renderTree();
     });
 
-    document.getElementById('treeReset').addEventListener('click', resetView);
   }
 
   async function loadAnalytics() {
@@ -580,10 +535,9 @@
   }
 
   async function initSkillTree() {
-    const main = document.querySelector('main');
-    if (!main) return;
-    document.getElementById('mainApp')?.classList.remove('blur-md', 'pointer-events-none');
-    renderPageShell(main);
+    const container = document.getElementById('adaptiveSkillTree');
+    if (!container) return;
+    renderPageShell(container);
     treeState.analytics = await loadAnalytics();
     const tree = buildTree(treeState.analytics);
     treeState.nodes = tree.nodes;
