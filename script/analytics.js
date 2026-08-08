@@ -875,6 +875,14 @@ const activityData = computeActivityAnalytics(submissions);
     const WEEKDAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const PLATFORM_SERIES_COLORS = ['#10b981', '#0ea5e9', '#8b5cf6'];
 
+    function contributionColor(value, maxValue) {
+        const ratio = Math.max(0, Math.min(1, Number(value || 0) / Math.max(1, Number(maxValue || 1))));
+        const red = Math.round(244 - ratio * 228);
+        const green = Math.round(63 + ratio * 122);
+        const blue = Math.round(94 + ratio * 35);
+        return `rgb(${red}, ${green}, ${blue})`;
+    }
+
     function setupRadarChartObserver(labels, data) {
         if (radarObserver) radarObserver.disconnect(); // Prevent duplicate triggers
         
@@ -1099,9 +1107,9 @@ const activityData = computeActivityAnalytics(submissions);
         radarChartInstance = engine.createVisualizationLab(document.getElementById('radarChart'), {
             id: 'analytics-topic-performance',
             title: 'Topic Performance',
-            group: 'topicPerformance',
-            types: ['radar', 'bar', 'treemap', 'sunburst', 'heatmap', 'bubble', 'table'],
+            types: ['radar'],
             defaultType: 'radar',
+            hideLegend: true,
             scope: 'topic',
             entityType: 'topic',
             data: {
@@ -1125,12 +1133,13 @@ const activityData = computeActivityAnalytics(submissions);
         if (!engine) return;
 
         const labels = ['<=900', '1000-1199', '1200-1399', '1400-1599', '1600-1799', '1800-1999', '2000+'];
+        const maxValue = Math.max(1, ...data.map((value) => Number(value || 0)));
         diffChartInstance = engine.createVisualizationLab(document.getElementById('difficultyChart'), {
             id: 'analytics-difficulty-distribution',
             title: 'Difficulty Distribution',
-            group: 'distribution',
-            types: ['horizontalBar', 'bar', 'histogram', 'heatmap', 'table'],
+            types: ['horizontalBar'],
             defaultType: 'horizontalBar',
+            hideLegend: true,
             scope: 'difficulty',
             entityType: 'difficulty-bucket',
             data: {
@@ -1140,7 +1149,8 @@ const activityData = computeActivityAnalytics(submissions);
                     key: label,
                     label,
                     value: data[index],
-                    count: data[index]
+                    count: data[index],
+                    color: contributionColor(data[index], maxValue)
                 }))
             }
         });

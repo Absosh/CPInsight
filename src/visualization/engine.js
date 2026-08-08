@@ -131,9 +131,10 @@ function seriesFromDataset(data, typeConfig, selectedKey) {
       itemStyle: {
         color: (params) => {
           const key = params.name || rows[params.dataIndex]?.label;
+          const row = rows[params.dataIndex] || {};
           return selectedKey && key === selectedKey
             ? visualizationPalette.amber
-            : (dataset.color || dataset.itemStyle?.color || colorAt(datasetIndex));
+            : (row.color || dataset.color || dataset.itemStyle?.color || colorAt(datasetIndex));
         },
         borderColor: selectedKey ? visualizationPalette.text : undefined,
         borderWidth: selectedKey ? 1 : 0
@@ -166,6 +167,7 @@ function optionFor(type, data, state = {}) {
     const values = data.values || data.datasets?.[0]?.values || rows.map((row) => row.value ?? row.score ?? 0);
     return {
       ...theme,
+      legend: { show: false },
       radar: {
         center: ['50%', '54%'],
         radius: '64%',
@@ -516,6 +518,7 @@ function optionFor(type, data, state = {}) {
   return {
     ...theme,
     ...axes,
+    legend: state.hideLegend ? { show: false } : theme.legend,
     dataZoom: needsZoom ? [{ type: 'inside' }, { type: 'slider', height: 12, bottom: 0 }] : undefined,
     series: seriesFromDataset(data, typeConfig, selectedKey)
   };
@@ -596,6 +599,7 @@ export function createVisualizationLab(target, config = {}) {
     type: defaultType,
     darkMode: config.darkMode ?? true,
     animation: config.animation ?? !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    hideLegend: Boolean(config.hideLegend),
     query: '',
     scope: config.scope || config.group || id
   };
