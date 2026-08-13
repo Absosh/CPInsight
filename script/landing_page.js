@@ -4,7 +4,6 @@ import {
   inView,
   motionValue,
   press,
-  scroll,
   springValue,
   stagger,
 } from "motion";
@@ -14,19 +13,61 @@ import {
   forceLink,
   forceManyBody,
   forceSimulation,
-} from "d3";
+  forceX,
+  forceY,
+} from "d3-force";
 
-const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const motionParams = new URLSearchParams(location.search);
+const reduceMotion = motionParams.has("reduced-motion") || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const desktopMotion = window.matchMedia("(min-width: 1081px)");
+const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+const compactViewport = window.matchMedia("(max-width: 680px)").matches;
+const constrainedDevice = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
+  (navigator.deviceMemory && navigator.deviceMemory <= 4);
+const performanceTier = reduceMotion ? "minimal" : compactViewport || constrainedDevice ? "balanced" : "full";
 const cleanups = [];
 const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
 const springOptions = { type: "spring", stiffness: 240, damping: 24, mass: 0.72 };
 
 document.documentElement.classList.add("motion-ready");
+document.documentElement.dataset.motionTier = performanceTier;
+
+if (motionParams.has("qa")) {
+  window.__landingQaErrors = [];
+  window.addEventListener("error", (event) => window.__landingQaErrors.push(event.message));
+  window.addEventListener("unhandledrejection", (event) => {
+    window.__landingQaErrors.push(event.reason?.message || String(event.reason));
+  });
+}
 
 function addCleanup(cleanup) {
   if (typeof cleanup === "function") cleanups.push(cleanup);
   return cleanup;
+}
+
+function createFrameScheduler(callback) {
+  let frame = 0;
+  let latest;
+  const schedule = (value) => {
+    latest = value;
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      callback(latest);
+    });
+  };
+  schedule.cancel = () => {
+    if (frame) cancelAnimationFrame(frame);
+    frame = 0;
+  };
+  return schedule;
+}
+
+function observeActivity(element, onChange, rootMargin = "120px") {
+  const observer = new IntersectionObserver(([entry]) => onChange(entry.isIntersecting, entry), { rootMargin });
+  observer.observe(element);
+  addCleanup(() => observer.disconnect());
+  return observer;
 }
 
 function initRoutes() {
@@ -47,10 +88,24 @@ function initRoutes() {
 
 function initNavigation() {
   const nav = document.querySelector("[data-nav]");
-  const updateNav = () => nav?.classList.toggle("is-scrolled", window.scrollY > 18);
+  let lastState = null;
+  let scrollFrame = 0;
+  const updateNav = () => {
+    scrollFrame = 0;
+    const nextState = window.scrollY > 18;
+    if (nextState === lastState) return;
+    lastState = nextState;
+    nav?.classList.toggle("is-scrolled", nextState);
+  };
+  const onScroll = () => {
+    if (!scrollFrame) scrollFrame = requestAnimationFrame(updateNav);
+  };
   updateNav();
-  window.addEventListener("scroll", updateNav, { passive: true });
-  addCleanup(() => window.removeEventListener("scroll", updateNav));
+  window.addEventListener("scroll", onScroll, { passive: true });
+  addCleanup(() => {
+    window.removeEventListener("scroll", onScroll);
+    if (scrollFrame) cancelAnimationFrame(scrollFrame);
+  });
 
   const menuToggle = document.querySelector(".menu-toggle");
   const mobileMenu = document.getElementById("mobileMenu");
@@ -84,7 +139,7 @@ function initNavigation() {
 
 function initCursorAura() {
   const aura = document.getElementById("cursorAura");
-  if (!aura || reduceMotion || matchMedia("(pointer: coarse)").matches) return;
+  if (!aura || reduceMotion || coarsePointer || performanceTier !== "full") return;
 
   const pointerX = motionValue(window.innerWidth / 2);
   const pointerY = motionValue(window.innerHeight / 2);
@@ -94,14 +149,17 @@ function initCursorAura() {
   let currentY = pointerY.get();
   let visible = false;
 
-  const render = () => {
+  const render = createFrameScheduler(() => {
     aura.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
-  };
+  });
   const unsubscribeX = smoothX.on("change", (value) => { currentX = value; render(); });
   const unsubscribeY = smoothY.on("change", (value) => { currentY = value; render(); });
+  const applyPointer = createFrameScheduler(({ x, y }) => {
+    pointerX.set(x);
+    pointerY.set(y);
+  });
   const onMove = (event) => {
-    pointerX.set(event.clientX);
-    pointerY.set(event.clientY);
+    applyPointer({ x: event.clientX, y: event.clientY });
     if (!visible) {
       visible = true;
       animate(aura, { opacity: [0, 0.78] }, { duration: 0.6 });
@@ -111,6 +169,8 @@ function initCursorAura() {
   window.addEventListener("pointermove", onMove, { passive: true });
   addCleanup(() => {
     window.removeEventListener("pointermove", onMove);
+    applyPointer.cancel();
+    render.cancel();
     unsubscribeX();
     unsubscribeY();
   });
@@ -118,6 +178,7 @@ function initCursorAura() {
 
 function initMagneticButtons() {
   document.querySelectorAll(".magnetic").forEach((button) => {
+    if (performanceTier !== "full" || coarsePointer) return;
     const targetX = motionValue(0);
     const targetY = motionValue(0);
     const x = springValue(targetX, { stiffness: 250, damping: 20, mass: 0.45 });
@@ -125,14 +186,20 @@ function initMagneticButtons() {
     const unsubscribeX = x.on("change", (value) => button.style.setProperty("--magnetic-x", `${value}px`));
     const unsubscribeY = y.on("change", (value) => button.style.setProperty("--magnetic-y", `${value}px`));
 
+    let rect = null;
+    const applyPointer = createFrameScheduler(({ x: clientX, y: clientY }) => {
+      if (!rect) return;
+      targetX.set((clientX - rect.left - rect.width / 2) * 0.16);
+      targetY.set((clientY - rect.top - rect.height / 2) * 0.16);
+    });
+    const onEnter = () => { rect = button.getBoundingClientRect(); };
     const onMove = (event) => {
-      if (reduceMotion || matchMedia("(pointer: coarse)").matches) return;
-      const rect = button.getBoundingClientRect();
-      targetX.set((event.clientX - rect.left - rect.width / 2) * 0.16);
-      targetY.set((event.clientY - rect.top - rect.height / 2) * 0.16);
+      if (!rect) rect = button.getBoundingClientRect();
+      applyPointer({ x: event.clientX, y: event.clientY });
     };
-    const onLeave = () => { targetX.set(0); targetY.set(0); };
-    button.addEventListener("pointermove", onMove);
+    const onLeave = () => { rect = null; targetX.set(0); targetY.set(0); };
+    button.addEventListener("pointerenter", onEnter, { passive: true });
+    button.addEventListener("pointermove", onMove, { passive: true });
     button.addEventListener("pointerleave", onLeave);
 
     const cancelPress = reduceMotion ? null : press(button, () => {
@@ -144,6 +211,8 @@ function initMagneticButtons() {
       unsubscribeX();
       unsubscribeY();
       cancelPress?.();
+      applyPointer.cancel();
+      button.removeEventListener("pointerenter", onEnter);
       button.removeEventListener("pointermove", onMove);
       button.removeEventListener("pointerleave", onLeave);
     });
@@ -252,22 +321,26 @@ function initHeroCore() {
   const smoothY = springValue(pointerY, { stiffness: 120, damping: 24, mass: 0.75 });
   let x = 0;
   let y = 0;
-  const renderTilt = () => {
+  let stageRect = null;
+  const renderTilt = createFrameScheduler(() => {
     stage.style.setProperty("--tilt-x", `${y * -3.2}deg`);
     stage.style.setProperty("--tilt-y", `${x * 4.2}deg`);
-    stage.__pointer = { x: x * 0.5 + 0.5, y: y * 0.5 + 0.5 };
-  };
+    stage.__pointerX = x * 0.5 + 0.5;
+    stage.__pointerY = y * 0.5 + 0.5;
+  });
   const unsubX = smoothX.on("change", (value) => { x = value; renderTilt(); });
   const unsubY = smoothY.on("change", (value) => { y = value; renderTilt(); });
 
   const onPointerMove = (event) => {
-    if (reduceMotion || matchMedia("(pointer: coarse)").matches) return;
-    const rect = stage.getBoundingClientRect();
-    pointerX.set(clamp((event.clientX - rect.left) / rect.width, 0, 1) * 2 - 1);
-    pointerY.set(clamp((event.clientY - rect.top) / rect.height, 0, 1) * 2 - 1);
+    if (reduceMotion || coarsePointer) return;
+    if (!stageRect) stageRect = stage.getBoundingClientRect();
+    pointerX.set(clamp((event.clientX - stageRect.left) / stageRect.width, 0, 1) * 2 - 1);
+    pointerY.set(clamp((event.clientY - stageRect.top) / stageRect.height, 0, 1) * 2 - 1);
   };
-  const onPointerLeave = () => { pointerX.set(0); pointerY.set(0); };
-  stage.addEventListener("pointermove", onPointerMove);
+  const onPointerEnter = () => { stageRect = stage.getBoundingClientRect(); };
+  const onPointerLeave = () => { stageRect = null; pointerX.set(0); pointerY.set(0); };
+  stage.addEventListener("pointerenter", onPointerEnter, { passive: true });
+  stage.addEventListener("pointermove", onPointerMove, { passive: true });
   stage.addEventListener("pointerleave", onPointerLeave);
 
   let selected = "rating";
@@ -289,7 +362,6 @@ function initHeroCore() {
           scale: active ? 1.09 : related ? 1.025 : 0.94,
           y: active ? -5 : 0,
           opacity: active || related ? 1 : 0.48,
-          filter: active ? "brightness(1.16)" : related ? "brightness(1.04)" : "brightness(0.72)",
         }, springOptions);
       } else {
         node.style.opacity = active || related ? "1" : "0.62";
@@ -303,13 +375,13 @@ function initHeroCore() {
     });
 
     if (!reduceMotion) {
-      await animate(insight, { x: [0, 16], filter: ["blur(0px)", "blur(7px)"], opacity: [1, 0.35] }, { duration: 0.16 });
+      await animate(insight, { x: [0, 16], scale: [1, 0.985], opacity: [1, 0.35] }, { duration: 0.16 });
     }
     insight.querySelector("strong").textContent = config.title;
     insight.querySelector("p").textContent = config.body;
     insight.querySelector(".core-insight-signals").innerHTML = config.signals.map((signal) => `<i>${signal}</i>`).join("");
     if (!reduceMotion) {
-      animate(insight, { x: [16, 0], filter: ["blur(7px)", "blur(0px)"], opacity: [0.35, 1] }, { duration: 0.42, ease: [0.16, 1, 0.3, 1] });
+      animate(insight, { x: [16, 0], scale: [0.985, 1], opacity: [0.35, 1] }, { duration: 0.42, ease: [0.16, 1, 0.3, 1] });
       animate(insight.querySelectorAll("i"), { y: [8, 0], scale: [0.9, 1] }, { delay: stagger(0.035), ...springOptions });
     }
   };
@@ -341,6 +413,8 @@ function initHeroCore() {
     stopCycle();
     unsubX();
     unsubY();
+    renderTilt.cancel();
+    stage.removeEventListener("pointerenter", onPointerEnter);
     stage.removeEventListener("pointermove", onPointerMove);
     stage.removeEventListener("pointerleave", onPointerLeave);
   });
@@ -366,12 +440,12 @@ function initCoreStreams() {
 
         const length = path.getTotalLength();
         const samples = Array.from({ length: 28 }, (_, index) => path.getPointAtLength(length * index / 27));
-        for (let packetIndex = 0; packetIndex < 2; packetIndex += 1) {
+        const packetCount = performanceTier === "full" ? 2 : 1;
+        for (let packetIndex = 0; packetIndex < packetCount; packetIndex += 1) {
           const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
           const color = packetIndex === 0 ? "#67e8f9" : pathIndex % 2 ? "#34d399" : "#60a5fa";
           circle.setAttribute("r", packetIndex === 0 ? "3.2" : "2.3");
           circle.setAttribute("fill", color);
-          circle.style.color = color;
           particleGroup.appendChild(circle);
           controls.push(animate(circle, {
             cx: samples.map((point) => point.x),
@@ -386,7 +460,7 @@ function initCoreStreams() {
         }
       });
 
-      document.querySelectorAll(".orbital-meta").forEach((label, index) => {
+      if (performanceTier === "full") document.querySelectorAll(".orbital-meta").forEach((label, index) => {
         controls.push(animate(label, {
           x: [0, index % 2 ? 9 : -8, 0],
           y: [0, index % 2 ? -7 : 8, 0],
@@ -397,6 +471,7 @@ function initCoreStreams() {
     }
     return () => controls.forEach((control) => control.pause?.());
   }, { margin: "80px" }));
+  addCleanup(() => controls.forEach((control) => control.cancel?.()));
 }
 
 function initSectionHeadings() {
@@ -443,6 +518,13 @@ function initIntelligenceStory() {
   const eventFragments = [...stage.querySelectorAll(".story-event-stream span")];
   const orbitRings = [...stage.querySelectorAll(".story-orbits i")];
   let activeStage = -1;
+  let sectionTop = 0;
+  let scrollDistance = 0;
+  const measureSection = () => {
+    sectionTop = section.offsetTop;
+    scrollDistance = Math.max(1, section.offsetHeight - innerHeight);
+  };
+  measureSection();
 
   const configurations = [
     [
@@ -532,21 +614,25 @@ function initIntelligenceStory() {
       renderProgress(index / 4);
       return;
     }
-    const top = section.getBoundingClientRect().top + window.scrollY;
-    const distance = Math.max(0, section.offsetHeight - window.innerHeight);
-    window.scrollTo({ top: top + distance * (index / 4), behavior: "smooth" });
+    window.scrollTo({ top: sectionTop + scrollDistance * (index / 4), behavior: "smooth" });
   };
   steps.forEach((step, index) => step.querySelector("button")?.addEventListener("click", () => scrollToStage(index)));
 
   if (desktopMotion.matches && !reduceMotion) {
-    const rawProgress = motionValue(0);
-    const smoothProgress = springValue(rawProgress, { stiffness: 130, damping: 28, mass: 0.55 });
-    const unsubscribe = smoothProgress.on("change", renderProgress);
-    const cancelScroll = scroll((progress) => rawProgress.set(progress), {
-      target: section,
-      offset: ["start start", "end end"],
+    let visible = false;
+    const onScroll = createFrameScheduler(() => {
+      if (!visible) return;
+      renderProgress(clamp((scrollY - sectionTop) / scrollDistance));
     });
-    addCleanup(() => { unsubscribe(); cancelScroll?.(); });
+    const onResize = () => { measureSection(); onScroll(); };
+    observeActivity(section, (isVisible) => { visible = isVisible; if (visible) onScroll(); }, "40px");
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
+    addCleanup(() => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      onScroll.cancel();
+    });
     renderProgress(0);
   } else {
     renderProgress(1);
@@ -623,16 +709,24 @@ function initAnalytics() {
   const scrubber = chart?.querySelector(".chart-scrubber");
   const tooltip = chart?.querySelector(".chart-tooltip");
   if (chart && scrubber && tooltip) {
-    chart.addEventListener("pointermove", (event) => {
-      const rect = chart.getBoundingClientRect();
-      const x = clamp(event.clientX - rect.left, 0, rect.width);
-      scrubber.style.left = `${x}px`;
-      tooltip.style.left = `${clamp(x + 12, 8, rect.width - 142)}px`;
-      if (!reduceMotion) animate([scrubber, tooltip], { opacity: 1 }, { duration: 0.14 });
+    let chartRect = null;
+    const updateScrubber = createFrameScheduler((clientX) => {
+      if (!chartRect) return;
+      const x = clamp(clientX - chartRect.left, 0, chartRect.width);
+      scrubber.style.transform = `translate3d(${x}px, 0, 0)`;
+      tooltip.style.transform = `translate3d(${clamp(x + 12, 8, chartRect.width - 142)}px, 0, 0)`;
     });
+    chart.addEventListener("pointerenter", () => { chartRect = chart.getBoundingClientRect(); }, { passive: true });
+    chart.addEventListener("pointermove", (event) => {
+      updateScrubber(event.clientX);
+      scrubber.style.opacity = "1";
+      tooltip.style.opacity = "1";
+    }, { passive: true });
     chart.addEventListener("pointerleave", () => {
+      chartRect = null;
       if (!reduceMotion) animate([scrubber, tooltip], { opacity: 0 }, { duration: 0.22 });
     });
+    addCleanup(() => updateScrubber.cancel());
   }
 }
 
@@ -710,6 +804,13 @@ function initReviewStory() {
   const packetLayer = section.querySelector(".review-packets");
   let packetControls = [];
   let activeStage = -1;
+  let sectionTop = 0;
+  let scrollDistance = 0;
+  const measureSection = () => {
+    sectionTop = section.offsetTop;
+    scrollDistance = Math.max(1, section.offsetHeight - innerHeight);
+  };
+  measureSection();
 
   const setStage = (index) => {
     const next = clamp(index, 0, 4);
@@ -730,7 +831,6 @@ function initReviewStory() {
           x: active ? -8 : passed ? 10 : 28,
           scale: active ? 1.035 : passed ? 0.96 : 0.92,
           opacity: active ? 1 : passed ? 0.52 : 0.26,
-          filter: active ? "blur(0px)" : "blur(0.7px)",
         }, springOptions);
       } else {
         card.style.opacity = active ? "1" : "0.62";
@@ -742,7 +842,6 @@ function initReviewStory() {
         x: next * 12,
         scale: 1 - next * 0.035,
         opacity: next === 4 ? 0.4 : 1 - next * 0.1,
-        filter: next >= 3 ? "saturate(0.7)" : "saturate(1)",
       }, springOptions);
       animate(output, { opacity: next === 4 ? 1 : 0, y: next === 4 ? 0 : 18, scale: next === 4 ? 1 : 0.94 }, springOptions);
       packetControls.forEach((control) => control.cancel?.());
@@ -757,8 +856,8 @@ function initReviewStory() {
           packet.className = "review-packet";
           packetLayer.appendChild(packet);
           packetControls.push(animate(packet, {
-            left: samples.map((point) => `${point.x / 9}%`),
-            top: samples.map((point) => `${point.y / 6.1}%`),
+            x: samples.map((point) => point.x),
+            y: samples.map((point) => point.y),
             opacity: [0, 1, 1, 0],
           }, { duration: 2.2, delay: packetIndex * 1.05, repeat: Infinity, ease: "linear" }));
         }
@@ -777,18 +876,26 @@ function initReviewStory() {
 
   const scrollToStage = (index) => {
     if (!desktopMotion.matches || reduceMotion) { renderProgress(index / 4); return; }
-    const top = section.getBoundingClientRect().top + scrollY;
-    const distance = Math.max(0, section.offsetHeight - innerHeight);
-    window.scrollTo({ top: top + distance * (index / 4), behavior: "smooth" });
+    window.scrollTo({ top: sectionTop + scrollDistance * (index / 4), behavior: "smooth" });
   };
   steps.forEach((step, index) => step.querySelector("button")?.addEventListener("click", () => scrollToStage(index)));
 
   if (desktopMotion.matches && !reduceMotion) {
-    const rawProgress = motionValue(0);
-    const smoothProgress = springValue(rawProgress, { stiffness: 130, damping: 28, mass: 0.55 });
-    const unsubscribe = smoothProgress.on("change", renderProgress);
-    const cancelScroll = scroll((progress) => rawProgress.set(progress), { target: section, offset: ["start start", "end end"] });
-    addCleanup(() => { unsubscribe(); cancelScroll?.(); });
+    let visible = false;
+    const onScroll = createFrameScheduler(() => {
+      if (!visible) return;
+      renderProgress(clamp((scrollY - sectionTop) / scrollDistance));
+    });
+    const onResize = () => { measureSection(); onScroll(); };
+    observeActivity(section, (isVisible) => { visible = isVisible; if (visible) onScroll(); }, "40px");
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
+    addCleanup(() => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      onScroll.cancel();
+      packetControls.forEach((control) => control.cancel?.());
+    });
     renderProgress(0);
   } else {
     renderProgress(4 / 5);
@@ -823,7 +930,7 @@ function initCoach() {
     const startX = start.right - flowRect.left;
     const endX = end.left - flowRect.left;
     const startY = start.top - flowRect.top + start.height / 2;
-    const count = mode === "personal" ? 4 : 1;
+    const count = mode === "personal" ? (performanceTier === "full" ? 3 : 2) : 1;
 
     for (let index = 0; index < count; index += 1) {
       const packet = document.createElement("span");
@@ -964,12 +1071,17 @@ function initSkillGraph() {
     index,
   }));
   const simulationLinks = edgePairs.map(([source, target]) => ({ source, target }));
+  const nodeById = new Map(simulationNodes.map((datum) => [datum.id, datum]));
   let selected = "Binary Search";
   let edgePaths = [];
+  let graphWidth = graph.clientWidth;
+  let graphHeight = graph.clientHeight;
+  let graphRect = null;
+  let graphVisible = false;
+  let dragActive = false;
 
   const drawEdges = () => {
-    const graphRect = graph.getBoundingClientRect();
-    svg.setAttribute("viewBox", `0 0 ${graphRect.width} ${graphRect.height}`);
+    svg.setAttribute("viewBox", `0 0 ${graphWidth} ${graphHeight}`);
     if (edgePaths.length !== edgePairs.length) {
       svg.innerHTML = "";
       edgePaths = edgePairs.map(([a, b]) => {
@@ -982,12 +1094,12 @@ function initSkillGraph() {
       });
     }
     edgePairs.forEach(([a, b], index) => {
-      const nodeA = nodes.find((node) => node.dataset.topic === a).getBoundingClientRect();
-      const nodeB = nodes.find((node) => node.dataset.topic === b).getBoundingClientRect();
-      const ax = nodeA.left - graphRect.left + nodeA.width / 2;
-      const ay = nodeA.top - graphRect.top + nodeA.height / 2;
-      const bx = nodeB.left - graphRect.left + nodeB.width / 2;
-      const by = nodeB.top - graphRect.top + nodeB.height / 2;
+      const nodeA = nodeById.get(a);
+      const nodeB = nodeById.get(b);
+      const ax = clamp(nodeA.x, 72, graphWidth - 72);
+      const ay = clamp(nodeA.y, 62, graphHeight - 62);
+      const bx = clamp(nodeB.x, 72, graphWidth - 72);
+      const by = clamp(nodeB.y, 62, graphHeight - 62);
       const path = edgePaths[index];
       const bend = Math.abs(ax - bx) * 0.08 + 18;
       path.setAttribute("d", `M${ax} ${ay} Q${(ax + bx) / 2} ${(ay + by) / 2 - bend} ${bx} ${by}`);
@@ -996,10 +1108,9 @@ function initSkillGraph() {
 
   const renderSimulation = () => {
     simulationNodes.forEach((datum) => {
-      const x = clamp(datum.x, 72, graph.clientWidth - 72);
-      const y = clamp(datum.y, 62, graph.clientHeight - 62);
-      datum.node.style.left = `${x}px`;
-      datum.node.style.top = `${y}px`;
+      const x = clamp(datum.x, 72, graphWidth - 72);
+      const y = clamp(datum.y, 62, graphHeight - 62);
+      datum.node.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(var(--node-scale, 1))`;
     });
     drawEdges();
   };
@@ -1008,26 +1119,25 @@ function initSkillGraph() {
     .force("link", forceLink(simulationLinks).id((datum) => datum.id).distance(180).strength(0.16))
     .force("charge", forceManyBody().strength(-150))
     .force("collide", forceCollide(70))
-    .force("center", forceCenter(graph.clientWidth / 2, graph.clientHeight / 2).strength(0.04))
-    .alphaDecay(0.045)
-    .velocityDecay(0.48)
-    .on("tick", renderSimulation);
+    .force("center", forceCenter(graphWidth / 2, graphHeight / 2).strength(0.025))
+    .force("anchor-x", forceX((datum) => datum.anchorX).strength(0.05))
+    .force("anchor-y", forceY((datum) => datum.anchorY).strength(0.05))
+    .alphaDecay(0.085)
+    .alphaMin(0.015)
+    .velocityDecay(0.58)
+    .on("tick", renderSimulation)
+    .stop();
+  graph.classList.add("is-simulated");
+  renderSimulation();
 
   const releaseNode = (datum, node, pointerId) => {
     if (pointerId !== undefined && node.hasPointerCapture(pointerId)) node.releasePointerCapture(pointerId);
     datum.fx = null;
     datum.fy = null;
+    dragActive = false;
     node.classList.remove("is-dragging");
     simulation.alphaTarget(0).alpha(0.2).restart();
   };
-
-  const pullToAnchors = window.setInterval(() => {
-    simulationNodes.forEach((datum) => {
-      datum.vx += (datum.anchorX - datum.x) * 0.015;
-      datum.vy += (datum.anchorY - datum.y) * 0.015;
-    });
-    if (!document.hidden) simulation.alpha(0.08).restart();
-  }, 1800);
 
   const activate = async (topic, commit = false) => {
     if (commit) selected = topic;
@@ -1038,11 +1148,8 @@ function initSkillGraph() {
       const isRelated = related.includes(node.dataset.topic);
       node.classList.toggle("is-selected", active);
       node.classList.toggle("is-related", isRelated);
-      if (!reduceMotion) animate(node, {
-        scale: active ? 1.1 : isRelated ? 1.035 : 0.91,
-        opacity: active || isRelated ? 1 : 0.44,
-        filter: active ? "brightness(1.2)" : isRelated ? "brightness(1.05)" : "brightness(0.7)",
-      }, springOptions);
+      node.style.setProperty("--node-scale", String(active ? 1.1 : isRelated ? 1.035 : 0.91));
+      node.style.opacity = String(active || isRelated ? 1 : 0.44);
     });
     edgePaths.forEach((path) => {
       const active = [path.dataset.a, path.dataset.b].includes(topic) ||
@@ -1053,13 +1160,13 @@ function initSkillGraph() {
     });
 
     const sourceDatum = simulationNodes.find((datum) => datum.id === topic);
-    graph.style.setProperty("--focus-x", `${sourceDatum?.x ?? graph.clientWidth / 2}px`);
-    graph.style.setProperty("--focus-y", `${sourceDatum?.y ?? graph.clientHeight / 2}px`);
+    graph.style.setProperty("--focus-x", `${sourceDatum?.x ?? graphWidth / 2}px`);
+    graph.style.setProperty("--focus-y", `${sourceDatum?.y ?? graphHeight / 2}px`);
     if (!commit) return;
-    if (!reduceMotion) await animate(detail, { x: [0, 18], opacity: [1, 0.3], filter: ["blur(0px)", "blur(6px)"] }, { duration: 0.16 });
+    if (!reduceMotion) await animate(detail, { x: [0, 18], scale: [1, 0.985], opacity: [1, 0.3] }, { duration: 0.16 });
     detail.querySelector("h3").textContent = topic;
     detail.querySelector("p").textContent = recommendations[topic];
-    if (!reduceMotion) animate(detail, { x: [18, 0], opacity: [0.3, 1], filter: ["blur(6px)", "blur(0px)"] }, { duration: 0.4, ease: [0.16, 1, 0.3, 1] });
+    if (!reduceMotion) animate(detail, { x: [18, 0], scale: [0.985, 1], opacity: [0.3, 1] }, { duration: 0.4, ease: [0.16, 1, 0.3, 1] });
   };
 
   nodes.forEach((node) => {
@@ -1073,16 +1180,16 @@ function initSkillGraph() {
       origin = { x: event.clientX, y: event.clientY };
       node.setPointerCapture(event.pointerId);
       node.classList.add("is-dragging");
+      dragActive = true;
+      graphRect = graph.getBoundingClientRect();
       datum.fx = datum.x;
       datum.fy = datum.y;
       simulation.alphaTarget(0.22).restart();
     });
     node.addEventListener("pointermove", (event) => {
       if (!node.hasPointerCapture(event.pointerId) || !origin) return;
-      const rect = graph.getBoundingClientRect();
-      datum.fx = clamp(event.clientX - rect.left, 72, rect.width - 72);
-      datum.fy = clamp(event.clientY - rect.top, 62, rect.height - 62);
-      activate(node.dataset.topic);
+      datum.fx = clamp(event.clientX - graphRect.left, 72, graphWidth - 72);
+      datum.fy = clamp(event.clientY - graphRect.top, 62, graphHeight - 62);
     });
     node.addEventListener("pointerup", (event) => {
       origin = null;
@@ -1093,30 +1200,32 @@ function initSkillGraph() {
       releaseNode(datum, node, event.pointerId);
     });
   });
-  graph.addEventListener("pointerleave", () => activate(selected));
-
   const pointerX = motionValue(0);
   const pointerY = motionValue(0);
   const smoothX = springValue(pointerX, { stiffness: 110, damping: 24 });
   const smoothY = springValue(pointerY, { stiffness: 110, damping: 24 });
   const unsubX = smoothX.on("change", (value) => graph.style.setProperty("--graph-ry", `${value * 2.2}deg`));
   const unsubY = smoothY.on("change", (value) => graph.style.setProperty("--graph-rx", `${value * -1.8}deg`));
+  const updateGraphRect = () => { graphRect = graph.getBoundingClientRect(); };
+  graph.addEventListener("pointerenter", updateGraphRect, { passive: true });
   graph.addEventListener("pointermove", (event) => {
-    if (reduceMotion || matchMedia("(pointer: coarse)").matches) return;
-    const rect = graph.getBoundingClientRect();
-    pointerX.set(((event.clientX - rect.left) / rect.width - 0.5) * 2);
-    pointerY.set(((event.clientY - rect.top) / rect.height - 0.5) * 2);
-  });
+    if (reduceMotion || coarsePointer || dragActive || !graphRect) return;
+    pointerX.set(((event.clientX - graphRect.left) / graphRect.width - 0.5) * 2);
+    pointerY.set(((event.clientY - graphRect.top) / graphRect.height - 0.5) * 2);
+  }, { passive: true });
   graph.addEventListener("pointerleave", () => { pointerX.set(0); pointerY.set(0); activate(selected); });
 
   drawEdges();
   const onResize = () => {
+    graphWidth = graph.clientWidth;
+    graphHeight = graph.clientHeight;
+    graphRect = null;
     simulationNodes.forEach((datum) => {
-      datum.anchorX = graph.clientWidth * parseFloat(datum.node.style.getPropertyValue("--nx")) / 100;
-      datum.anchorY = graph.clientHeight * parseFloat(datum.node.style.getPropertyValue("--ny")) / 100;
+      datum.anchorX = graphWidth * parseFloat(datum.node.style.getPropertyValue("--nx")) / 100;
+      datum.anchorY = graphHeight * parseFloat(datum.node.style.getPropertyValue("--ny")) / 100;
     });
-    simulation.force("center", forceCenter(graph.clientWidth / 2, graph.clientHeight / 2).strength(0.04));
-    simulation.alpha(0.24).restart();
+    simulation.force("center", forceCenter(graphWidth / 2, graphHeight / 2).strength(0.025));
+    if (graphVisible) simulation.alpha(0.24).restart();
     drawEdges();
   };
   window.addEventListener("resize", onResize, { passive: true });
@@ -1125,14 +1234,19 @@ function initSkillGraph() {
     unsubX();
     unsubY();
     simulation.stop();
-    window.clearInterval(pullToAnchors);
   });
   addCleanup(inView(graph, () => {
+    graphVisible = true;
+    simulation.alpha(0.65).restart();
     if (!reduceMotion) {
       animate(edgePaths, { strokeDashoffset: [1, 0] }, { delay: stagger(0.07), duration: 0.82 });
-      animate(nodes, { scale: [0.25, 1], filter: ["blur(8px)", "blur(0px)"] }, { delay: stagger(0.08), ...springOptions });
+      animate(nodes, { opacity: [0.2, 1] }, { delay: stagger(0.06), duration: 0.55 });
     }
     activate(selected);
+    return () => {
+      graphVisible = false;
+      simulation.alphaTarget(0).stop();
+    };
   }, { margin: "0px 0px -12% 0px" }));
 }
 
@@ -1302,7 +1416,8 @@ function initArchitecture() {
 
 function resizeCanvas(canvas) {
   const rect = canvas.getBoundingClientRect();
-  const ratio = Math.min(window.devicePixelRatio || 1, 2);
+  const ratioCap = performanceTier === "full" ? 1.5 : 1;
+  const ratio = Math.min(window.devicePixelRatio || 1, ratioCap);
   canvas.width = Math.max(1, Math.floor(rect.width * ratio));
   canvas.height = Math.max(1, Math.floor(rect.height * ratio));
   return { width: canvas.width, height: canvas.height, ratio };
@@ -1310,24 +1425,29 @@ function resizeCanvas(canvas) {
 
 function initAmbientCanvas() {
   const canvas = document.getElementById("ambientCanvas");
-  if (!canvas || reduceMotion) return;
+  if (!canvas || reduceMotion || performanceTier !== "full") return;
   const ctx = canvas.getContext("2d");
   let size = resizeCanvas(canvas);
   let raf = 0;
   let lastFrame = 0;
   let running = true;
-  const pointCount = innerWidth < 680 ? 24 : 38;
+  const pointCount = 26;
+  const connections = [];
   const points = Array.from({ length: pointCount }, (_, index) => ({
     x: (index * 137) % Math.max(size.width, 1),
     y: (index * 79) % Math.max(size.height, 1),
     speed: 0.12 + (index % 5) * 0.035,
     phase: index * 0.73,
   }));
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const next = (index + 1) % points.length;
+    if (Math.hypot(points[index].x - points[next].x, points[index].y - points[next].y) <= 180) connections.push([index, next]);
+  }
 
   const draw = (time) => {
     if (!running) return;
     raf = requestAnimationFrame(draw);
-    if (time - lastFrame < 32) return;
+    if (time - lastFrame < 48) return;
     lastFrame = time;
     ctx.clearRect(0, 0, size.width, size.height);
     points.forEach((point, index) => {
@@ -1340,16 +1460,16 @@ function initAmbientCanvas() {
       ctx.fill();
     });
 
-    for (let index = 0; index < points.length - 1; index += 1) {
-      const a = points[index];
-      const b = points[index + 1];
-      const distance = Math.hypot(a.x - b.x, a.y - b.y);
-      if (distance > 180) continue;
-      ctx.strokeStyle = `rgba(103, 232, 249, ${0.055 * (1 - distance / 180)})`;
+    if (connections.length) {
+      ctx.strokeStyle = "rgba(103, 232, 249, 0.028)";
       ctx.lineWidth = 0.7;
       ctx.beginPath();
+      connections.forEach(([aIndex, bIndex]) => {
+        const a = points[aIndex];
+        const b = points[bIndex];
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
+      });
       ctx.stroke();
     }
   };
@@ -1380,26 +1500,31 @@ function initCoreCanvas() {
   let raf = 0;
   let running = false;
   let time = 0;
-  const fieldPoints = Array.from({ length: innerWidth < 680 ? 18 : 28 }, (_, index) => ({
+  let lastFrame = 0;
+  const targetFrame = performanceTier === "full" ? 32 : 48;
+  const fieldPoints = Array.from({ length: performanceTier === "full" ? 22 : 14 }, (_, index) => ({
     x: ((index * 83) % 970) / 1000,
     y: ((index * 127) % 720) / 760,
     phase: index * 0.6,
   }));
 
-  const draw = () => {
+  const draw = (timestamp) => {
     if (!running) return;
+    raf = requestAnimationFrame(draw);
+    if (timestamp - lastFrame < targetFrame) return;
+    lastFrame = timestamp;
     time += 1;
-    const pointer = stage.__pointer || { x: 0.5, y: 0.5 };
+    const pointerX = stage.__pointerX ?? 0.5;
+    const pointerY = stage.__pointerY ?? 0.5;
     ctx.clearRect(0, 0, size.width, size.height);
     fieldPoints.forEach((point, index) => {
-      const x = size.width * point.x + (pointer.x - 0.5) * (index % 2 ? 18 : -14) + Math.sin(time / 90 + point.phase) * 4;
-      const y = size.height * point.y + (pointer.y - 0.5) * (index % 2 ? -12 : 14) + Math.cos(time / 110 + point.phase) * 4;
+      const x = size.width * point.x + (pointerX - 0.5) * (index % 2 ? 18 : -14) + Math.sin(time / 90 + point.phase) * 4;
+      const y = size.height * point.y + (pointerY - 0.5) * (index % 2 ? -12 : 14) + Math.cos(time / 110 + point.phase) * 4;
       ctx.fillStyle = index % 4 === 0 ? "rgba(52, 211, 153, 0.34)" : "rgba(103, 232, 249, 0.25)";
       ctx.beginPath();
       ctx.arc(x, y, index % 6 === 0 ? 1.7 : 1.05, 0, Math.PI * 2);
       ctx.fill();
     });
-    raf = requestAnimationFrame(draw);
   };
 
   const observer = new IntersectionObserver(([entry]) => {
@@ -1409,8 +1534,99 @@ function initCoreCanvas() {
   }, { rootMargin: "100px" });
   observer.observe(stage);
   const onResize = () => { size = resizeCanvas(canvas); };
+  const onVisibility = () => {
+    const shouldRun = !document.hidden && stage.getBoundingClientRect().bottom > -100 && stage.getBoundingClientRect().top < innerHeight + 100;
+    running = shouldRun;
+    cancelAnimationFrame(raf);
+    if (running) raf = requestAnimationFrame(draw);
+  };
   window.addEventListener("resize", onResize, { passive: true });
-  addCleanup(() => { running = false; cancelAnimationFrame(raf); observer.disconnect(); window.removeEventListener("resize", onResize); });
+  document.addEventListener("visibilitychange", onVisibility);
+  addCleanup(() => { running = false; cancelAnimationFrame(raf); observer.disconnect(); window.removeEventListener("resize", onResize); document.removeEventListener("visibilitychange", onVisibility); });
+}
+
+function initMotionVisibility() {
+  const zones = [
+    "#coreStage",
+    ".intelligence-stage",
+    "[data-flow-pipeline]",
+    ".viz-wall",
+    "[data-contest-simulation]",
+    ".review-console",
+    "#coachLogic",
+    "#plannerFlow",
+    "#skillNetwork",
+    "#tourStage",
+    ".architecture-strip",
+  ];
+  document.querySelectorAll(zones.join(",")).forEach((zone) => {
+    zone.classList.add("motion-zone");
+    observeActivity(zone, (active) => zone.classList.toggle("is-motion-active", active), "160px");
+  });
+}
+
+function initPerformanceProbe() {
+  if (!motionParams.has("perf")) return;
+  window.addEventListener("load", () => window.setTimeout(() => {
+    const longTasks = [];
+    const observer = typeof PerformanceObserver !== "undefined" && PerformanceObserver.supportedEntryTypes?.includes("longtask")
+      ? new PerformanceObserver((list) => longTasks.push(...list.getEntries().map((entry) => entry.duration)))
+      : null;
+    observer?.observe({ type: "longtask", buffered: true });
+    const frames = [];
+    let previous = performance.now();
+    const started = previous;
+    const maximum = document.documentElement.scrollHeight - innerHeight;
+    const sample = (now) => {
+      frames.push(now - previous);
+      previous = now;
+      const elapsed = now - started;
+      scrollTo(0, maximum * Math.min(1, elapsed / 4200));
+      if (elapsed < 4200) {
+        requestAnimationFrame(sample);
+        return;
+      }
+      window.setTimeout(() => {
+        observer?.disconnect();
+        const sorted = frames.slice(5).sort((a, b) => a - b);
+        const percentile = (value) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * value))] || 0;
+        const navigation = performance.getEntriesByType("navigation")[0];
+        const resources = performance.getEntriesByType("resource");
+        const bundle = resources.find((entry) => entry.name.includes("landing_page.bundle"));
+        const css = resources.find((entry) => entry.name.includes("landing_page.css"));
+        const runningAnimations = document.getAnimations().filter((animation) => animation.playState === "running");
+        document.documentElement.dataset.performanceProbe = JSON.stringify({
+          domNodes: document.querySelectorAll("*").length,
+          animations: {
+            running: runningAnimations.length,
+            total: document.getAnimations().length,
+          },
+          navigation: { dcl: navigation?.domContentLoadedEventEnd, load: navigation?.loadEventEnd },
+          bundle: { transfer: bundle?.transferSize, decoded: bundle?.decodedBodySize, duration: bundle?.duration },
+          css: { transfer: css?.transferSize, decoded: css?.decodedBodySize },
+          frames: {
+            count: sorted.length,
+            average: sorted.reduce((sum, value) => sum + value, 0) / Math.max(sorted.length, 1),
+            p95: percentile(0.95),
+            p99: percentile(0.99),
+            over25: sorted.filter((value) => value > 25).length,
+            over50: sorted.filter((value) => value > 50).length,
+          },
+          longTasks: {
+            count: longTasks.length,
+            total: longTasks.reduce((sum, value) => sum + value, 0),
+            max: Math.max(0, ...longTasks),
+          },
+          heap: performance.memory ? {
+            used: performance.memory.usedJSHeapSize,
+            total: performance.memory.totalJSHeapSize,
+          } : null,
+          scrollHeight: document.documentElement.scrollHeight,
+        });
+      }, 350);
+    };
+    requestAnimationFrame(sample);
+  }, 300), { once: true });
 }
 
 initRoutes();
@@ -1434,6 +1650,8 @@ initTour();
 initArchitecture();
 initAmbientCanvas();
 initCoreCanvas();
+initMotionVisibility();
+initPerformanceProbe();
 
 window.addEventListener("pagehide", () => {
   cleanups.splice(0).forEach((cleanup) => {
