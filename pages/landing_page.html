@@ -1,446 +1,384 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8" />
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
-
-  <title>
-    CPInsight
-  </title>
-  <link rel="icon" type="image/png" sizes="32x32" href="../Assets/favicon_32.png">
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <link
-    rel="preconnect"
-    href="https://fonts.googleapis.com"
-  />
-
-  <link
-    rel="preconnect"
-    href="https://fonts.gstatic.com"
-    crossorigin
-  />
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-    rel="stylesheet"
-  />
-
- <link rel="stylesheet" href="../css/landing_page.css">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CPInsight turns competitive-programming history, behavior, contests, and live activity into personal intelligence, AI coaching, and adaptive practice plans." />
+  <title>CPInsight | Personal Competitive Programming Intelligence</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../Assets/favicon_32.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/landing_page.css" />
 </head>
-
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="ambient-field" aria-hidden="true">
+    <canvas id="ambientCanvas"></canvas>
+  </div>
 
-  <!-- PARTICLES -->
+  <header class="site-nav" data-nav>
+    <a class="brand" href="landing_page.html" aria-label="CPInsight home">
+      <img src="../Assets/favicon_32.png" alt="" />
+      <span>CPInsight</span>
+    </a>
+    <nav class="desktop-links" aria-label="Primary">
+      <a href="#product">Product</a>
+      <a href="#intelligence">Intelligence</a>
+      <a href="#review">AI Review</a>
+      <a href="#technology">Technology</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="nav-link" id="loginLink" href="auth.html">Login</a>
+      <a class="button button-small button-primary" id="entryLink" href="auth.html">Enter CPInsight</a>
+      <button class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span></span><span></span>
+      </button>
+    </div>
+  </header>
 
-  <div class="particle top-[90%] left-[10%]"></div>
-  <div class="particle top-[95%] left-[25%]"></div>
-  <div class="particle top-[92%] left-[40%]"></div>
-  <div class="particle top-[97%] left-[60%]"></div>
-  <div class="particle top-[93%] left-[75%]"></div>
-  <div class="particle top-[96%] left-[90%]"></div>
+  <div class="mobile-menu" id="mobileMenu" hidden>
+    <a href="#product">Product</a>
+    <a href="#intelligence">Intelligence</a>
+    <a href="#review">AI Review</a>
+    <a href="#technology">Technology</a>
+    <a href="auth.html">Login</a>
+    <a href="dashboard.html">Enter CPInsight</a>
+  </div>
 
-  <!-- NAVBAR -->
-
-  <nav class="w-full fixed top-0 z-50 backdrop-blur-lg bg-black/20 border-b border-white/5">
-
-    <div class="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
-
-      <a href="landing_page.html" class="text-3xl font-black tracking-wide hover:text-emerald-300 transition" aria-label="Return to CPInsight home">
-        CPInsight
-      </a>
-
-      <ul class="hidden md:flex gap-10 text-gray-300">
-
-        <li>
-          <a href="#features" class="hover:text-white transition">
-            Features
-          </a>
-        </li>
-
-        <li>
-          <a href="dashboard.html" class="hover:text-white transition">
-            Dashboard
-          </a>
-        </li>
-
-        <li>
-          <a href="#analytics" class="hover:text-white transition">
-            Analytics
-          </a>
-        </li>
-
-        <li>
-          <a href="#contact" class="hover:text-white transition">
-            Contact
-          </a>
-        </li>
-
-      </ul>
-
-      <div class="flex gap-3 items-center">
-        <a id="dashboardLink" href="dashboard.html" class="hidden">
-          <button class="animated-gradient glow-pulse hover-scale transition px-6 py-3 rounded-2xl font-semibold">
-            Dashboard
-          </button>
-        </a>
-        <button id="logoutBtn" class="hidden border border-gray-700 hover:border-red-500 transition px-6 py-3 rounded-2xl font-semibold text-red-400 hover:text-red-300" onclick="logout()">
-          Logout
-        </button>
-        <a id="authLink" href="pages/auth.html">
-          <button class="animated-gradient glow-pulse hover-scale transition px-6 py-3 rounded-2xl font-semibold">
-            Sign In
-          </button>
-        </a>
+  <main id="main">
+    <section class="hero section-depth" id="hero">
+      <div class="hero-copy reveal">
+        <p class="eyebrow">Personal Competitive Programming Intelligence Platform</p>
+        <h1>Understand how you solve. Improve how you think.</h1>
+        <p class="hero-lede">
+          CPInsight turns your Codeforces, CodeChef, LeetCode, contest activity, browser telemetry, and AI conversations into evidence-backed coaching and adaptive next actions.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary magnetic" id="heroEntry" href="auth.html">Explore CPInsight</a>
+          <a class="button button-secondary" href="#system-tour">See how it works</a>
+        </div>
+        <div class="platform-strip" aria-label="Supported platform integrations">
+          <span>Supported integrations</span>
+          <strong>Codeforces</strong>
+          <strong>CodeChef</strong>
+          <strong>LeetCode</strong>
+        </div>
       </div>
 
-    </div>
+      <div class="hero-visual reveal" aria-label="Interactive CPInsight intelligence system">
+        <div class="core-stage" id="coreStage">
+          <canvas id="coreCanvas" width="860" height="680"></canvas>
+          <div class="core-center" tabindex="0">
+            <span>CPInsight</span>
+            <strong>Intelligence Core</strong>
+          </div>
+          <button class="core-node is-active" data-node="rating" style="--x: 17%; --y: 27%;" type="button">
+            <span>Rating</span><small>trajectory</small>
+          </button>
+          <button class="core-node" data-node="topics" style="--x: 78%; --y: 20%;" type="button">
+            <span>Topics</span><small>priority</small>
+          </button>
+          <button class="core-node" data-node="behavior" style="--x: 82%; --y: 61%;" type="button">
+            <span>Behavior</span><small>signals</small>
+          </button>
+          <button class="core-node" data-node="contests" style="--x: 15%; --y: 65%;" type="button">
+            <span>Contests</span><small>replay</small>
+          </button>
+          <button class="core-node" data-node="ai" style="--x: 50%; --y: 8%;" type="button">
+            <span>AI</span><small>reasoning</small>
+          </button>
+          <button class="core-node" data-node="progress" style="--x: 50%; --y: 84%;" type="button">
+            <span>Progress</span><small>roadmap</small>
+          </button>
+          <aside class="core-insight" id="coreInsight" aria-live="polite">
+            <span>Active signal</span>
+            <strong>Rating trajectory</strong>
+            <p>Contest outcomes and historical movement become context for planning, review, and skill prioritization.</p>
+          </aside>
+        </div>
+      </div>
+    </section>
 
-  </nav>
-
-  <!-- HERO -->
-
-  <section class="min-h-screen flex items-center justify-center px-8 grid-bg">
-
-    <div class="max-w-7xl w-full grid md:grid-cols-2 gap-16 items-center">
-
-      <!-- LEFT -->
-
+    <section class="signal-band reveal" aria-label="Product signal">
+      <p>Your competitive-programming data, turned into intelligence.</p>
       <div>
-
-        <p class="text-indigo-400 font-medium mb-4 fade-up">
-          Competitive Programming Analytics Platform
-        </p>
-
-        <h1 class="text-5xl md:text-7xl font-black leading-tight mb-6 fade-up">
-
-          Track.<br/>
-          Analyze.<br/>
-          Improve.
-
-        </h1>
-
-        <p class="text-gray-400 text-lg leading-relaxed mb-8 fade-up">
-
-          Advanced real-time analytics platform for
-          Codeforces and CodeChef users with contest
-          insights, behavioral tracking, recommendation
-          systems, and AI-powered learning analysis.
-
-        </p>
-
-        <div class="flex gap-5 fade-up flex-wrap">
-
-          <a href="dashboard.html">
-
-            <button class="animated-gradient glow-pulse hover-scale transition px-8 py-4 rounded-2xl font-semibold text-lg">
-
-              Launch Dashboard
-
-            </button>
-
-          </a>
-
-          <button class="border border-gray-700 hover:border-indigo-500 hover-scale transition px-8 py-4 rounded-2xl font-semibold">
-
-            Explore Features
-
-          </button>
-
-        </div>
-
-        <!-- STATS -->
-
-        <div class="flex gap-10 mt-14 flex-wrap fade-up">
-
-          <div>
-
-            <h2 class="text-4xl font-black text-indigo-400">
-              10K+
-            </h2>
-
-            <p class="text-gray-400">
-              Events/day
-            </p>
-
-          </div>
-
-          <div>
-
-            <h2 class="text-4xl font-black text-indigo-400">
-              120ms
-            </h2>
-
-            <p class="text-gray-400">
-              Avg Latency
-            </p>
-
-          </div>
-
-          <div>
-
-            <h2 class="text-4xl font-black text-indigo-400">
-              40%
-            </h2>
-
-            <p class="text-gray-400">
-              Better Recommendations
-            </p>
-
-          </div>
-
-        </div>
-
+        <span>Submissions</span>
+        <span>Contests</span>
+        <span>Behavior</span>
+        <span>AI Coach</span>
+        <span>Roadmaps</span>
       </div>
+    </section>
 
-      <!-- RIGHT -->
-
-      <div class="relative">
-
-        <!-- MAIN CARD -->
-
-        <div class="glass rounded-3xl p-8 glow float-animation">
-
-          <div class="flex items-center justify-between mb-8">
-
-            <div>
-
-              <p class="text-gray-400 text-sm">
-                Current Rating
-              </p>
-
-              <h2 class="text-5xl font-black mt-2">
-                1864
-              </h2>
-
-            </div>
-
-            <div class="bg-green-500/20 text-green-400 px-5 py-2 rounded-full text-sm">
-
-              +142 this month
-
-            </div>
-
-          </div>
-
-          <!-- GRAPH -->
-
-          <div class="h-56 flex items-end gap-3">
-
-            <div class="bg-indigo-500 w-full rounded-t-xl h-20 hover-scale"></div>
-            <div class="bg-indigo-500 w-full rounded-t-xl h-28 hover-scale"></div>
-            <div class="bg-indigo-500 w-full rounded-t-xl h-36 hover-scale"></div>
-            <div class="bg-indigo-500 w-full rounded-t-xl h-32 hover-scale"></div>
-            <div class="bg-indigo-500 w-full rounded-t-xl h-48 hover-scale"></div>
-            <div class="bg-indigo-500 w-full rounded-t-xl h-44 hover-scale"></div>
-            <div class="bg-indigo-500 w-full rounded-t-xl h-56 hover-scale"></div>
-
-          </div>
-
-          <div class="flex justify-between text-gray-500 text-sm mt-4">
-
-            <span>Jan</span>
-            <span>Feb</span>
-            <span>Mar</span>
-            <span>Apr</span>
-            <span>May</span>
-            <span>Jun</span>
-            <span>Jul</span>
-
-          </div>
-
-        </div>
-
-        <!-- FLOAT CARD -->
-
-        <div class="absolute -bottom-10 -left-10 glass rounded-3xl p-5 glow hover-scale">
-
-          <p class="text-gray-400 text-sm mb-2">
-            Problems Solved
-          </p>
-
-          <h3 class="text-4xl font-black">
-            3,482
-          </h3>
-
-        </div>
-
+    <section class="problem-section section-depth" id="product">
+      <div class="section-heading reveal">
+        <p class="eyebrow">The Problem</p>
+        <h2>Platforms show what happened. CPInsight asks why.</h2>
+        <p>Competitive programmers leave a dense trail of submissions, attempts, contests, ratings, topics, switches, and study activity. The hard part is turning that trail into the next useful move.</p>
       </div>
+      <div class="transformation reveal" aria-label="Raw activity becomes intelligence">
+        <div><span>01</span><strong>Raw activity</strong><p>Submissions, contests, solved problems, attempts, topics, difficulty.</p></div>
+        <div><span>02</span><strong>Patterns</strong><p>Topic exposure, problem switching, rating velocity, practice consistency.</p></div>
+        <div><span>03</span><strong>Intelligence</strong><p>Behavior and performance context grounded in product evidence.</p></div>
+        <div><span>04</span><strong>Action</strong><p>Recommendations, reflections, daily plans, weekly roadmaps.</p></div>
+      </div>
+    </section>
 
+    <section class="pipeline-section section-depth" id="intelligence">
+      <div class="section-heading reveal">
+        <p class="eyebrow">From Activity To Understanding</p>
+        <h2>A continuous system for personal improvement.</h2>
+      </div>
+      <div class="pipeline reveal">
+        <div class="pipeline-track" aria-hidden="true"></div>
+        <article><span>Your data</span><strong>Profiles + platform history</strong></article>
+        <article><span>Behavior intelligence</span><strong>Signals from live activity</strong></article>
+        <article><span>Performance intelligence</span><strong>Rating, topic, contest context</strong></article>
+        <article><span>AI reasoning</span><strong>Evidence-backed review and coaching</strong></article>
+        <article><span>Personalized action</span><strong>Plans, recommendations, roadmap</strong></article>
+      </div>
+    </section>
+
+    <section class="analytics-wall section-depth">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Analytics Showcase</p>
+        <h2>Not a chatbot. A product built around competitive-programming data.</h2>
+        <p class="demo-note">Visuals below use illustrative example data.</p>
+      </div>
+      <div class="viz-wall reveal">
+        <article class="viz-panel rating-panel">
+          <div class="panel-top"><span>Rating trajectory</span><strong>drawn over contests</strong></div>
+          <div class="line-chart" aria-hidden="true"><i></i></div>
+        </article>
+        <article class="viz-panel heatmap-panel">
+          <div class="panel-top"><span>Activity heatmap</span><strong>daily solve density</strong></div>
+          <div class="mini-heatmap" aria-hidden="true"></div>
+        </article>
+        <article class="viz-panel topic-panel">
+          <div class="panel-top"><span>Topic strength</span><strong>priority surfaces</strong></div>
+          <div class="bars" aria-hidden="true">
+            <span style="--h: 72%"></span><span style="--h: 48%"></span><span style="--h: 86%"></span><span style="--h: 58%"></span><span style="--h: 67%"></span>
+          </div>
+        </article>
+        <article class="viz-panel distribution-panel">
+          <div class="panel-top"><span>Difficulty distribution</span><strong>solves by bucket</strong></div>
+          <div class="rings" aria-hidden="true"><span></span><span></span><span></span></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="contest-section section-depth">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Live Contest Monitoring</p>
+        <h2>Your contest, understood in real time.</h2>
+      </div>
+      <div class="contest-grid reveal">
+        <div class="timeline-card">
+          <ol class="contest-timeline">
+            <li><span>00:04</span><strong>Problem A opened</strong><em>reading begins</em></li>
+            <li><span>00:19</span><strong>Problem B switched</strong><em>focus shift detected</em></li>
+            <li><span>00:38</span><strong>Submission</strong><em>wrong answer</em></li>
+            <li><span>01:07</span><strong>Problem C explored</strong><em>high time cost</em></li>
+            <li><span>01:24</span><strong>Accepted</strong><em>progress recovered</em></li>
+          </ol>
+        </div>
+        <div class="signal-router">
+          <div>Browser activity</div>
+          <div>Telemetry</div>
+          <div>Live analysis</div>
+          <div>Contest intelligence</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="review-section section-depth" id="review">
+      <div class="section-heading reveal">
+        <p class="eyebrow">AI Contest Review</p>
+        <h2>After the contest, understand the contest.</h2>
+        <p class="demo-note">Example review content is illustrative.</p>
+      </div>
+      <div class="review-console reveal">
+        <div class="event-column">
+          <span>Contest event</span>
+          <strong>Spent 18m on Problem C</strong>
+          <p>Repeated exploration before switching away.</p>
+        </div>
+        <div class="review-arrow" aria-hidden="true"></div>
+        <div class="insight-column">
+          <article><span>Evidence</span><p>Problem switches, attempts, verdicts, elapsed time.</p></article>
+          <article><span>Reasoning</span><p>High-cost exploration appeared before recognizing the pattern.</p></article>
+          <article><span>Recommendation</span><p>Practice earlier pattern recognition on comparable difficulty tasks.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="coach-section section-depth">
+      <div class="section-heading reveal">
+        <p class="eyebrow">AI Coach</p>
+        <h2>An AI coach that knows when to use your data.</h2>
+      </div>
+      <div class="coach-logic reveal">
+        <article>
+          <span>General question</span>
+          <strong>General AI reasoning</strong>
+          <p>Explain an algorithm, debug an approach, or compare techniques without needing personal context.</p>
+        </article>
+        <article class="contextual">
+          <span>Personal question</span>
+          <strong>Your history + behavior + contests + progress</strong>
+          <p>When the question depends on you, CPInsight brings your evidence into the answer.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="planner-section section-depth">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Adaptive Study Planner</p>
+        <h2>Your plan changes as you improve.</h2>
+      </div>
+      <div class="planner-flow reveal">
+        <span>Current rating</span>
+        <span>Topic priorities</span>
+        <span>Recommended problems</span>
+        <span>Daily plan</span>
+        <span>Weekly roadmap</span>
+        <span>Progress update</span>
+        <span>Next contest</span>
+      </div>
+    </section>
+
+    <section class="recommendation-section section-depth">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Recommendation Engine</p>
+        <h2>Problem recommendations with a reason attached.</h2>
+        <p class="demo-note">Skill relationships shown here are conceptual.</p>
+      </div>
+      <div class="recommendation-lab reveal" id="recommendationLab">
+        <div class="skill-network" aria-label="Interactive conceptual skill graph">
+          <button data-topic="Binary Search" class="is-selected" type="button">Binary Search</button>
+          <button data-topic="DP" type="button">DP</button>
+          <button data-topic="Graphs" type="button">Graphs</button>
+          <button data-topic="Greedy" type="button">Greedy</button>
+          <button data-topic="Trees" type="button">Trees</button>
+          <button data-topic="Two Pointers" type="button">Two Pointers</button>
+        </div>
+        <aside class="recommendation-detail" id="recommendationDetail" aria-live="polite">
+          <span>Selected topic</span>
+          <h3>Binary Search</h3>
+          <p>Recommended next because recent practice shows pattern hesitation around monotonic predicates.</p>
+          <div><strong>Platform</strong><em>Codeforces / LeetCode</em></div>
+          <div><strong>Difficulty</strong><em>Illustrative: 1200-1500</em></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="skill-section section-depth">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Skill Intelligence</p>
+        <h2>Topics expand into concepts, problems, and mastery signals.</h2>
+      </div>
+      <div class="skill-stack reveal">
+        <button type="button" data-skill="Dynamic Programming" class="is-active">Dynamic Programming</button>
+        <button type="button" data-skill="Graphs">Graphs</button>
+        <button type="button" data-skill="Greedy">Greedy</button>
+        <button type="button" data-skill="Trees">Trees</button>
+        <aside id="skillDetail">
+          <span>Topic intelligence</span>
+          <h3>Dynamic Programming</h3>
+          <p>Inspect recent activity, difficulty exposure, and the next recommended step from the analytics surface.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="why-section section-depth">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Why CPInsight</p>
+        <h2>Traditional platforms give you data. CPInsight adds context.</h2>
+      </div>
+      <div class="comparison reveal">
+        <article><span>Traditional platforms</span><p>Rating, problems, submissions, contest results.</p></article>
+        <article><span>CPInsight adds</span><p>Behavior, context, intelligence, recommendations, AI coaching, contest review, adaptive planning.</p></article>
+      </div>
+    </section>
+
+    <section class="tour-section section-depth" id="system-tour">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Explore The System</p>
+        <h2>A miniature product tour that transforms with your selection.</h2>
+      </div>
+      <div class="tour-shell reveal">
+        <div class="tour-tabs" role="tablist" aria-label="Product demos">
+          <button role="tab" aria-selected="true" data-tour="analytics" type="button">Analytics</button>
+          <button role="tab" aria-selected="false" data-tour="contest" type="button">Contest Review</button>
+          <button role="tab" aria-selected="false" data-tour="coach" type="button">AI Coach</button>
+          <button role="tab" aria-selected="false" data-tour="planner" type="button">Study Planner</button>
+          <button role="tab" aria-selected="false" data-tour="monitoring" type="button">Live Monitoring</button>
+        </div>
+        <div class="tour-stage" id="tourStage" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="technology-section section-depth" id="technology">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Technical Engine</p>
+        <h2>Serious engineering underneath, presented only where it matters.</h2>
+      </div>
+      <div class="architecture-strip reveal" aria-label="CPInsight technical components">
+        <span>PostgreSQL</span>
+        <span>Redis</span>
+        <span>WebSockets</span>
+        <span>Telemetry</span>
+        <span>Workers</span>
+        <span>RAG</span>
+        <span>Knowledge Graph</span>
+        <span>LLM Runtime</span>
+        <span>Browser Extension</span>
+      </div>
+    </section>
+
+    <section class="ecosystem-section section-depth">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Product Ecosystem</p>
+        <h2>One connected environment for practice, contests, analysis, and coaching.</h2>
+      </div>
+      <div class="ecosystem-grid reveal">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="analytics.html">Analytics</a>
+        <a href="calendar.html">Calendar</a>
+        <a href="contests.html">Contests</a>
+        <a href="ai-coach.html">AI Coach</a>
+        <a href="ai-coach.html?view=studyPlans">Study Planner</a>
+        <a href="platforms.html">Platforms</a>
+        <span>Browser Extension</span>
+      </div>
+    </section>
+
+    <section class="final-cta section-depth reveal">
+      <p class="eyebrow">Begin</p>
+      <h2>Turn your next contest into useful evidence.</h2>
+      <div class="hero-actions">
+        <a class="button button-primary magnetic" id="finalEntry" href="auth.html">Enter CPInsight</a>
+        <a class="button button-secondary" href="analytics.html">View analytics</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>
+      <strong>CPInsight</strong>
+      <p>Personal competitive-programming intelligence.</p>
     </div>
+    <nav aria-label="Footer">
+      <a href="#product">Product</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="analytics.html">Analytics</a>
+      <a href="contests.html">Contests</a>
+      <a href="ai-coach.html">AI Coach</a>
+      <a href="../docs/README.md">Docs</a>
+    </nav>
+  </footer>
 
-  </section>
-
-  <!-- FEATURES -->
-
-  <section id="features" class="px-8 py-28">
-
-    <div class="max-w-7xl mx-auto">
-
-      <div class="text-center mb-20 fade-up">
-
-        <p class="text-indigo-400 font-medium mb-3">
-          FEATURES
-        </p>
-
-        <h2 class="text-5xl font-black mb-6">
-          Everything You Need
-        </h2>
-
-        <p class="text-gray-400 max-w-2xl mx-auto">
-
-          Powerful analytics and intelligent recommendations
-          to accelerate your competitive programming journey.
-
-        </p>
-
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-8">
-
-        <!-- CARD -->
-
-        <div class="glass rounded-3xl p-8 hover:-translate-y-3 hover:shadow-2xl hover:shadow-indigo-500/20 hover-scale transition duration-300">
-
-          <div class="text-6xl mb-6">
-            📊
-          </div>
-
-          <h3 class="text-2xl font-bold mb-4">
-            Real-Time Analytics
-          </h3>
-
-          <p class="text-gray-400 leading-relaxed">
-
-            Track ratings, weaknesses,
-            strengths, contest patterns,
-            and overall performance growth.
-
-          </p>
-
-        </div>
-
-        <!-- CARD -->
-
-        <div class="glass rounded-3xl p-8 hover:-translate-y-3 hover:shadow-2xl hover:shadow-indigo-500/20 hover-scale transition duration-300">
-
-          <div class="text-6xl mb-6">
-            ⚡
-          </div>
-
-          <h3 class="text-2xl font-bold mb-4">
-            Live Tracking
-          </h3>
-
-          <p class="text-gray-400 leading-relaxed">
-
-            Real-time contest tracking,
-            instant synchronization,
-            and behavioral monitoring.
-
-          </p>
-
-        </div>
-
-        <!-- CARD -->
-
-        <div class="glass rounded-3xl p-8 hover:-translate-y-3 hover:shadow-2xl hover:shadow-indigo-500/20 hover-scale transition duration-300">
-
-          <div class="text-6xl mb-6">
-            🤖
-          </div>
-
-          <h3 class="text-2xl font-bold mb-4">
-            AI Recommendations
-          </h3>
-
-          <p class="text-gray-400 leading-relaxed">
-
-            Adaptive problem recommendations
-            using semantic retrieval and
-            learning pattern analysis.
-
-          </p>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-  <!-- CTA -->
-
-  <section class="px-8 pb-28">
-
-    <div class="max-w-6xl mx-auto animated-gradient rounded-[40px] p-16 text-center glow-pulse">
-
-      <h2 class="text-5xl font-black mb-6">
-
-        Ready To Level Up?
-
-      </h2>
-
-      <p class="text-lg text-indigo-100 max-w-2xl mx-auto mb-10">
-
-        Join the next generation of competitive programmers
-        using intelligent analytics to improve faster.
-
-      </p>
-
-      <a href="dashboard.html">
-
-        <button class="bg-white text-indigo-700 font-bold px-10 py-5 rounded-2xl hover-scale transition text-lg">
-
-          Start Now
-
-        </button>
-
-      </a>
-
-    </div>
-
-  </section>
-
-  <!-- SCROLL REVEAL -->
   <script src="../script/landing_page.js"></script>
-
-  <!-- AUTH CHECK -->
-  <script>
-    function checkAuth() {
-      const isLoggedIn = localStorage.getItem('accessToken');
-      const dashboardLink = document.getElementById('dashboardLink');
-      const logoutBtn = document.getElementById('logoutBtn');
-      const authLink = document.getElementById('authLink');
-
-      if (isLoggedIn) {
-        dashboardLink.classList.remove('hidden');
-        logoutBtn.classList.remove('hidden');
-        authLink.classList.add('hidden');
-      } else {
-        dashboardLink.classList.add('hidden');
-        logoutBtn.classList.add('hidden');
-        authLink.classList.remove('hidden');
-      }
-    }
-
-    function logout() {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('userProfile');
-      checkAuth();
-    }
-
-    checkAuth();
-  </script>
 </body>
-
 </html>

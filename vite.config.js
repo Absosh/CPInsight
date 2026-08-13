@@ -15,6 +15,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
+        landing: 'pages/landing_page.html',
         aiCoach: 'pages/ai-coach.html',
         dashboard: 'pages/dashboard.html',
         analytics: 'pages/analytics.html'
