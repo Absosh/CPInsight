@@ -15,7 +15,10 @@
   <a class="skip-link" href="#main">Skip to content</a>
   <div class="ambient-field" aria-hidden="true">
     <canvas id="ambientCanvas"></canvas>
+    <div class="ambient-grid"></div>
+    <div class="ambient-scan"></div>
   </div>
+  <div class="cursor-aura" id="cursorAura" aria-hidden="true"></div>
 
   <header class="site-nav" data-nav>
     <a class="brand" href="landing_page.html" aria-label="CPInsight home">
@@ -48,9 +51,22 @@
 
   <main id="main">
     <section class="hero section-depth" id="hero">
-      <div class="hero-copy reveal">
+      <div class="hero-copy">
         <p class="eyebrow">Personal Competitive Programming Intelligence Platform</p>
-        <h1>Understand how you solve. Improve how you think.</h1>
+        <h1 aria-label="Understand how you solve. Improve how you think.">
+          <span class="headline-line" aria-hidden="true">
+            <span class="headline-word">Understand</span>
+            <span class="headline-word">how</span>
+            <span class="headline-word">you</span>
+            <span class="headline-word">solve.</span>
+          </span>
+          <span class="headline-line headline-line-accent" aria-hidden="true">
+            <span class="headline-word">Improve</span>
+            <span class="headline-word">how</span>
+            <span class="headline-word">you</span>
+            <span class="headline-word">think.</span>
+          </span>
+        </h1>
         <p class="hero-lede">
           CPInsight turns your Codeforces, CodeChef, LeetCode, contest activity, browser telemetry, and AI conversations into evidence-backed coaching and adaptive next actions.
         </p>
@@ -66,9 +82,25 @@
         </div>
       </div>
 
-      <div class="hero-visual reveal" aria-label="Interactive CPInsight intelligence system">
+      <div class="hero-visual" aria-label="Interactive CPInsight intelligence system">
         <div class="core-stage" id="coreStage">
           <canvas id="coreCanvas" width="860" height="680"></canvas>
+          <div class="core-hud" aria-hidden="true">
+            <span><i></i> Live intelligence</span>
+            <span>Illustrative system view</span>
+          </div>
+          <svg class="core-links" viewBox="0 0 1000 760" preserveAspectRatio="none" aria-hidden="true">
+            <path data-core-link="rating" pathLength="1" d="M500 380 Q330 310 170 205" />
+            <path data-core-link="topics" pathLength="1" d="M500 380 Q640 250 780 152" />
+            <path data-core-link="behavior" pathLength="1" d="M500 380 Q680 390 820 464" />
+            <path data-core-link="contests" pathLength="1" d="M500 380 Q320 430 150 494" />
+            <path data-core-link="ai" pathLength="1" d="M500 380 Q500 220 500 61" />
+            <path data-core-link="progress" pathLength="1" d="M500 380 Q500 520 500 638" />
+            <g class="core-particles"></g>
+          </svg>
+          <span class="orbital-meta orbital-meta-a" aria-hidden="true">SUBMISSION / ACCEPTED</span>
+          <span class="orbital-meta orbital-meta-b" aria-hidden="true">CONTEST / SIGNAL</span>
+          <span class="orbital-meta orbital-meta-c" aria-hidden="true">TOPIC / PRIORITY</span>
           <div class="core-center" tabindex="0">
             <span>CPInsight</span>
             <strong>Intelligence Core</strong>
@@ -95,6 +127,9 @@
             <span>Active signal</span>
             <strong>Rating trajectory</strong>
             <p>Contest outcomes and historical movement become context for planning, review, and skill prioritization.</p>
+            <div class="core-insight-signals" aria-hidden="true">
+              <i>Contests</i><i>Trajectory</i><i>Progress</i>
+            </div>
           </aside>
         </div>
       </div>
@@ -111,17 +146,58 @@
       </div>
     </section>
 
-    <section class="problem-section section-depth" id="product">
-      <div class="section-heading reveal">
-        <p class="eyebrow">The Problem</p>
-        <h2>Platforms show what happened. CPInsight asks why.</h2>
-        <p>Competitive programmers leave a dense trail of submissions, attempts, contests, ratings, topics, switches, and study activity. The hard part is turning that trail into the next useful move.</p>
-      </div>
-      <div class="transformation reveal" aria-label="Raw activity becomes intelligence">
-        <div><span>01</span><strong>Raw activity</strong><p>Submissions, contests, solved problems, attempts, topics, difficulty.</p></div>
-        <div><span>02</span><strong>Patterns</strong><p>Topic exposure, problem switching, rating velocity, practice consistency.</p></div>
-        <div><span>03</span><strong>Intelligence</strong><p>Behavior and performance context grounded in product evidence.</p></div>
-        <div><span>04</span><strong>Action</strong><p>Recommendations, reflections, daily plans, weekly roadmaps.</p></div>
+    <section class="problem-section section-depth pinned-story" id="product" data-intelligence-story>
+      <div class="intelligence-story-pin">
+        <div class="story-copy">
+          <div class="section-heading">
+            <p class="eyebrow">The Problem</p>
+            <h2>Platforms show what happened. CPInsight asks why.</h2>
+            <p>Competitive programmers leave a dense trail of submissions, attempts, contests, ratings, topics, switches, and study activity. The hard part is turning that trail into the next useful move.</p>
+          </div>
+          <ol class="story-stage-index" aria-label="Activity to intelligence stages">
+            <li class="is-active" data-story-step="0"><button type="button"><span>01</span>Raw activity</button></li>
+            <li data-story-step="1"><button type="button"><span>02</span>Patterns connect</button></li>
+            <li data-story-step="2"><button type="button"><span>03</span>Behavior emerges</button></li>
+            <li data-story-step="3"><button type="button"><span>04</span>AI reasoning</button></li>
+            <li data-story-step="4"><button type="button"><span>05</span>Next action</button></li>
+          </ol>
+        </div>
+        <div class="intelligence-stage" data-story-stage="0" aria-label="Scroll-driven transformation from activity to action">
+          <div class="story-hud" aria-hidden="true">
+            <span>EVENT STREAM</span>
+            <strong id="storyStatus">RAW SIGNALS</strong>
+          </div>
+          <svg class="story-routes" viewBox="0 0 900 620" preserveAspectRatio="none" aria-hidden="true">
+            <path pathLength="1" d="M95 126 C240 126 260 290 448 310" />
+            <path pathLength="1" d="M805 126 C660 126 640 290 452 310" />
+            <path pathLength="1" d="M95 500 C230 500 270 340 448 310" />
+            <path pathLength="1" d="M805 500 C670 500 630 340 452 310" />
+            <path class="story-output-path" pathLength="1" d="M450 310 C450 410 450 475 450 568" />
+          </svg>
+          <div class="story-orbits" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="story-event-stream" aria-hidden="true">
+            <span style="--sx: 8%; --sy: 34%; --delay: 0s;">SUBMISSION / WA</span>
+            <span style="--sx: 70%; --sy: 27%; --delay: .9s;">TOPIC / GRAPHS</span>
+            <span style="--sx: 13%; --sy: 77%; --delay: 1.8s;">CONTEST / SWITCH</span>
+            <span style="--sx: 68%; --sy: 82%; --delay: 2.7s;">RATING / UPDATE</span>
+            <span style="--sx: 40%; --sy: 15%; --delay: 3.6s;">ACTIVITY / SOLVED</span>
+          </div>
+          <div class="story-core" aria-hidden="true">
+            <span>CPInsight</span>
+            <strong id="storyCoreLabel">Signal intake</strong>
+            <div class="story-core-wave"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+          <div class="transformation" aria-label="Raw activity becomes intelligence">
+            <div data-stage-card="raw"><span>01</span><strong>Raw activity</strong><p>Submissions, contests, solved problems, attempts, topics, difficulty.</p></div>
+            <div data-stage-card="patterns"><span>02</span><strong>Patterns</strong><p>Topic exposure, problem switching, rating velocity, practice consistency.</p></div>
+            <div data-stage-card="intelligence"><span>03</span><strong>Intelligence</strong><p>Behavior and performance context grounded in product evidence.</p></div>
+            <div data-stage-card="action"><span>04</span><strong>Action</strong><p>Recommendations, reflections, daily plans, weekly roadmaps.</p></div>
+          </div>
+          <div class="story-next-action" aria-hidden="true">
+            <span>PERSONALIZED ACTION</span>
+            <strong>Your next useful problem</strong>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -130,13 +206,13 @@
         <p class="eyebrow">From Activity To Understanding</p>
         <h2>A continuous system for personal improvement.</h2>
       </div>
-      <div class="pipeline reveal">
+      <div class="pipeline" data-flow-pipeline>
         <div class="pipeline-track" aria-hidden="true"></div>
-        <article><span>Your data</span><strong>Profiles + platform history</strong></article>
-        <article><span>Behavior intelligence</span><strong>Signals from live activity</strong></article>
-        <article><span>Performance intelligence</span><strong>Rating, topic, contest context</strong></article>
-        <article><span>AI reasoning</span><strong>Evidence-backed review and coaching</strong></article>
-        <article><span>Personalized action</span><strong>Plans, recommendations, roadmap</strong></article>
+        <article data-flow-node="0"><span>Your data</span><strong>Profiles + platform history</strong></article>
+        <article data-flow-node="1"><span>Behavior intelligence</span><strong>Signals from live activity</strong></article>
+        <article data-flow-node="2"><span>Performance intelligence</span><strong>Rating, topic, contest context</strong></article>
+        <article data-flow-node="3"><span>AI reasoning</span><strong>Evidence-backed review and coaching</strong></article>
+        <article data-flow-node="4"><span>Personalized action</span><strong>Plans, recommendations, roadmap</strong></article>
       </div>
     </section>
 
@@ -149,21 +225,58 @@
       <div class="viz-wall reveal">
         <article class="viz-panel rating-panel">
           <div class="panel-top"><span>Rating trajectory</span><strong>drawn over contests</strong></div>
-          <div class="line-chart" aria-hidden="true"><i></i></div>
+          <div class="line-chart" aria-hidden="true">
+            <svg class="rating-chart-svg" viewBox="0 0 720 250" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="ratingArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#67e8f9" stop-opacity=".28" />
+                  <stop offset="1" stop-color="#67e8f9" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <path class="rating-area" d="M18 214 C78 208 94 180 145 188 S235 128 286 142 S370 104 420 112 S502 54 557 76 S646 32 704 42 L704 238 L18 238 Z" />
+              <path class="rating-line" pathLength="1" d="M18 214 C78 208 94 180 145 188 S235 128 286 142 S370 104 420 112 S502 54 557 76 S646 32 704 42" />
+              <g class="rating-points">
+                <circle cx="18" cy="214" r="4" data-rating-point="Contest 01" />
+                <circle cx="145" cy="188" r="4" data-rating-point="Contest 04" />
+                <circle cx="286" cy="142" r="4" data-rating-point="Contest 08" />
+                <circle cx="420" cy="112" r="4" data-rating-point="Contest 12" />
+                <circle cx="557" cy="76" r="4" data-rating-point="Contest 16" />
+                <circle cx="704" cy="42" r="4" data-rating-point="Contest 20" />
+              </g>
+            </svg>
+            <span class="chart-scrubber"></span>
+            <span class="chart-tooltip">Illustrative trajectory</span>
+            <div class="chart-axis-labels" aria-hidden="true"><span>earlier contests</span><span>recent contests</span></div>
+          </div>
         </article>
         <article class="viz-panel heatmap-panel">
           <div class="panel-top"><span>Activity heatmap</span><strong>daily solve density</strong></div>
-          <div class="mini-heatmap" aria-hidden="true"></div>
+          <div class="heatmap-readout" aria-hidden="true"><span>Practice rhythm</span><strong>Consistency emerging</strong></div>
+          <div class="mini-heatmap" aria-hidden="true">
+            <span data-lvl="0"></span><span data-lvl="1"></span><span data-lvl="0"></span><span data-lvl="2"></span><span data-lvl="3"></span><span data-lvl="1"></span><span data-lvl="0"></span>
+            <span data-lvl="2"></span><span data-lvl="1"></span><span data-lvl="3"></span><span data-lvl="0"></span><span data-lvl="2"></span><span data-lvl="1"></span><span data-lvl="0"></span>
+            <span data-lvl="2"></span><span data-lvl="3"></span><span data-lvl="1"></span><span data-lvl="0"></span><span data-lvl="1"></span><span data-lvl="2"></span><span data-lvl="0"></span>
+            <span data-lvl="3"></span><span data-lvl="2"></span><span data-lvl="1"></span><span data-lvl="0"></span><span data-lvl="1"></span><span data-lvl="3"></span><span data-lvl="2"></span>
+            <span data-lvl="0"></span><span data-lvl="0"></span><span data-lvl="1"></span><span data-lvl="2"></span><span data-lvl="3"></span><span data-lvl="0"></span><span data-lvl="2"></span>
+            <span data-lvl="1"></span><span data-lvl="1"></span><span data-lvl="0"></span><span data-lvl="3"></span><span data-lvl="2"></span><span data-lvl="0"></span><span data-lvl="1"></span>
+            <span data-lvl="2"></span><span data-lvl="3"></span><span data-lvl="1"></span><span data-lvl="0"></span><span data-lvl="2"></span><span data-lvl="1"></span><span data-lvl="3"></span>
+            <span data-lvl="0"></span><span data-lvl="1"></span><span data-lvl="2"></span><span data-lvl="0"></span><span data-lvl="3"></span><span data-lvl="2"></span><span data-lvl="1"></span>
+          </div>
+          <div class="heatmap-legend" aria-hidden="true"><span>less</span><i></i><i></i><i></i><i></i><span>more</span></div>
         </article>
         <article class="viz-panel topic-panel">
           <div class="panel-top"><span>Topic strength</span><strong>priority surfaces</strong></div>
           <div class="bars" aria-hidden="true">
-            <span style="--h: 72%"></span><span style="--h: 48%"></span><span style="--h: 86%"></span><span style="--h: 58%"></span><span style="--h: 67%"></span>
+            <span style="--h: 72%"><i>Greedy</i></span><span style="--h: 48%"><i>Graphs</i></span><span style="--h: 86%"><i>Binary</i></span><span style="--h: 58%"><i>DP</i></span><span style="--h: 67%"><i>Trees</i></span>
           </div>
         </article>
         <article class="viz-panel distribution-panel">
           <div class="panel-top"><span>Difficulty distribution</span><strong>solves by bucket</strong></div>
-          <div class="rings" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div class="rings" aria-hidden="true">
+            <span class="difficulty-ring difficulty-ring-wide"></span><span class="difficulty-ring difficulty-ring-mid"></span><span class="difficulty-ring difficulty-ring-core"></span>
+            <div class="difficulty-center"><strong>Practice</strong><small>distribution</small></div>
+            <i class="ring-label ring-label-a">FOUNDATION</i><i class="ring-label ring-label-b">GROWTH</i><i class="ring-label ring-label-c">STRETCH</i>
+          </div>
         </article>
       </div>
     </section>
@@ -173,42 +286,77 @@
         <p class="eyebrow">Live Contest Monitoring</p>
         <h2>Your contest, understood in real time.</h2>
       </div>
-      <div class="contest-grid reveal">
+      <div class="contest-grid" data-contest-simulation>
         <div class="timeline-card">
+          <div class="simulation-status" aria-hidden="true">
+            <span><i></i> Contest telemetry</span>
+            <strong id="contestState">READING</strong>
+          </div>
+          <div class="timeline-rail" aria-hidden="true"><span class="timeline-playhead"></span></div>
           <ol class="contest-timeline">
-            <li><span>00:04</span><strong>Problem A opened</strong><em>reading begins</em></li>
-            <li><span>00:19</span><strong>Problem B switched</strong><em>focus shift detected</em></li>
-            <li><span>00:38</span><strong>Submission</strong><em>wrong answer</em></li>
-            <li><span>01:07</span><strong>Problem C explored</strong><em>high time cost</em></li>
-            <li><span>01:24</span><strong>Accepted</strong><em>progress recovered</em></li>
+            <li tabindex="0" data-contest-event="reading"><span>00:04</span><strong>Problem A opened</strong><em>reading begins</em></li>
+            <li tabindex="0" data-contest-event="switch"><span>00:19</span><strong>Problem B switched</strong><em>focus shift detected</em></li>
+            <li tabindex="0" data-contest-event="submission"><span>00:38</span><strong>Submission</strong><em>wrong answer</em></li>
+            <li tabindex="0" data-contest-event="exploration"><span>01:07</span><strong>Problem C explored</strong><em>high time cost</em></li>
+            <li tabindex="0" data-contest-event="accepted"><span>01:24</span><strong>Accepted</strong><em>progress recovered</em></li>
           </ol>
         </div>
         <div class="signal-router">
-          <div>Browser activity</div>
-          <div>Telemetry</div>
-          <div>Live analysis</div>
-          <div>Contest intelligence</div>
+          <svg class="router-lines" viewBox="0 0 420 360" preserveAspectRatio="none" aria-hidden="true">
+            <path pathLength="1" d="M210 42 L210 318" />
+          </svg>
+          <div data-router-node="0">Browser activity</div>
+          <div data-router-node="1">Telemetry</div>
+          <div data-router-node="2">Live analysis</div>
+          <div data-router-node="3">Contest intelligence</div>
+          <p class="router-readout" id="routerReadout" aria-live="polite">Problem reading time enters the telemetry stream.</p>
         </div>
       </div>
     </section>
 
-    <section class="review-section section-depth" id="review">
-      <div class="section-heading reveal">
-        <p class="eyebrow">AI Contest Review</p>
-        <h2>After the contest, understand the contest.</h2>
-        <p class="demo-note">Example review content is illustrative.</p>
-      </div>
-      <div class="review-console reveal">
-        <div class="event-column">
-          <span>Contest event</span>
-          <strong>Spent 18m on Problem C</strong>
-          <p>Repeated exploration before switching away.</p>
+    <section class="review-section section-depth pinned-story" id="review" data-review-story>
+      <div class="review-story-pin">
+        <div class="review-story-copy">
+          <div class="section-heading">
+            <p class="eyebrow">AI Contest Review</p>
+            <h2>After the contest, understand the contest.</h2>
+            <p class="demo-note">Example review content is illustrative.</p>
+          </div>
+          <ol class="review-stage-index" aria-label="Contest review reasoning stages">
+            <li class="is-active" data-review-step="0"><button type="button">Event</button></li>
+            <li data-review-step="1"><button type="button">Evidence</button></li>
+            <li data-review-step="2"><button type="button">Reasoning</button></li>
+            <li data-review-step="3"><button type="button">Behavior</button></li>
+            <li data-review-step="4"><button type="button">Plan</button></li>
+          </ol>
         </div>
-        <div class="review-arrow" aria-hidden="true"></div>
-        <div class="insight-column">
-          <article><span>Evidence</span><p>Problem switches, attempts, verdicts, elapsed time.</p></article>
-          <article><span>Reasoning</span><p>High-cost exploration appeared before recognizing the pattern.</p></article>
-          <article><span>Recommendation</span><p>Practice earlier pattern recognition on comparable difficulty tasks.</p></article>
+        <div class="review-console" data-review-stage="0">
+          <div class="review-telemetry" aria-hidden="true">
+            <span>00:49 / Problem C opened</span><span>01:07 / approach repeated</span><span>01:25 / problem switched</span>
+          </div>
+          <svg class="review-links" viewBox="0 0 900 610" preserveAspectRatio="none" aria-hidden="true">
+            <path data-review-link="1" pathLength="1" d="M250 305 C330 305 330 106 470 106" />
+            <path data-review-link="2" pathLength="1" d="M250 305 C350 305 350 236 470 236" />
+            <path data-review-link="3" pathLength="1" d="M250 305 C350 305 350 370 470 370" />
+            <path data-review-link="4" pathLength="1" d="M250 305 C330 305 330 510 470 510" />
+          </svg>
+          <div class="review-packets" aria-hidden="true"></div>
+          <div class="event-column">
+            <span>Contest event</span>
+            <strong>Spent 18m on Problem C</strong>
+            <p>Repeated exploration before switching away.</p>
+            <div class="event-pulse" aria-hidden="true"></div>
+          </div>
+          <div class="review-arrow" aria-hidden="true">
+            <svg viewBox="0 0 100 16" preserveAspectRatio="none"><path pathLength="1" d="M0 8 H94 L86 2 M94 8 L86 14" /></svg>
+          </div>
+          <div class="insight-column">
+            <article data-review-card="1"><span>Evidence</span><p>Problem switches, attempts, verdicts, elapsed time.</p></article>
+            <article data-review-card="2"><span>Reasoning</span><p>High-cost exploration appeared before recognizing the pattern.</p></article>
+            <article data-review-card="3"><span>Behavior</span><p>Repeated high-cost exploration before switching became a recognizable behavior pattern.</p></article>
+            <article data-review-card="4"><span>Improvement plan</span><p>Practice earlier pattern recognition on comparable difficulty tasks.</p></article>
+          </div>
+          <div class="review-output" aria-hidden="true"><span>NEXT REVIEW ACTION</span><strong>Recognize the pattern earlier</strong></div>
         </div>
       </div>
     </section>
@@ -218,13 +366,32 @@
         <p class="eyebrow">AI Coach</p>
         <h2>An AI coach that knows when to use your data.</h2>
       </div>
-      <div class="coach-logic reveal">
-        <article>
+      <div class="coach-logic" id="coachLogic" data-coach-mode="personal">
+        <div class="coach-mode-switch" role="tablist" aria-label="AI Coach question type">
+          <button type="button" role="tab" aria-selected="false" data-coach-select="general">General question</button>
+          <button type="button" role="tab" aria-selected="true" data-coach-select="personal">Personal question</button>
+        </div>
+        <div class="coach-pipeline" aria-live="polite">
+          <svg class="coach-routes" viewBox="0 0 900 240" preserveAspectRatio="none" aria-hidden="true">
+            <path data-coach-route="question" pathLength="1" d="M110 120 C230 120 250 120 342 120" />
+            <path data-coach-route="context" pathLength="1" d="M342 120 C465 120 515 120 610 120" />
+            <path data-coach-route="answer" pathLength="1" d="M610 120 C720 120 755 120 820 120" />
+          </svg>
+          <div class="coach-node coach-question"><span>Question</span><strong>What should I practice next?</strong></div>
+          <div class="coach-context-well">
+            <span>Context</span>
+            <div><i>History</i><i>Behavior</i><i>Performance</i><i>Contests</i></div>
+          </div>
+          <div class="coach-node coach-reasoning"><span>Reasoning</span><strong>Evidence + intent</strong></div>
+          <div class="coach-node coach-answer"><span>Answer</span><strong>Personal next action</strong></div>
+          <div class="coach-packets" aria-hidden="true"></div>
+        </div>
+        <article data-coach-card="general">
           <span>General question</span>
           <strong>General AI reasoning</strong>
           <p>Explain an algorithm, debug an approach, or compare techniques without needing personal context.</p>
         </article>
-        <article class="contextual">
+        <article class="contextual is-selected" data-coach-card="personal">
           <span>Personal question</span>
           <strong>Your history + behavior + contests + progress</strong>
           <p>When the question depends on you, CPInsight brings your evidence into the answer.</p>
@@ -237,14 +404,21 @@
         <p class="eyebrow">Adaptive Study Planner</p>
         <h2>Your plan changes as you improve.</h2>
       </div>
-      <div class="planner-flow reveal">
-        <span>Current rating</span>
-        <span>Topic priorities</span>
-        <span>Recommended problems</span>
-        <span>Daily plan</span>
-        <span>Weekly roadmap</span>
-        <span>Progress update</span>
-        <span>Next contest</span>
+      <div class="planner-board">
+        <div class="planner-flow" id="plannerFlow" aria-label="Interactive adaptive study plan">
+          <button type="button" data-planner-key="rating"><span>Current rating</span><small>profile</small></button>
+          <button type="button" data-planner-key="priorities"><span>Topic priorities</span><small>analyzed</small></button>
+          <button type="button" data-planner-key="problems"><span>Recommended problems</span><small>queued</small></button>
+          <button type="button" data-planner-key="daily"><span>Daily plan</span><small>planned</small></button>
+          <button type="button" data-planner-key="weekly"><span>Weekly roadmap</span><small>planned</small></button>
+          <button type="button" data-planner-key="progress"><span>Progress update</span><small>waiting</small></button>
+          <button type="button" data-planner-key="contest"><span>Next contest</span><small>feedback</small></button>
+        </div>
+        <div class="planner-controls">
+          <button class="planner-control" id="plannerAdvance" type="button">Complete next step</button>
+          <button class="planner-control" id="plannerAdapt" type="button">Apply contest signal</button>
+          <p id="plannerStatus" aria-live="polite">The current plan is ordered from evidence to feedback.</p>
+        </div>
       </div>
     </section>
 
@@ -255,13 +429,21 @@
         <p class="demo-note">Skill relationships shown here are conceptual.</p>
       </div>
       <div class="recommendation-lab reveal" id="recommendationLab">
-        <div class="skill-network" aria-label="Interactive conceptual skill graph">
-          <button data-topic="Binary Search" class="is-selected" type="button">Binary Search</button>
-          <button data-topic="DP" type="button">DP</button>
-          <button data-topic="Graphs" type="button">Graphs</button>
-          <button data-topic="Greedy" type="button">Greedy</button>
-          <button data-topic="Trees" type="button">Trees</button>
-          <button data-topic="Two Pointers" type="button">Two Pointers</button>
+        <div class="skill-network" id="skillNetwork" aria-label="Interactive conceptual skill graph">
+          <svg class="skill-edges" id="skillEdges" viewBox="0 0 720 400" preserveAspectRatio="none" aria-hidden="true">
+            <path pathLength="1" d="M130 112 Q240 126 360 78" /><path pathLength="1" d="M360 78 Q500 112 590 120" />
+            <path pathLength="1" d="M130 112 Q260 215 145 294" /><path pathLength="1" d="M145 294 Q300 360 360 334" />
+            <path pathLength="1" d="M360 334 Q500 350 585 294" /><path pathLength="1" d="M590 120 Q620 205 585 294" />
+            <path pathLength="1" d="M360 78 Q360 205 360 334" /><path pathLength="1" d="M145 294 Q360 212 585 294" />
+          </svg>
+          <div class="skill-focus" aria-hidden="true"></div>
+          <button data-topic="Binary Search" data-related="Greedy,Two Pointers" class="is-selected" style="--nx: 18%; --ny: 28%;" type="button"><span>Binary Search</span><small>pattern search</small></button>
+          <button data-topic="DP" data-related="Graphs,Trees" style="--nx: 50%; --ny: 16%;" type="button"><span>DP</span><small>state design</small></button>
+          <button data-topic="Graphs" data-related="DP,Trees" style="--nx: 82%; --ny: 28%;" type="button"><span>Graphs</span><small>traversal</small></button>
+          <button data-topic="Greedy" data-related="Binary Search,Two Pointers" style="--nx: 20%; --ny: 72%;" type="button"><span>Greedy</span><small>proof instinct</small></button>
+          <button data-topic="Trees" data-related="DP,Graphs" style="--nx: 50%; --ny: 84%;" type="button"><span>Trees</span><small>structure</small></button>
+          <button data-topic="Two Pointers" data-related="Binary Search,Greedy" style="--nx: 80%; --ny: 72%;" type="button"><span>Two Pointers</span><small>linear scans</small></button>
+          <div class="graph-readout" aria-hidden="true"><span>CONCEPTUAL RELATIONSHIP MAP</span><i></i><strong>EXPLORE A TOPIC</strong></div>
         </div>
         <aside class="recommendation-detail" id="recommendationDetail" aria-live="polite">
           <span>Selected topic</span>
@@ -278,7 +460,7 @@
         <p class="eyebrow">Skill Intelligence</p>
         <h2>Topics expand into concepts, problems, and mastery signals.</h2>
       </div>
-      <div class="skill-stack reveal">
+      <div class="skill-stack">
         <button type="button" data-skill="Dynamic Programming" class="is-active">Dynamic Programming</button>
         <button type="button" data-skill="Graphs">Graphs</button>
         <button type="button" data-skill="Greedy">Greedy</button>
@@ -315,7 +497,18 @@
           <button role="tab" aria-selected="false" data-tour="planner" type="button">Study Planner</button>
           <button role="tab" aria-selected="false" data-tour="monitoring" type="button">Live Monitoring</button>
         </div>
-        <div class="tour-stage" id="tourStage" aria-live="polite"></div>
+        <div class="tour-stage tour-stage-analytics" id="tourStage" aria-live="polite">
+          <div class="tour-scene">
+            <div class="tour-scene-hud"><span>ANALYTICS / ILLUSTRATIVE</span><strong>PERFORMANCE MAP</strong></div>
+            <div class="tour-mini-chart" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="tour-mini-heatmap" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+          <div class="tour-step-list">
+            <article class="tour-card"><span>Input</span><h3>Platform history</h3><p>Ratings, submissions, topics, difficulty, and contests enter the system.</p></article>
+            <article class="tour-card"><span>Understanding</span><h3>Performance map</h3><p>Trajectory, strength, distribution, and practice rhythm become visible.</p></article>
+            <article class="tour-card"><span>Action</span><h3>Priority surfaced</h3><p>The system directs attention toward the next useful practice area.</p></article>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -379,6 +572,6 @@
     </nav>
   </footer>
 
-  <script src="../script/landing_page.js"></script>
+  <script type="module" src="../script/landing_page.bundle.js"></script>
 </body>
 </html>
