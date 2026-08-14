@@ -1406,7 +1406,10 @@ const tours = {
   analytics: {
     status: "PERFORMANCE MAP",
     className: "analytics",
-    scene: `<div class="tour-mini-chart" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><div class="tour-mini-heatmap" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>`,
+    intake: "ratings + submissions + topics",
+    signal: "growth vector",
+    modules: [["Rating", 13, 22], ["Heatmap", 72, 20], ["Topics", 16, 76], ["Difficulty", 76, 73], ["Velocity", 49, 14]],
+    readouts: ["trajectory", "solve density", "weakness drift"],
     steps: [
     ["Input", "Platform history", "Rating, submissions, topics, difficulty, streaks, and contest history enter the analytics surface."],
     ["Understanding", "Performance map", "Trajectory, heatmap, topic strength, distribution, and growth analytics become visible."],
@@ -1416,7 +1419,10 @@ const tours = {
   contest: {
     status: "REVIEW ASSEMBLY",
     className: "contest",
-    scene: `<div class="tour-contest-line" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><div class="tour-insight-stack" aria-hidden="true"><span>Evidence</span><span>Behavior</span><span>Recommendation</span></div>`,
+    intake: "events + verdicts + elapsed time",
+    signal: "contest replay",
+    modules: [["Opened", 12, 30], ["Switch", 24, 66], ["Verdict", 72, 28], ["Solved", 80, 72], ["Review", 50, 15]],
+    readouts: ["evidence", "behavior", "mistake pattern"],
     steps: [
     ["Event stream", "Replay timeline", "Opened problems, switches, submissions, verdicts, and progress create an evidence timeline."],
     ["Review", "Behavior + mistakes", "The review interface separates evidence, reasoning, mistakes, reflection, and recommendations."],
@@ -1426,7 +1432,10 @@ const tours = {
   coach: {
     status: "CONTEXT ROUTING",
     className: "coach",
-    scene: `<div class="tour-context-source" aria-hidden="true"><span>History</span><span>Behavior</span><span>Contests</span></div><div class="tour-reasoning-core" aria-hidden="true">Reasoning</div><div class="tour-answer-node" aria-hidden="true">Answer</div>`,
+    intake: "question + personal context",
+    signal: "reasoning route",
+    modules: [["General", 14, 22], ["History", 18, 70], ["Behavior", 76, 23], ["Progress", 78, 70], ["Answer", 50, 16]],
+    readouts: ["intent", "retrieved context", "coached answer"],
     steps: [
     ["Question", "Intent detected", "General questions stay general; personal questions request relevant CPInsight context."],
     ["Context", "Evidence retrieved", "History, performance, behavior, contests, and progress are used when they matter."],
@@ -1436,7 +1445,10 @@ const tours = {
   planner: {
     status: "PLAN ADAPTING",
     className: "planner",
-    scene: `<div class="tour-plan-items" aria-hidden="true"><span>Topic priorities</span><span>Problems</span><span>Daily plan</span><span>Progress</span></div><div class="tour-plan-feedback" aria-hidden="true">NEW CONTEST SIGNAL</div>`,
+    intake: "profile + priorities + progress",
+    signal: "adaptive roadmap",
+    modules: [["Priorities", 16, 27], ["Problems", 74, 28], ["Daily", 18, 72], ["Weekly", 76, 72], ["Progress", 50, 15]],
+    readouts: ["topic queue", "planned practice", "feedback loop"],
     steps: [
     ["Profile", "Current state", "Rating, topic priorities, and recent activity define the starting point."],
     ["Plan", "Daily + weekly structure", "Recommended problems and study sessions become a practical roadmap."],
@@ -1446,7 +1458,10 @@ const tours = {
   monitoring: {
     status: "TELEMETRY LIVE",
     className: "monitoring",
-    scene: `<div class="tour-event-feed" aria-hidden="true"><span>00:04 Problem opened</span><span>00:19 Problem switched</span><span>00:38 Wrong answer</span><span>01:24 Accepted</span></div><div class="tour-monitor-pulse" aria-hidden="true"></div>`,
+    intake: "browser activity + contest state",
+    signal: "live telemetry",
+    modules: [["00:04 Opened", 13, 26], ["00:19 Switch", 23, 68], ["00:38 Verdict", 75, 29], ["01:24 Solved", 78, 72], ["Live", 50, 15]],
+    readouts: ["event stream", "focus change", "rank signal"],
     steps: [
     ["Browser", "Activity captured", "Contest interactions and verdict flow are converted into telemetry events."],
     ["Stream", "Live signal", "Telemetry feeds the live monitoring view without turning the page into noise."],
@@ -1454,6 +1469,35 @@ const tours = {
     ],
   },
 };
+
+function createTourScene(name, tour) {
+  const nodes = tour.modules.map(([label, x, y], index) => `
+    <span class="tour-module tour-module-${index + 1}" style="--x:${x}%; --y:${y}%;">
+      <i></i>${label}
+    </span>`).join("");
+  const chips = tour.readouts.map((readout) => `<span>${readout}</span>`).join("");
+  return `
+    <div class="tour-mission" aria-hidden="true">
+      <div class="tour-signal-rail">
+        <span>${tour.intake}</span>
+        <b></b><b></b><b></b>
+      </div>
+      <svg class="tour-routing" viewBox="0 0 640 360" preserveAspectRatio="none">
+        <path class="tour-route route-a" d="M64 72 C160 132 220 150 320 178 C430 210 500 250 578 292" />
+        <path class="tour-route route-b" d="M92 286 C172 210 224 220 320 178 C420 130 510 120 580 70" />
+        <path class="tour-route route-c" d="M318 48 C316 120 320 170 320 178 C322 226 324 274 326 328" />
+      </svg>
+      <div class="tour-core-node">
+        <small>CPINSIGHT</small>
+        <strong>${tour.signal}</strong>
+      </div>
+      ${nodes}
+      <div class="tour-output-panel">
+        <span>${name.toUpperCase()}</span>
+        ${chips}
+      </div>
+    </div>`;
+}
 
 function initTour() {
   const stage = document.getElementById("tourStage");
@@ -1466,6 +1510,7 @@ function initTour() {
   let rotationTimer = 0;
   const scenes = new Map();
 
+  stage.replaceChildren();
   Object.entries(tours).forEach(([name, tour]) => {
     const scene = document.createElement("div");
     scene.className = `tour-view tour-view-${tour.className}`;
@@ -1473,7 +1518,7 @@ function initTour() {
     scene.innerHTML = `
       <div class="tour-scene">
         <div class="tour-scene-hud"><span>${name.toUpperCase()} / ILLUSTRATIVE</span><strong>${tour.status}</strong></div>
-        ${tour.scene}
+        ${createTourScene(name, tour)}
       </div>
       <div class="tour-step-list">
         ${tour.steps.map(([label, title, body]) => `<article class="tour-card"><span>${label}</span><h3>${title}</h3><p>${body}</p></article>`).join("")}
@@ -1493,6 +1538,8 @@ function initTour() {
     if (!immediate && !reduceMotion) {
       animate(activeScene, { x: [14, 0], opacity: [0.78, 1], scale: [0.992, 1] }, { duration: 0.22, ease: [0.16, 1, 0.3, 1] });
       animate(activeScene.querySelectorAll(".tour-card"), { x: [12, 0], opacity: [0.78, 1] }, { delay: stagger(0.025), duration: 0.2 });
+      animate(activeScene.querySelectorAll(".tour-module"), { scale: [0.82, 1], opacity: [0.45, 1] }, { delay: stagger(0.025), ...springOptions });
+      animate(activeScene.querySelectorAll(".tour-route"), { pathLength: [0.35, 1], opacity: [0.24, 0.95] }, { duration: 0.42, ease: [0.16, 1, 0.3, 1] });
     }
   };
 

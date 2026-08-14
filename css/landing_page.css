@@ -2156,8 +2156,19 @@ h3 {
   font-weight: 900;
 }
 
+.section-depth {
+  scroll-margin-top: 108px;
+}
+
 .tour-shell {
-  padding: 18px;
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(103,232,249,.18);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(103,232,249,.1), transparent 24%),
+    radial-gradient(circle at 88% 24%, rgba(52,211,153,.07), transparent 28%),
+    rgba(3,9,18,.6);
+  padding: 16px;
 }
 
 .tour-tabs {
@@ -2169,14 +2180,14 @@ h3 {
 
 .tour-tabs button {
   min-height: 42px;
+  border-color: rgba(103,232,249,.14);
+  background: rgba(7,17,31,.72);
   padding: 0 14px;
 }
 
 .tour-stage {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
-  gap: 14px;
-  min-height: 420px;
+  min-height: clamp(480px, 50vw, 620px);
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(103,232,249,.11);
@@ -2190,8 +2201,9 @@ h3 {
 
 .tour-view {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr);
+  gap: 16px;
+  height: 100%;
   min-width: 0;
 }
 
@@ -2202,11 +2214,12 @@ h3 {
 .tour-scene {
   position: relative;
   overflow: hidden;
-  min-height: 386px;
+  min-height: 448px;
   border: 1px solid rgba(103,232,249,.15);
   border-radius: 12px;
   background:
-    radial-gradient(circle at 60% 45%, rgba(103,232,249,.13), transparent 30%),
+    radial-gradient(circle at 50% 50%, rgba(103,232,249,.12), transparent 25%),
+    radial-gradient(circle at 76% 72%, rgba(52,211,153,.09), transparent 30%),
     rgba(4,11,22,.78);
   padding: 44px 20px 20px;
 }
@@ -2236,7 +2249,206 @@ h3 {
 
 .tour-step-list {
   display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.tour-mission {
+  position: absolute;
+  inset: 42px 20px 20px;
+  overflow: hidden;
+  border-radius: 10px;
+  background:
+    linear-gradient(rgba(103,232,249,.045) 1px, transparent 1px) 0 0 / 100% 44px,
+    linear-gradient(90deg, rgba(103,232,249,.04) 1px, transparent 1px) 0 0 / 44px 100%;
+  perspective: 900px;
+}
+
+.tour-mission::before,
+.tour-mission::after {
+  position: absolute;
+  inset: 8%;
+  border: 1px solid rgba(103,232,249,.12);
+  border-radius: 999px;
+  transform: rotateX(62deg) rotateZ(var(--orbit-rotate, -8deg));
+  animation: tourOrbit 9s linear infinite;
+  content: "";
+}
+
+.tour-mission::after {
+  inset: 18%;
+  border-color: rgba(52,211,153,.13);
+  --orbit-rotate: 18deg;
+  animation-duration: 13s;
+  animation-direction: reverse;
+}
+
+.tour-signal-rail {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  max-width: calc(100% - 36px);
   gap: 10px;
+  color: var(--subtle);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.tour-signal-rail span {
+  overflow: hidden;
+  max-width: 270px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tour-signal-rail b {
+  width: 22px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  box-shadow: 0 0 12px rgba(103,232,249,.55);
+  animation: tourSignalBlink 1.8s ease-in-out infinite;
+}
+
+.tour-signal-rail b:nth-child(3) { animation-delay: .35s; }
+.tour-signal-rail b:nth-child(4) { animation-delay: .7s; }
+
+.tour-routing {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+}
+
+.tour-route {
+  fill: none;
+  stroke: rgba(103,232,249,.55);
+  stroke-dasharray: 6 13;
+  stroke-linecap: round;
+  stroke-width: 1.8;
+  filter: drop-shadow(0 0 7px rgba(103,232,249,.34));
+  animation: tourRouteFlow 2.8s linear infinite;
+}
+
+.tour-route.route-b {
+  stroke: rgba(52,211,153,.48);
+  animation-duration: 3.6s;
+}
+
+.tour-route.route-c {
+  stroke: rgba(96,165,250,.48);
+  animation-duration: 4.2s;
+}
+
+.tour-core-node {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: clamp(128px, 16vw, 170px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(103,232,249,.5);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(103,232,249,.2), transparent 34%),
+    rgba(3,10,20,.88);
+  box-shadow: inset 0 0 28px rgba(103,232,249,.12), 0 0 36px rgba(103,232,249,.14);
+  text-align: center;
+  animation: tourCoreBreath 3.8s ease-in-out infinite;
+}
+
+.tour-core-node small,
+.tour-output-panel span {
+  color: var(--cyan);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.tour-core-node strong {
+  max-width: 96px;
+  color: #f8fbff;
+  font-size: 18px;
+  line-height: 1.05;
+  text-transform: capitalize;
+}
+
+.tour-module {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 150px;
+  min-height: 36px;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(103,232,249,.2);
+  border-radius: 999px;
+  background: rgba(7,17,31,.86);
+  box-shadow: 0 14px 28px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.025);
+  color: #dbeafe;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.1;
+  padding: 8px 11px;
+  transition: border-color 180ms var(--ease), background 180ms var(--ease), transform 180ms var(--ease);
+}
+
+.tour-module i {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 12px rgba(103,232,249,.9);
+}
+
+.tour-module:nth-of-type(2n) i {
+  background: var(--green);
+  box-shadow: 0 0 12px rgba(52,211,153,.78);
+}
+
+.tour-view-analytics .tour-module-1,
+.tour-view-contest .tour-module-4,
+.tour-view-coach .tour-module-3,
+.tour-view-planner .tour-module-5,
+.tour-view-monitoring .tour-module-5 {
+  border-color: rgba(52,211,153,.55);
+  background: rgba(13,45,42,.88);
+}
+
+.tour-output-panel {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  z-index: 4;
+  display: grid;
+  width: min(240px, calc(100% - 36px));
+  gap: 7px;
+  border: 1px solid rgba(103,232,249,.18);
+  border-radius: 10px;
+  background: rgba(2,8,17,.82);
+  padding: 12px;
+}
+
+.tour-output-panel span:not(:first-child) {
+  border: 1px solid rgba(103,232,249,.12);
+  border-radius: 7px;
+  background: rgba(103,232,249,.045);
+  color: #dbeafe;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 7px 8px;
 }
 
 .tour-mini-chart {
@@ -2474,9 +2686,11 @@ h3 {
   align-content: space-between;
   min-height: 0;
   border: 1px solid rgba(148, 163, 184, 0.14);
-  border-radius: 16px;
-  background: rgba(255,255,255,0.04);
-  padding: 20px;
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(103,232,249,.055), transparent 36%),
+    rgba(255,255,255,0.04);
+  padding: 18px;
   will-change: auto;
 }
 
@@ -2487,9 +2701,20 @@ h3 {
   text-transform: uppercase;
 }
 
+.tour-card h3 {
+  margin: 8px 0 12px;
+  font-size: clamp(20px, 2.2vw, 28px);
+  line-height: 1.02;
+}
+
 .tour-card p {
   color: var(--muted);
-  line-height: 1.55;
+  font-size: 16px;
+  line-height: 1.48;
+}
+
+.technology-section {
+  margin-top: clamp(56px, 8vw, 108px);
 }
 
 .architecture-strip {
@@ -2662,6 +2887,24 @@ h3 {
   to { filter: brightness(1.65); transform: scale(.88); }
 }
 
+@keyframes tourRouteFlow {
+  to { stroke-dashoffset: -38; }
+}
+
+@keyframes tourSignalBlink {
+  0%, 100% { opacity: .22; transform: scaleX(.72); }
+  45%, 65% { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes tourCoreBreath {
+  0%, 100% { transform: translate(-50%, -50%) scale(.985); }
+  50% { transform: translate(-50%, -50%) scale(1.025); }
+}
+
+@keyframes tourOrbit {
+  to { transform: rotateX(62deg) rotateZ(calc(var(--orbit-rotate, -8deg) + 360deg)); }
+}
+
 @keyframes monitorPulse {
   0% { transform: scale(.5); opacity: 1; }
   100% { transform: scale(1.8); opacity: 0; }
@@ -2679,6 +2922,11 @@ h3 {
 .pipeline-track::after,
 .coach-reasoning::after,
 .tour-scene::after,
+.tour-mission::before,
+.tour-mission::after,
+.tour-route,
+.tour-core-node,
+.tour-signal-rail b,
 .tour-mini-chart::after,
 .tour-mini-heatmap i,
 .tour-monitor-pulse,
@@ -2707,7 +2955,8 @@ html[data-motion-tier="balanced"] .skill-network {
 
 html[data-motion-tier="balanced"] .core-links > path.is-related,
 html[data-motion-tier="balanced"] .skill-edges path.is-active,
-html[data-motion-tier="balanced"] .tour-mini-chart::after {
+html[data-motion-tier="balanced"] .tour-mini-chart::after,
+html[data-motion-tier="balanced"] .tour-route {
   filter: none;
 }
 
@@ -2995,7 +3244,54 @@ html[data-motion-tier="minimal"] .review-console [data-review-card] {
   }
 
   .tour-scene {
-    min-height: 340px;
+    min-height: 460px;
+  }
+
+  .tour-mission {
+    inset: 42px 12px 14px;
+  }
+
+  .tour-module {
+    max-width: 118px;
+    min-height: 32px;
+    gap: 6px;
+    font-size: 10px;
+    padding: 7px 9px;
+  }
+
+  .tour-core-node {
+    top: 39%;
+    width: 104px;
+  }
+
+  .tour-core-node strong {
+    max-width: 70px;
+    font-size: 14px;
+  }
+
+  .tour-output-panel {
+    right: 10px;
+    bottom: 10px;
+    width: 178px;
+    padding: 9px;
+  }
+
+  .tour-signal-rail {
+    left: 10px;
+    max-width: calc(100% - 20px);
+    gap: 6px;
+  }
+
+  .tour-signal-rail span {
+    max-width: 166px;
+  }
+
+  .tour-card h3 {
+    font-size: 21px;
+  }
+
+  .tour-card p {
+    font-size: 14px;
   }
 
   .story-stage-index,
