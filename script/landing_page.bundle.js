@@ -4,9 +4,9 @@ function addUniqueItem(arr, item) {
     arr.push(item);
 }
 function removeItem(arr, item) {
-  const index2 = arr.indexOf(item);
-  if (index2 > -1)
-    arr.splice(index2, 1);
+  const index = arr.indexOf(item);
+  if (index > -1)
+    arr.splice(index, 1);
 }
 
 // node_modules/motion-utils/dist/es/clamp.mjs
@@ -68,7 +68,7 @@ function memo(callback) {
 var noop = /* @__NO_SIDE_EFFECTS__ */ (any) => any;
 
 // node_modules/motion-utils/dist/es/pipe.mjs
-var pipe = (...transformers) => transformers.reduce((a2, b) => (v) => b(a2(v)));
+var pipe = (...transformers) => transformers.reduce((a, b) => (v) => b(a(v)));
 
 // node_modules/motion-utils/dist/es/progress.mjs
 var progress = /* @__NO_SIDE_EFFECTS__ */ (from, to, value) => {
@@ -85,16 +85,16 @@ var SubscriptionManager = class {
     addUniqueItem(this.subscriptions, handler);
     return () => removeItem(this.subscriptions, handler);
   }
-  notify(a2, b, c2) {
+  notify(a, b, c) {
     const numSubscriptions = this.subscriptions.length;
     if (!numSubscriptions)
       return;
     if (numSubscriptions === 1) {
-      this.subscriptions[0](a2, b, c2);
+      this.subscriptions[0](a, b, c);
     } else {
       for (let i = 0; i < numSubscriptions; i++) {
         const handler = this.subscriptions[i];
-        handler && handler(a2, b, c2);
+        handler && handler(a, b, c);
       }
     }
   }
@@ -132,13 +132,13 @@ var wrap = (min, max, v) => {
 var calcBezier = (t, a1, a2) => (((1 - 3 * a2 + 3 * a1) * t + (3 * a2 - 6 * a1)) * t + 3 * a1) * t;
 var subdivisionPrecision = 1e-7;
 var subdivisionMaxIterations = 12;
-function binarySubdivide(x3, lowerBound, upperBound, mX1, mX2) {
+function binarySubdivide(x, lowerBound, upperBound, mX1, mX2) {
   let currentX;
   let currentT;
   let i = 0;
   do {
     currentT = lowerBound + (upperBound - lowerBound) / 2;
-    currentX = calcBezier(currentT, mX1, mX2) - x3;
+    currentX = calcBezier(currentT, mX1, mX2) - x;
     if (currentX > 0) {
       upperBound = currentT;
     } else {
@@ -213,8 +213,8 @@ var isValidEasing = (easing) => {
 var easingDefinitionToFunction = (definition) => {
   if (isBezierDefinition(definition)) {
     invariant(definition.length === 4, `Cubic bezier arrays must contain four numerical values.`, "cubic-bezier-length");
-    const [x1, y1, x22, y22] = definition;
-    return cubicBezier(x1, y1, x22, y22);
+    const [x1, y1, x2, y2] = definition;
+    return cubicBezier(x1, y1, x2, y2);
   } else if (isValidEasing(definition)) {
     invariant(easingLookup[definition] !== void 0, `Invalid easing type '${definition}'`, "invalid-easing-type");
     return easingLookup[definition];
@@ -344,7 +344,7 @@ function createRenderBatcher(scheduleNextBatch, allowKeepAlive) {
       scheduleNextBatch(processBatch);
     }
   };
-  const wake2 = () => {
+  const wake = () => {
     runNextFrame = true;
     useDefaultElapsed = true;
     if (!state.isProcessing) {
@@ -355,7 +355,7 @@ function createRenderBatcher(scheduleNextBatch, allowKeepAlive) {
     const step = steps[key];
     acc[key] = (process2, keepAlive = false, immediate = false) => {
       if (!runNextFrame)
-        wake2();
+        wake();
       return step.schedule(process2, keepAlive, immediate);
     };
     return acc;
@@ -442,11 +442,11 @@ var isColorString = (type, testProp) => (v) => {
 var splitColor = (aName, bName, cName) => (v) => {
   if (typeof v !== "string")
     return v;
-  const [a2, b, c2, alpha2] = v.match(floatRegex);
+  const [a, b, c, alpha2] = v.match(floatRegex);
   return {
-    [aName]: parseFloat(a2),
+    [aName]: parseFloat(a),
     [bName]: parseFloat(b),
-    [cName]: parseFloat(c2),
+    [cName]: parseFloat(c),
     alpha: alpha2 !== void 0 ? parseFloat(alpha2) : 1
   };
 };
@@ -468,27 +468,27 @@ function parseHex(v) {
   let r = "";
   let g = "";
   let b = "";
-  let a2 = "";
+  let a = "";
   if (v.length > 5) {
     r = v.substring(1, 3);
     g = v.substring(3, 5);
     b = v.substring(5, 7);
-    a2 = v.substring(7, 9);
+    a = v.substring(7, 9);
   } else {
     r = v.substring(1, 2);
     g = v.substring(2, 3);
     b = v.substring(3, 4);
-    a2 = v.substring(4, 5);
+    a = v.substring(4, 5);
     r += r;
     g += g;
     b += b;
-    a2 += a2;
+    a += a;
   }
   return {
     red: parseInt(r, 16),
     green: parseInt(g, 16),
     blue: parseInt(b, 16),
-    alpha: a2 ? parseInt(a2, 16) / 255 : 1
+    alpha: a ? parseInt(a, 16) / 255 : 1
   };
 }
 var hex = {
@@ -672,8 +672,8 @@ function hslaToRgba({ hue, saturation, lightness, alpha: alpha2 }) {
 }
 
 // node_modules/motion-dom/dist/es/utils/mix/immediate.mjs
-function mixImmediate(a2, b) {
-  return (p) => p > 0 ? b : a2;
+function mixImmediate(a, b) {
+  return (p) => p > 0 ? b : a;
 }
 
 // node_modules/motion-dom/dist/es/utils/mix/number.mjs
@@ -727,25 +727,25 @@ function mixVisibility(origin, target) {
 }
 
 // node_modules/motion-dom/dist/es/utils/mix/complex.mjs
-function mixNumber2(a2, b) {
-  return (p) => mixNumber(a2, b, p);
+function mixNumber2(a, b) {
+  return (p) => mixNumber(a, b, p);
 }
-function getMixer(a2) {
-  if (typeof a2 === "number") {
+function getMixer(a) {
+  if (typeof a === "number") {
     return mixNumber2;
-  } else if (typeof a2 === "string") {
-    return isCSSVariableToken(a2) ? mixImmediate : color.test(a2) ? mixColor : mixComplex;
-  } else if (Array.isArray(a2)) {
+  } else if (typeof a === "string") {
+    return isCSSVariableToken(a) ? mixImmediate : color.test(a) ? mixColor : mixComplex;
+  } else if (Array.isArray(a)) {
     return mixArray;
-  } else if (typeof a2 === "object") {
-    return color.test(a2) ? mixColor : mixObject;
+  } else if (typeof a === "object") {
+    return color.test(a) ? mixColor : mixObject;
   }
   return mixImmediate;
 }
-function mixArray(a2, b) {
-  const output = [...a2];
+function mixArray(a, b) {
+  const output = [...a];
   const numValues = output.length;
-  const blendValue = a2.map((v, i) => getMixer(v)(v, b[i]));
+  const blendValue = a.map((v, i) => getMixer(v)(v, b[i]));
   return (p) => {
     for (let i = 0; i < numValues; i++) {
       output[i] = blendValue[i](p);
@@ -753,12 +753,12 @@ function mixArray(a2, b) {
     return output;
   };
 }
-function mixObject(a2, b) {
-  const output = { ...a2, ...b };
+function mixObject(a, b) {
+  const output = { ...a, ...b };
   const blendValue = {};
   for (const key in output) {
-    if (a2[key] !== void 0 && b[key] !== void 0) {
-      blendValue[key] = getMixer(a2[key])(a2[key], b[key]);
+    if (a[key] !== void 0 && b[key] !== void 0) {
+      blendValue[key] = getMixer(a[key])(a[key], b[key]);
     }
   }
   return (v) => {
@@ -908,10 +908,10 @@ function findSpring({ duration = springDefaults.duration, bounce = springDefault
     envelope = (undampedFreq2) => {
       const exponentialDecay = undampedFreq2 * dampingRatio;
       const delta = exponentialDecay * duration;
-      const a2 = exponentialDecay - velocity;
+      const a = exponentialDecay - velocity;
       const b = calcAngularFreq(undampedFreq2, dampingRatio);
-      const c2 = Math.exp(-delta);
-      return safeMin - a2 / b * c2;
+      const c = Math.exp(-delta);
+      return safeMin - a / b * c;
     };
     derivative = (undampedFreq2) => {
       const exponentialDecay = undampedFreq2 * dampingRatio;
@@ -925,14 +925,14 @@ function findSpring({ duration = springDefaults.duration, bounce = springDefault
     };
   } else {
     envelope = (undampedFreq2) => {
-      const a2 = Math.exp(-undampedFreq2 * duration);
+      const a = Math.exp(-undampedFreq2 * duration);
       const b = (undampedFreq2 - velocity) * duration + 1;
-      return -safeMin + a2 * b;
+      return -safeMin + a * b;
     };
     derivative = (undampedFreq2) => {
-      const a2 = Math.exp(-undampedFreq2 * duration);
+      const a = Math.exp(-undampedFreq2 * duration);
       const b = (velocity - undampedFreq2) * (duration * duration);
-      return a2 * b;
+      return a * b;
     };
   }
   const initialGuess = 5 / duration;
@@ -1265,8 +1265,8 @@ var isNotNull = (value) => value !== null;
 function getFinalKeyframe(keyframes2, { repeat, repeatType = "loop" }, finalKeyframe, speed = 1) {
   const resolvedKeyframes = keyframes2.filter(isNotNull);
   const useFirstKeyframe = speed < 0 || repeat && repeatType !== "loop" && repeat % 2 === 1;
-  const index2 = useFirstKeyframe ? 0 : resolvedKeyframes.length - 1;
-  return !index2 || finalKeyframe === void 0 ? resolvedKeyframes[index2] : finalKeyframe;
+  const index = useFirstKeyframe ? 0 : resolvedKeyframes.length - 1;
+  return !index || finalKeyframe === void 0 ? resolvedKeyframes[index] : finalKeyframe;
 }
 
 // node_modules/motion-dom/dist/es/animation/utils/replace-transition-type.mjs
@@ -1521,14 +1521,14 @@ var JSAnimation = class extends WithPromise {
       this.driver = driver((timestamp) => this.tick(timestamp));
     }
     this.options.onPlay?.();
-    const now3 = this.driver.now();
+    const now2 = this.driver.now();
     if (this.state === "finished") {
       this.updateFinished();
-      this.startTime = now3;
+      this.startTime = now2;
     } else if (this.holdTime !== null) {
-      this.startTime = now3 - this.holdTime;
+      this.startTime = now2 - this.holdTime;
     } else if (!this.startTime) {
-      this.startTime = startTime ?? now3;
+      this.startTime = startTime ?? now2;
     }
     if (this.state === "finished" && this.speed < 0) {
       this.startTime += this.calculatedDuration;
@@ -1714,18 +1714,18 @@ function removeNonTranslationalTransform(visualElement) {
 }
 var positionalValues = {
   // Dimensions
-  width: ({ x: x3 }, { paddingLeft = "0", paddingRight = "0", boxSizing }) => {
-    const width = x3.max - x3.min;
+  width: ({ x }, { paddingLeft = "0", paddingRight = "0", boxSizing }) => {
+    const width = x.max - x.min;
     return boxSizing === "border-box" ? width : width - parseFloat(paddingLeft) - parseFloat(paddingRight);
   },
-  height: ({ y: y3 }, { paddingTop = "0", paddingBottom = "0", boxSizing }) => {
-    const height = y3.max - y3.min;
+  height: ({ y }, { paddingTop = "0", paddingBottom = "0", boxSizing }) => {
+    const height = y.max - y.min;
     return boxSizing === "border-box" ? height : height - parseFloat(paddingTop) - parseFloat(paddingBottom);
   },
   top: (_bbox, { top }) => parseFloat(top),
   left: (_bbox, { left }) => parseFloat(left),
-  bottom: ({ y: y3 }, { top }) => parseFloat(top) + (y3.max - y3.min),
-  right: ({ x: x3 }, { left }) => parseFloat(left) + (x3.max - x3.min),
+  bottom: ({ y }, { top }) => parseFloat(top) + (y.max - y.min),
+  right: ({ x }, { left }) => parseFloat(left) + (x.max - x.min),
   // Transform
   x: (_bbox, { transform }) => parseValueFromTransform(transform, "x"),
   y: (_bbox, { transform }) => parseValueFromTransform(transform, "y")
@@ -1890,7 +1890,7 @@ var supportsLinearEasing = /* @__PURE__ */ memoSupports(() => {
 }, "linearEasing");
 
 // node_modules/motion-dom/dist/es/animation/waapi/easing/cubic-bezier.mjs
-var cubicBezierAsString = ([a2, b, c2, d]) => `cubic-bezier(${a2}, ${b}, ${c2}, ${d})`;
+var cubicBezierAsString = ([a, b, c, d]) => `cubic-bezier(${a}, ${b}, ${c}, ${d})`;
 
 // node_modules/motion-dom/dist/es/animation/waapi/easing/supported.mjs
 var supportedWaapiEasing = {
@@ -3736,9 +3736,9 @@ function attachFollow(value, source, options = {}) {
       value["events"].animationComplete?.notify();
     });
   };
-  value.attach((v, set2) => {
+  value.attach((v, set) => {
     latestValue = v;
-    latestSetter = (latest) => set2(parseValue(latest, unit));
+    latestSetter = (latest) => set(parseValue(latest, unit));
     frame.postRender(scheduleAnimation);
   }, stopAnimation);
   if (isMotionValue(source)) {
@@ -3911,9 +3911,9 @@ var VisualElement = class {
     };
     this.renderScheduledAt = 0;
     this.scheduleRender = () => {
-      const now3 = time.now();
-      if (this.renderScheduledAt < now3) {
-        this.renderScheduledAt = now3;
+      const now2 = time.now();
+      if (this.renderScheduledAt < now2) {
+        this.renderScheduledAt = now2;
         frame.render(this.render, false, true);
       }
     };
@@ -4264,8 +4264,8 @@ var DOMVisualElement = class extends VisualElement {
     super(...arguments);
     this.KeyframeResolver = DOMKeyframesResolver;
   }
-  sortInstanceNodePosition(a2, b) {
-    return a2.compareDocumentPosition(b) & 2 ? 1 : -1;
+  sortInstanceNodePosition(a, b) {
+    return a.compareDocumentPosition(b) & 2 ? 1 : -1;
   }
   getBaseTargetFromProps(props, key) {
     const style = props.style;
@@ -4431,9 +4431,9 @@ var correctBorderRadius = {
         return latest;
       }
     }
-    const x3 = pixelsToPercent(latest, node.target.x);
-    const y3 = pixelsToPercent(latest, node.target.y);
-    return `${x3}% ${y3}%`;
+    const x = pixelsToPercent(latest, node.target.x);
+    const y = pixelsToPercent(latest, node.target.y);
+    return `${x}% ${y}%`;
   }
 };
 
@@ -4802,15 +4802,15 @@ function normalizeTimes(times, repeat, repeatDelayUnits = 0) {
 }
 
 // node_modules/framer-motion/dist/es/animation/sequence/utils/sort.mjs
-function compareByTime(a2, b) {
-  if (a2.at === b.at) {
-    if (a2.value === null)
+function compareByTime(a, b) {
+  if (a.at === b.at) {
+    if (a.value === null)
       return 1;
     if (b.value === null)
       return -1;
     return 0;
   } else {
-    return a2.at - b.at;
+    return a.at - b.at;
   }
 }
 
@@ -5167,929 +5167,8 @@ function inView(elementOrSelector, onStart, { root, margin: rootMargin, amount =
   return () => observer.disconnect();
 }
 
-// node_modules/d3-force/src/center.js
-function center_default(x3, y3) {
-  var nodes, strength = 1;
-  if (x3 == null) x3 = 0;
-  if (y3 == null) y3 = 0;
-  function force() {
-    var i, n = nodes.length, node, sx = 0, sy = 0;
-    for (i = 0; i < n; ++i) {
-      node = nodes[i], sx += node.x, sy += node.y;
-    }
-    for (sx = (sx / n - x3) * strength, sy = (sy / n - y3) * strength, i = 0; i < n; ++i) {
-      node = nodes[i], node.x -= sx, node.y -= sy;
-    }
-  }
-  force.initialize = function(_) {
-    nodes = _;
-  };
-  force.x = function(_) {
-    return arguments.length ? (x3 = +_, force) : x3;
-  };
-  force.y = function(_) {
-    return arguments.length ? (y3 = +_, force) : y3;
-  };
-  force.strength = function(_) {
-    return arguments.length ? (strength = +_, force) : strength;
-  };
-  return force;
-}
-
-// node_modules/d3-quadtree/src/add.js
-function add_default(d) {
-  const x3 = +this._x.call(null, d), y3 = +this._y.call(null, d);
-  return add(this.cover(x3, y3), x3, y3, d);
-}
-function add(tree, x3, y3, d) {
-  if (isNaN(x3) || isNaN(y3)) return tree;
-  var parent, node = tree._root, leaf = { data: d }, x0 = tree._x0, y0 = tree._y0, x1 = tree._x1, y1 = tree._y1, xm, ym, xp, yp, right, bottom, i, j;
-  if (!node) return tree._root = leaf, tree;
-  while (node.length) {
-    if (right = x3 >= (xm = (x0 + x1) / 2)) x0 = xm;
-    else x1 = xm;
-    if (bottom = y3 >= (ym = (y0 + y1) / 2)) y0 = ym;
-    else y1 = ym;
-    if (parent = node, !(node = node[i = bottom << 1 | right])) return parent[i] = leaf, tree;
-  }
-  xp = +tree._x.call(null, node.data);
-  yp = +tree._y.call(null, node.data);
-  if (x3 === xp && y3 === yp) return leaf.next = node, parent ? parent[i] = leaf : tree._root = leaf, tree;
-  do {
-    parent = parent ? parent[i] = new Array(4) : tree._root = new Array(4);
-    if (right = x3 >= (xm = (x0 + x1) / 2)) x0 = xm;
-    else x1 = xm;
-    if (bottom = y3 >= (ym = (y0 + y1) / 2)) y0 = ym;
-    else y1 = ym;
-  } while ((i = bottom << 1 | right) === (j = (yp >= ym) << 1 | xp >= xm));
-  return parent[j] = node, parent[i] = leaf, tree;
-}
-function addAll(data) {
-  var d, i, n = data.length, x3, y3, xz = new Array(n), yz = new Array(n), x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-  for (i = 0; i < n; ++i) {
-    if (isNaN(x3 = +this._x.call(null, d = data[i])) || isNaN(y3 = +this._y.call(null, d))) continue;
-    xz[i] = x3;
-    yz[i] = y3;
-    if (x3 < x0) x0 = x3;
-    if (x3 > x1) x1 = x3;
-    if (y3 < y0) y0 = y3;
-    if (y3 > y1) y1 = y3;
-  }
-  if (x0 > x1 || y0 > y1) return this;
-  this.cover(x0, y0).cover(x1, y1);
-  for (i = 0; i < n; ++i) {
-    add(this, xz[i], yz[i], data[i]);
-  }
-  return this;
-}
-
-// node_modules/d3-quadtree/src/cover.js
-function cover_default(x3, y3) {
-  if (isNaN(x3 = +x3) || isNaN(y3 = +y3)) return this;
-  var x0 = this._x0, y0 = this._y0, x1 = this._x1, y1 = this._y1;
-  if (isNaN(x0)) {
-    x1 = (x0 = Math.floor(x3)) + 1;
-    y1 = (y0 = Math.floor(y3)) + 1;
-  } else {
-    var z = x1 - x0 || 1, node = this._root, parent, i;
-    while (x0 > x3 || x3 >= x1 || y0 > y3 || y3 >= y1) {
-      i = (y3 < y0) << 1 | x3 < x0;
-      parent = new Array(4), parent[i] = node, node = parent, z *= 2;
-      switch (i) {
-        case 0:
-          x1 = x0 + z, y1 = y0 + z;
-          break;
-        case 1:
-          x0 = x1 - z, y1 = y0 + z;
-          break;
-        case 2:
-          x1 = x0 + z, y0 = y1 - z;
-          break;
-        case 3:
-          x0 = x1 - z, y0 = y1 - z;
-          break;
-      }
-    }
-    if (this._root && this._root.length) this._root = node;
-  }
-  this._x0 = x0;
-  this._y0 = y0;
-  this._x1 = x1;
-  this._y1 = y1;
-  return this;
-}
-
-// node_modules/d3-quadtree/src/data.js
-function data_default() {
-  var data = [];
-  this.visit(function(node) {
-    if (!node.length) do
-      data.push(node.data);
-    while (node = node.next);
-  });
-  return data;
-}
-
-// node_modules/d3-quadtree/src/extent.js
-function extent_default(_) {
-  return arguments.length ? this.cover(+_[0][0], +_[0][1]).cover(+_[1][0], +_[1][1]) : isNaN(this._x0) ? void 0 : [[this._x0, this._y0], [this._x1, this._y1]];
-}
-
-// node_modules/d3-quadtree/src/quad.js
-function quad_default(node, x0, y0, x1, y1) {
-  this.node = node;
-  this.x0 = x0;
-  this.y0 = y0;
-  this.x1 = x1;
-  this.y1 = y1;
-}
-
-// node_modules/d3-quadtree/src/find.js
-function find_default(x3, y3, radius) {
-  var data, x0 = this._x0, y0 = this._y0, x1, y1, x22, y22, x32 = this._x1, y32 = this._y1, quads = [], node = this._root, q, i;
-  if (node) quads.push(new quad_default(node, x0, y0, x32, y32));
-  if (radius == null) radius = Infinity;
-  else {
-    x0 = x3 - radius, y0 = y3 - radius;
-    x32 = x3 + radius, y32 = y3 + radius;
-    radius *= radius;
-  }
-  while (q = quads.pop()) {
-    if (!(node = q.node) || (x1 = q.x0) > x32 || (y1 = q.y0) > y32 || (x22 = q.x1) < x0 || (y22 = q.y1) < y0) continue;
-    if (node.length) {
-      var xm = (x1 + x22) / 2, ym = (y1 + y22) / 2;
-      quads.push(
-        new quad_default(node[3], xm, ym, x22, y22),
-        new quad_default(node[2], x1, ym, xm, y22),
-        new quad_default(node[1], xm, y1, x22, ym),
-        new quad_default(node[0], x1, y1, xm, ym)
-      );
-      if (i = (y3 >= ym) << 1 | x3 >= xm) {
-        q = quads[quads.length - 1];
-        quads[quads.length - 1] = quads[quads.length - 1 - i];
-        quads[quads.length - 1 - i] = q;
-      }
-    } else {
-      var dx = x3 - +this._x.call(null, node.data), dy = y3 - +this._y.call(null, node.data), d2 = dx * dx + dy * dy;
-      if (d2 < radius) {
-        var d = Math.sqrt(radius = d2);
-        x0 = x3 - d, y0 = y3 - d;
-        x32 = x3 + d, y32 = y3 + d;
-        data = node.data;
-      }
-    }
-  }
-  return data;
-}
-
-// node_modules/d3-quadtree/src/remove.js
-function remove_default(d) {
-  if (isNaN(x3 = +this._x.call(null, d)) || isNaN(y3 = +this._y.call(null, d))) return this;
-  var parent, node = this._root, retainer, previous, next, x0 = this._x0, y0 = this._y0, x1 = this._x1, y1 = this._y1, x3, y3, xm, ym, right, bottom, i, j;
-  if (!node) return this;
-  if (node.length) while (true) {
-    if (right = x3 >= (xm = (x0 + x1) / 2)) x0 = xm;
-    else x1 = xm;
-    if (bottom = y3 >= (ym = (y0 + y1) / 2)) y0 = ym;
-    else y1 = ym;
-    if (!(parent = node, node = node[i = bottom << 1 | right])) return this;
-    if (!node.length) break;
-    if (parent[i + 1 & 3] || parent[i + 2 & 3] || parent[i + 3 & 3]) retainer = parent, j = i;
-  }
-  while (node.data !== d) if (!(previous = node, node = node.next)) return this;
-  if (next = node.next) delete node.next;
-  if (previous) return next ? previous.next = next : delete previous.next, this;
-  if (!parent) return this._root = next, this;
-  next ? parent[i] = next : delete parent[i];
-  if ((node = parent[0] || parent[1] || parent[2] || parent[3]) && node === (parent[3] || parent[2] || parent[1] || parent[0]) && !node.length) {
-    if (retainer) retainer[j] = node;
-    else this._root = node;
-  }
-  return this;
-}
-function removeAll(data) {
-  for (var i = 0, n = data.length; i < n; ++i) this.remove(data[i]);
-  return this;
-}
-
-// node_modules/d3-quadtree/src/root.js
-function root_default() {
-  return this._root;
-}
-
-// node_modules/d3-quadtree/src/size.js
-function size_default() {
-  var size = 0;
-  this.visit(function(node) {
-    if (!node.length) do
-      ++size;
-    while (node = node.next);
-  });
-  return size;
-}
-
-// node_modules/d3-quadtree/src/visit.js
-function visit_default(callback) {
-  var quads = [], q, node = this._root, child, x0, y0, x1, y1;
-  if (node) quads.push(new quad_default(node, this._x0, this._y0, this._x1, this._y1));
-  while (q = quads.pop()) {
-    if (!callback(node = q.node, x0 = q.x0, y0 = q.y0, x1 = q.x1, y1 = q.y1) && node.length) {
-      var xm = (x0 + x1) / 2, ym = (y0 + y1) / 2;
-      if (child = node[3]) quads.push(new quad_default(child, xm, ym, x1, y1));
-      if (child = node[2]) quads.push(new quad_default(child, x0, ym, xm, y1));
-      if (child = node[1]) quads.push(new quad_default(child, xm, y0, x1, ym));
-      if (child = node[0]) quads.push(new quad_default(child, x0, y0, xm, ym));
-    }
-  }
-  return this;
-}
-
-// node_modules/d3-quadtree/src/visitAfter.js
-function visitAfter_default(callback) {
-  var quads = [], next = [], q;
-  if (this._root) quads.push(new quad_default(this._root, this._x0, this._y0, this._x1, this._y1));
-  while (q = quads.pop()) {
-    var node = q.node;
-    if (node.length) {
-      var child, x0 = q.x0, y0 = q.y0, x1 = q.x1, y1 = q.y1, xm = (x0 + x1) / 2, ym = (y0 + y1) / 2;
-      if (child = node[0]) quads.push(new quad_default(child, x0, y0, xm, ym));
-      if (child = node[1]) quads.push(new quad_default(child, xm, y0, x1, ym));
-      if (child = node[2]) quads.push(new quad_default(child, x0, ym, xm, y1));
-      if (child = node[3]) quads.push(new quad_default(child, xm, ym, x1, y1));
-    }
-    next.push(q);
-  }
-  while (q = next.pop()) {
-    callback(q.node, q.x0, q.y0, q.x1, q.y1);
-  }
-  return this;
-}
-
-// node_modules/d3-quadtree/src/x.js
-function defaultX(d) {
-  return d[0];
-}
-function x_default(_) {
-  return arguments.length ? (this._x = _, this) : this._x;
-}
-
-// node_modules/d3-quadtree/src/y.js
-function defaultY(d) {
-  return d[1];
-}
-function y_default(_) {
-  return arguments.length ? (this._y = _, this) : this._y;
-}
-
-// node_modules/d3-quadtree/src/quadtree.js
-function quadtree(nodes, x3, y3) {
-  var tree = new Quadtree(x3 == null ? defaultX : x3, y3 == null ? defaultY : y3, NaN, NaN, NaN, NaN);
-  return nodes == null ? tree : tree.addAll(nodes);
-}
-function Quadtree(x3, y3, x0, y0, x1, y1) {
-  this._x = x3;
-  this._y = y3;
-  this._x0 = x0;
-  this._y0 = y0;
-  this._x1 = x1;
-  this._y1 = y1;
-  this._root = void 0;
-}
-function leaf_copy(leaf) {
-  var copy = { data: leaf.data }, next = copy;
-  while (leaf = leaf.next) next = next.next = { data: leaf.data };
-  return copy;
-}
-var treeProto = quadtree.prototype = Quadtree.prototype;
-treeProto.copy = function() {
-  var copy = new Quadtree(this._x, this._y, this._x0, this._y0, this._x1, this._y1), node = this._root, nodes, child;
-  if (!node) return copy;
-  if (!node.length) return copy._root = leaf_copy(node), copy;
-  nodes = [{ source: node, target: copy._root = new Array(4) }];
-  while (node = nodes.pop()) {
-    for (var i = 0; i < 4; ++i) {
-      if (child = node.source[i]) {
-        if (child.length) nodes.push({ source: child, target: node.target[i] = new Array(4) });
-        else node.target[i] = leaf_copy(child);
-      }
-    }
-  }
-  return copy;
-};
-treeProto.add = add_default;
-treeProto.addAll = addAll;
-treeProto.cover = cover_default;
-treeProto.data = data_default;
-treeProto.extent = extent_default;
-treeProto.find = find_default;
-treeProto.remove = remove_default;
-treeProto.removeAll = removeAll;
-treeProto.root = root_default;
-treeProto.size = size_default;
-treeProto.visit = visit_default;
-treeProto.visitAfter = visitAfter_default;
-treeProto.x = x_default;
-treeProto.y = y_default;
-
-// node_modules/d3-force/src/constant.js
-function constant_default(x3) {
-  return function() {
-    return x3;
-  };
-}
-
-// node_modules/d3-force/src/jiggle.js
-function jiggle_default(random) {
-  return (random() - 0.5) * 1e-6;
-}
-
-// node_modules/d3-force/src/collide.js
-function x(d) {
-  return d.x + d.vx;
-}
-function y(d) {
-  return d.y + d.vy;
-}
-function collide_default(radius) {
-  var nodes, radii, random, strength = 1, iterations = 1;
-  if (typeof radius !== "function") radius = constant_default(radius == null ? 1 : +radius);
-  function force() {
-    var i, n = nodes.length, tree, node, xi, yi, ri, ri2;
-    for (var k = 0; k < iterations; ++k) {
-      tree = quadtree(nodes, x, y).visitAfter(prepare);
-      for (i = 0; i < n; ++i) {
-        node = nodes[i];
-        ri = radii[node.index], ri2 = ri * ri;
-        xi = node.x + node.vx;
-        yi = node.y + node.vy;
-        tree.visit(apply);
-      }
-    }
-    function apply(quad, x0, y0, x1, y1) {
-      var data = quad.data, rj = quad.r, r = ri + rj;
-      if (data) {
-        if (data.index > node.index) {
-          var x3 = xi - data.x - data.vx, y3 = yi - data.y - data.vy, l = x3 * x3 + y3 * y3;
-          if (l < r * r) {
-            if (x3 === 0) x3 = jiggle_default(random), l += x3 * x3;
-            if (y3 === 0) y3 = jiggle_default(random), l += y3 * y3;
-            l = (r - (l = Math.sqrt(l))) / l * strength;
-            node.vx += (x3 *= l) * (r = (rj *= rj) / (ri2 + rj));
-            node.vy += (y3 *= l) * r;
-            data.vx -= x3 * (r = 1 - r);
-            data.vy -= y3 * r;
-          }
-        }
-        return;
-      }
-      return x0 > xi + r || x1 < xi - r || y0 > yi + r || y1 < yi - r;
-    }
-  }
-  function prepare(quad) {
-    if (quad.data) return quad.r = radii[quad.data.index];
-    for (var i = quad.r = 0; i < 4; ++i) {
-      if (quad[i] && quad[i].r > quad.r) {
-        quad.r = quad[i].r;
-      }
-    }
-  }
-  function initialize() {
-    if (!nodes) return;
-    var i, n = nodes.length, node;
-    radii = new Array(n);
-    for (i = 0; i < n; ++i) node = nodes[i], radii[node.index] = +radius(node, i, nodes);
-  }
-  force.initialize = function(_nodes, _random) {
-    nodes = _nodes;
-    random = _random;
-    initialize();
-  };
-  force.iterations = function(_) {
-    return arguments.length ? (iterations = +_, force) : iterations;
-  };
-  force.strength = function(_) {
-    return arguments.length ? (strength = +_, force) : strength;
-  };
-  force.radius = function(_) {
-    return arguments.length ? (radius = typeof _ === "function" ? _ : constant_default(+_), initialize(), force) : radius;
-  };
-  return force;
-}
-
-// node_modules/d3-force/src/link.js
-function index(d) {
-  return d.index;
-}
-function find(nodeById, nodeId) {
-  var node = nodeById.get(nodeId);
-  if (!node) throw new Error("node not found: " + nodeId);
-  return node;
-}
-function link_default(links) {
-  var id = index, strength = defaultStrength, strengths, distance = constant_default(30), distances, nodes, count, bias, random, iterations = 1;
-  if (links == null) links = [];
-  function defaultStrength(link) {
-    return 1 / Math.min(count[link.source.index], count[link.target.index]);
-  }
-  function force(alpha2) {
-    for (var k = 0, n = links.length; k < iterations; ++k) {
-      for (var i = 0, link, source, target, x3, y3, l, b; i < n; ++i) {
-        link = links[i], source = link.source, target = link.target;
-        x3 = target.x + target.vx - source.x - source.vx || jiggle_default(random);
-        y3 = target.y + target.vy - source.y - source.vy || jiggle_default(random);
-        l = Math.sqrt(x3 * x3 + y3 * y3);
-        l = (l - distances[i]) / l * alpha2 * strengths[i];
-        x3 *= l, y3 *= l;
-        target.vx -= x3 * (b = bias[i]);
-        target.vy -= y3 * b;
-        source.vx += x3 * (b = 1 - b);
-        source.vy += y3 * b;
-      }
-    }
-  }
-  function initialize() {
-    if (!nodes) return;
-    var i, n = nodes.length, m2 = links.length, nodeById = new Map(nodes.map((d, i2) => [id(d, i2, nodes), d])), link;
-    for (i = 0, count = new Array(n); i < m2; ++i) {
-      link = links[i], link.index = i;
-      if (typeof link.source !== "object") link.source = find(nodeById, link.source);
-      if (typeof link.target !== "object") link.target = find(nodeById, link.target);
-      count[link.source.index] = (count[link.source.index] || 0) + 1;
-      count[link.target.index] = (count[link.target.index] || 0) + 1;
-    }
-    for (i = 0, bias = new Array(m2); i < m2; ++i) {
-      link = links[i], bias[i] = count[link.source.index] / (count[link.source.index] + count[link.target.index]);
-    }
-    strengths = new Array(m2), initializeStrength();
-    distances = new Array(m2), initializeDistance();
-  }
-  function initializeStrength() {
-    if (!nodes) return;
-    for (var i = 0, n = links.length; i < n; ++i) {
-      strengths[i] = +strength(links[i], i, links);
-    }
-  }
-  function initializeDistance() {
-    if (!nodes) return;
-    for (var i = 0, n = links.length; i < n; ++i) {
-      distances[i] = +distance(links[i], i, links);
-    }
-  }
-  force.initialize = function(_nodes, _random) {
-    nodes = _nodes;
-    random = _random;
-    initialize();
-  };
-  force.links = function(_) {
-    return arguments.length ? (links = _, initialize(), force) : links;
-  };
-  force.id = function(_) {
-    return arguments.length ? (id = _, force) : id;
-  };
-  force.iterations = function(_) {
-    return arguments.length ? (iterations = +_, force) : iterations;
-  };
-  force.strength = function(_) {
-    return arguments.length ? (strength = typeof _ === "function" ? _ : constant_default(+_), initializeStrength(), force) : strength;
-  };
-  force.distance = function(_) {
-    return arguments.length ? (distance = typeof _ === "function" ? _ : constant_default(+_), initializeDistance(), force) : distance;
-  };
-  return force;
-}
-
-// node_modules/d3-dispatch/src/dispatch.js
-var noop2 = { value: () => {
-} };
-function dispatch() {
-  for (var i = 0, n = arguments.length, _ = {}, t; i < n; ++i) {
-    if (!(t = arguments[i] + "") || t in _ || /[\s.]/.test(t)) throw new Error("illegal type: " + t);
-    _[t] = [];
-  }
-  return new Dispatch(_);
-}
-function Dispatch(_) {
-  this._ = _;
-}
-function parseTypenames(typenames, types) {
-  return typenames.trim().split(/^|\s+/).map(function(t) {
-    var name = "", i = t.indexOf(".");
-    if (i >= 0) name = t.slice(i + 1), t = t.slice(0, i);
-    if (t && !types.hasOwnProperty(t)) throw new Error("unknown type: " + t);
-    return { type: t, name };
-  });
-}
-Dispatch.prototype = dispatch.prototype = {
-  constructor: Dispatch,
-  on: function(typename, callback) {
-    var _ = this._, T = parseTypenames(typename + "", _), t, i = -1, n = T.length;
-    if (arguments.length < 2) {
-      while (++i < n) if ((t = (typename = T[i]).type) && (t = get(_[t], typename.name))) return t;
-      return;
-    }
-    if (callback != null && typeof callback !== "function") throw new Error("invalid callback: " + callback);
-    while (++i < n) {
-      if (t = (typename = T[i]).type) _[t] = set(_[t], typename.name, callback);
-      else if (callback == null) for (t in _) _[t] = set(_[t], typename.name, null);
-    }
-    return this;
-  },
-  copy: function() {
-    var copy = {}, _ = this._;
-    for (var t in _) copy[t] = _[t].slice();
-    return new Dispatch(copy);
-  },
-  call: function(type, that) {
-    if ((n = arguments.length - 2) > 0) for (var args = new Array(n), i = 0, n, t; i < n; ++i) args[i] = arguments[i + 2];
-    if (!this._.hasOwnProperty(type)) throw new Error("unknown type: " + type);
-    for (t = this._[type], i = 0, n = t.length; i < n; ++i) t[i].value.apply(that, args);
-  },
-  apply: function(type, that, args) {
-    if (!this._.hasOwnProperty(type)) throw new Error("unknown type: " + type);
-    for (var t = this._[type], i = 0, n = t.length; i < n; ++i) t[i].value.apply(that, args);
-  }
-};
-function get(type, name) {
-  for (var i = 0, n = type.length, c2; i < n; ++i) {
-    if ((c2 = type[i]).name === name) {
-      return c2.value;
-    }
-  }
-}
-function set(type, name, callback) {
-  for (var i = 0, n = type.length; i < n; ++i) {
-    if (type[i].name === name) {
-      type[i] = noop2, type = type.slice(0, i).concat(type.slice(i + 1));
-      break;
-    }
-  }
-  if (callback != null) type.push({ name, value: callback });
-  return type;
-}
-var dispatch_default = dispatch;
-
-// node_modules/d3-timer/src/timer.js
-var frame2 = 0;
-var timeout = 0;
-var interval = 0;
-var pokeDelay = 1e3;
-var taskHead;
-var taskTail;
-var clockLast = 0;
-var clockNow = 0;
-var clockSkew = 0;
-var clock = typeof performance === "object" && performance.now ? performance : Date;
-var setFrame = typeof window === "object" && window.requestAnimationFrame ? window.requestAnimationFrame.bind(window) : function(f) {
-  setTimeout(f, 17);
-};
-function now2() {
-  return clockNow || (setFrame(clearNow), clockNow = clock.now() + clockSkew);
-}
-function clearNow() {
-  clockNow = 0;
-}
-function Timer() {
-  this._call = this._time = this._next = null;
-}
-Timer.prototype = timer.prototype = {
-  constructor: Timer,
-  restart: function(callback, delay, time2) {
-    if (typeof callback !== "function") throw new TypeError("callback is not a function");
-    time2 = (time2 == null ? now2() : +time2) + (delay == null ? 0 : +delay);
-    if (!this._next && taskTail !== this) {
-      if (taskTail) taskTail._next = this;
-      else taskHead = this;
-      taskTail = this;
-    }
-    this._call = callback;
-    this._time = time2;
-    sleep();
-  },
-  stop: function() {
-    if (this._call) {
-      this._call = null;
-      this._time = Infinity;
-      sleep();
-    }
-  }
-};
-function timer(callback, delay, time2) {
-  var t = new Timer();
-  t.restart(callback, delay, time2);
-  return t;
-}
-function timerFlush() {
-  now2();
-  ++frame2;
-  var t = taskHead, e;
-  while (t) {
-    if ((e = clockNow - t._time) >= 0) t._call.call(void 0, e);
-    t = t._next;
-  }
-  --frame2;
-}
-function wake() {
-  clockNow = (clockLast = clock.now()) + clockSkew;
-  frame2 = timeout = 0;
-  try {
-    timerFlush();
-  } finally {
-    frame2 = 0;
-    nap();
-    clockNow = 0;
-  }
-}
-function poke() {
-  var now3 = clock.now(), delay = now3 - clockLast;
-  if (delay > pokeDelay) clockSkew -= delay, clockLast = now3;
-}
-function nap() {
-  var t0, t1 = taskHead, t2, time2 = Infinity;
-  while (t1) {
-    if (t1._call) {
-      if (time2 > t1._time) time2 = t1._time;
-      t0 = t1, t1 = t1._next;
-    } else {
-      t2 = t1._next, t1._next = null;
-      t1 = t0 ? t0._next = t2 : taskHead = t2;
-    }
-  }
-  taskTail = t0;
-  sleep(time2);
-}
-function sleep(time2) {
-  if (frame2) return;
-  if (timeout) timeout = clearTimeout(timeout);
-  var delay = time2 - clockNow;
-  if (delay > 24) {
-    if (time2 < Infinity) timeout = setTimeout(wake, time2 - clock.now() - clockSkew);
-    if (interval) interval = clearInterval(interval);
-  } else {
-    if (!interval) clockLast = clock.now(), interval = setInterval(poke, pokeDelay);
-    frame2 = 1, setFrame(wake);
-  }
-}
-
-// node_modules/d3-force/src/lcg.js
-var a = 1664525;
-var c = 1013904223;
-var m = 4294967296;
-function lcg_default() {
-  let s = 1;
-  return () => (s = (a * s + c) % m) / m;
-}
-
-// node_modules/d3-force/src/simulation.js
-function x2(d) {
-  return d.x;
-}
-function y2(d) {
-  return d.y;
-}
-var initialRadius = 10;
-var initialAngle = Math.PI * (3 - Math.sqrt(5));
-function simulation_default(nodes) {
-  var simulation, alpha2 = 1, alphaMin = 1e-3, alphaDecay = 1 - Math.pow(alphaMin, 1 / 300), alphaTarget = 0, velocityDecay = 0.6, forces = /* @__PURE__ */ new Map(), stepper = timer(step), event = dispatch_default("tick", "end"), random = lcg_default();
-  if (nodes == null) nodes = [];
-  function step() {
-    tick();
-    event.call("tick", simulation);
-    if (alpha2 < alphaMin) {
-      stepper.stop();
-      event.call("end", simulation);
-    }
-  }
-  function tick(iterations) {
-    var i, n = nodes.length, node;
-    if (iterations === void 0) iterations = 1;
-    for (var k = 0; k < iterations; ++k) {
-      alpha2 += (alphaTarget - alpha2) * alphaDecay;
-      forces.forEach(function(force) {
-        force(alpha2);
-      });
-      for (i = 0; i < n; ++i) {
-        node = nodes[i];
-        if (node.fx == null) node.x += node.vx *= velocityDecay;
-        else node.x = node.fx, node.vx = 0;
-        if (node.fy == null) node.y += node.vy *= velocityDecay;
-        else node.y = node.fy, node.vy = 0;
-      }
-    }
-    return simulation;
-  }
-  function initializeNodes() {
-    for (var i = 0, n = nodes.length, node; i < n; ++i) {
-      node = nodes[i], node.index = i;
-      if (node.fx != null) node.x = node.fx;
-      if (node.fy != null) node.y = node.fy;
-      if (isNaN(node.x) || isNaN(node.y)) {
-        var radius = initialRadius * Math.sqrt(0.5 + i), angle = i * initialAngle;
-        node.x = radius * Math.cos(angle);
-        node.y = radius * Math.sin(angle);
-      }
-      if (isNaN(node.vx) || isNaN(node.vy)) {
-        node.vx = node.vy = 0;
-      }
-    }
-  }
-  function initializeForce(force) {
-    if (force.initialize) force.initialize(nodes, random);
-    return force;
-  }
-  initializeNodes();
-  return simulation = {
-    tick,
-    restart: function() {
-      return stepper.restart(step), simulation;
-    },
-    stop: function() {
-      return stepper.stop(), simulation;
-    },
-    nodes: function(_) {
-      return arguments.length ? (nodes = _, initializeNodes(), forces.forEach(initializeForce), simulation) : nodes;
-    },
-    alpha: function(_) {
-      return arguments.length ? (alpha2 = +_, simulation) : alpha2;
-    },
-    alphaMin: function(_) {
-      return arguments.length ? (alphaMin = +_, simulation) : alphaMin;
-    },
-    alphaDecay: function(_) {
-      return arguments.length ? (alphaDecay = +_, simulation) : +alphaDecay;
-    },
-    alphaTarget: function(_) {
-      return arguments.length ? (alphaTarget = +_, simulation) : alphaTarget;
-    },
-    velocityDecay: function(_) {
-      return arguments.length ? (velocityDecay = 1 - _, simulation) : 1 - velocityDecay;
-    },
-    randomSource: function(_) {
-      return arguments.length ? (random = _, forces.forEach(initializeForce), simulation) : random;
-    },
-    force: function(name, _) {
-      return arguments.length > 1 ? (_ == null ? forces.delete(name) : forces.set(name, initializeForce(_)), simulation) : forces.get(name);
-    },
-    find: function(x3, y3, radius) {
-      var i = 0, n = nodes.length, dx, dy, d2, node, closest;
-      if (radius == null) radius = Infinity;
-      else radius *= radius;
-      for (i = 0; i < n; ++i) {
-        node = nodes[i];
-        dx = x3 - node.x;
-        dy = y3 - node.y;
-        d2 = dx * dx + dy * dy;
-        if (d2 < radius) closest = node, radius = d2;
-      }
-      return closest;
-    },
-    on: function(name, _) {
-      return arguments.length > 1 ? (event.on(name, _), simulation) : event.on(name);
-    }
-  };
-}
-
-// node_modules/d3-force/src/manyBody.js
-function manyBody_default() {
-  var nodes, node, random, alpha2, strength = constant_default(-30), strengths, distanceMin2 = 1, distanceMax2 = Infinity, theta2 = 0.81;
-  function force(_) {
-    var i, n = nodes.length, tree = quadtree(nodes, x2, y2).visitAfter(accumulate);
-    for (alpha2 = _, i = 0; i < n; ++i) node = nodes[i], tree.visit(apply);
-  }
-  function initialize() {
-    if (!nodes) return;
-    var i, n = nodes.length, node2;
-    strengths = new Array(n);
-    for (i = 0; i < n; ++i) node2 = nodes[i], strengths[node2.index] = +strength(node2, i, nodes);
-  }
-  function accumulate(quad) {
-    var strength2 = 0, q, c2, weight = 0, x3, y3, i;
-    if (quad.length) {
-      for (x3 = y3 = i = 0; i < 4; ++i) {
-        if ((q = quad[i]) && (c2 = Math.abs(q.value))) {
-          strength2 += q.value, weight += c2, x3 += c2 * q.x, y3 += c2 * q.y;
-        }
-      }
-      quad.x = x3 / weight;
-      quad.y = y3 / weight;
-    } else {
-      q = quad;
-      q.x = q.data.x;
-      q.y = q.data.y;
-      do
-        strength2 += strengths[q.data.index];
-      while (q = q.next);
-    }
-    quad.value = strength2;
-  }
-  function apply(quad, x1, _, x22) {
-    if (!quad.value) return true;
-    var x3 = quad.x - node.x, y3 = quad.y - node.y, w = x22 - x1, l = x3 * x3 + y3 * y3;
-    if (w * w / theta2 < l) {
-      if (l < distanceMax2) {
-        if (x3 === 0) x3 = jiggle_default(random), l += x3 * x3;
-        if (y3 === 0) y3 = jiggle_default(random), l += y3 * y3;
-        if (l < distanceMin2) l = Math.sqrt(distanceMin2 * l);
-        node.vx += x3 * quad.value * alpha2 / l;
-        node.vy += y3 * quad.value * alpha2 / l;
-      }
-      return true;
-    } else if (quad.length || l >= distanceMax2) return;
-    if (quad.data !== node || quad.next) {
-      if (x3 === 0) x3 = jiggle_default(random), l += x3 * x3;
-      if (y3 === 0) y3 = jiggle_default(random), l += y3 * y3;
-      if (l < distanceMin2) l = Math.sqrt(distanceMin2 * l);
-    }
-    do
-      if (quad.data !== node) {
-        w = strengths[quad.data.index] * alpha2 / l;
-        node.vx += x3 * w;
-        node.vy += y3 * w;
-      }
-    while (quad = quad.next);
-  }
-  force.initialize = function(_nodes, _random) {
-    nodes = _nodes;
-    random = _random;
-    initialize();
-  };
-  force.strength = function(_) {
-    return arguments.length ? (strength = typeof _ === "function" ? _ : constant_default(+_), initialize(), force) : strength;
-  };
-  force.distanceMin = function(_) {
-    return arguments.length ? (distanceMin2 = _ * _, force) : Math.sqrt(distanceMin2);
-  };
-  force.distanceMax = function(_) {
-    return arguments.length ? (distanceMax2 = _ * _, force) : Math.sqrt(distanceMax2);
-  };
-  force.theta = function(_) {
-    return arguments.length ? (theta2 = _ * _, force) : Math.sqrt(theta2);
-  };
-  return force;
-}
-
-// node_modules/d3-force/src/x.js
-function x_default2(x3) {
-  var strength = constant_default(0.1), nodes, strengths, xz;
-  if (typeof x3 !== "function") x3 = constant_default(x3 == null ? 0 : +x3);
-  function force(alpha2) {
-    for (var i = 0, n = nodes.length, node; i < n; ++i) {
-      node = nodes[i], node.vx += (xz[i] - node.x) * strengths[i] * alpha2;
-    }
-  }
-  function initialize() {
-    if (!nodes) return;
-    var i, n = nodes.length;
-    strengths = new Array(n);
-    xz = new Array(n);
-    for (i = 0; i < n; ++i) {
-      strengths[i] = isNaN(xz[i] = +x3(nodes[i], i, nodes)) ? 0 : +strength(nodes[i], i, nodes);
-    }
-  }
-  force.initialize = function(_) {
-    nodes = _;
-    initialize();
-  };
-  force.strength = function(_) {
-    return arguments.length ? (strength = typeof _ === "function" ? _ : constant_default(+_), initialize(), force) : strength;
-  };
-  force.x = function(_) {
-    return arguments.length ? (x3 = typeof _ === "function" ? _ : constant_default(+_), initialize(), force) : x3;
-  };
-  return force;
-}
-
-// node_modules/d3-force/src/y.js
-function y_default2(y3) {
-  var strength = constant_default(0.1), nodes, strengths, yz;
-  if (typeof y3 !== "function") y3 = constant_default(y3 == null ? 0 : +y3);
-  function force(alpha2) {
-    for (var i = 0, n = nodes.length, node; i < n; ++i) {
-      node = nodes[i], node.vy += (yz[i] - node.y) * strengths[i] * alpha2;
-    }
-  }
-  function initialize() {
-    if (!nodes) return;
-    var i, n = nodes.length;
-    strengths = new Array(n);
-    yz = new Array(n);
-    for (i = 0; i < n; ++i) {
-      strengths[i] = isNaN(yz[i] = +y3(nodes[i], i, nodes)) ? 0 : +strength(nodes[i], i, nodes);
-    }
-  }
-  force.initialize = function(_) {
-    nodes = _;
-    initialize();
-  };
-  force.strength = function(_) {
-    return arguments.length ? (strength = typeof _ === "function" ? _ : constant_default(+_), initialize(), force) : strength;
-  };
-  force.y = function(_) {
-    return arguments.length ? (y3 = typeof _ === "function" ? _ : constant_default(+_), initialize(), force) : y3;
-  };
-  return force;
-}
-
 // script/landing_page.js
+var moduleEvaluationStarted = performance.now();
 var motionParams = new URLSearchParams(location.search);
 var reduceMotion = motionParams.has("reduced-motion") || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 var desktopMotion = window.matchMedia("(min-width: 1081px)");
@@ -6098,7 +5177,28 @@ var compactViewport = window.matchMedia("(max-width: 680px)").matches;
 var constrainedDevice = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4 || navigator.deviceMemory && navigator.deviceMemory <= 4;
 var performanceTier = reduceMotion ? "minimal" : compactViewport || constrainedDevice ? "balanced" : "full";
 var cleanups = [];
+var initializedSystems = /* @__PURE__ */ new Set();
+var scrollPosition = motionValue(window.scrollY);
+var skillGraphModulePromise;
+var preloadSkillGraph = () => {
+  skillGraphModulePromise || (skillGraphModulePromise = import("./landing_skill_graph.bundle.js"));
+  return skillGraphModulePromise;
+};
+var motionDiagnosis = motionParams.has("motion-diagnosis");
+var diagnosis = motionDiagnosis ? {
+  navigationStart: performance.timeOrigin,
+  moduleEvaluationStarted,
+  initializers: [],
+  inputFrames: { scroll: [], pointer: [] },
+  responses: [],
+  lastInput: { scroll: 0, pointer: 0 },
+  longTasks: [],
+  layoutShifts: [],
+  paints: []
+} : null;
 var clamp2 = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+var lerp = (start, end, amount) => start + (end - start) * amount;
+var rangeProgress = (value, start, end) => clamp2((value - start) / Math.max(1e-4, end - start));
 var springOptions = { type: "spring", stiffness: 240, damping: 24, mass: 0.72 };
 document.documentElement.classList.add("motion-ready");
 document.documentElement.dataset.motionTier = performanceTier;
@@ -6113,22 +5213,157 @@ function addCleanup(cleanup) {
   if (typeof cleanup === "function") cleanups.push(cleanup);
   return cleanup;
 }
+function runInitializer(name, initializer) {
+  if (initializedSystems.has(name)) return void 0;
+  initializedSystems.add(name);
+  if (!diagnosis) {
+    try {
+      const result2 = initializer();
+      result2?.catch?.((error) => {
+        initializedSystems.delete(name);
+        console.error(`[landing:${name}]`, error);
+      });
+      return result2;
+    } catch (error) {
+      initializedSystems.delete(name);
+      console.error(`[landing:${name}]`, error);
+      return void 0;
+    }
+  }
+  const started = performance.now();
+  let result;
+  try {
+    result = initializer();
+  } catch (error) {
+    initializedSystems.delete(name);
+    console.error(`[landing:${name}]`, error);
+    return void 0;
+  }
+  diagnosis.initializers.push({ name, duration: performance.now() - started });
+  result?.then?.(() => {
+    diagnosis.initializers.push({ name: `${name}:ready`, duration: performance.now() - started });
+    updateMotionDiagnosisDataset();
+  }).catch?.((error) => {
+    initializedSystems.delete(name);
+    console.error(`[landing:${name}]`, error);
+  });
+  updateMotionDiagnosisDataset();
+  return result;
+}
+function scheduleIdle(callback, timeout = 700) {
+  if ("requestIdleCallback" in window) {
+    const handle2 = window.requestIdleCallback(callback, { timeout });
+    addCleanup(() => window.cancelIdleCallback(handle2));
+    return;
+  }
+  const handle = window.setTimeout(callback, Math.min(timeout, 120));
+  addCleanup(() => window.clearTimeout(handle));
+}
+function initMotionDiagnosis() {
+  if (!diagnosis) return;
+  const observers = [];
+  if (PerformanceObserver.supportedEntryTypes?.includes("longtask")) {
+    const observer = new PerformanceObserver((list) => {
+      diagnosis.longTasks.push(...list.getEntries().map((entry) => ({ start: entry.startTime, duration: entry.duration })));
+    });
+    observer.observe({ type: "longtask", buffered: true });
+    observers.push(observer);
+  }
+  if (PerformanceObserver.supportedEntryTypes?.includes("layout-shift")) {
+    const observer = new PerformanceObserver((list) => {
+      diagnosis.layoutShifts.push(...list.getEntries().filter((entry) => !entry.hadRecentInput).map((entry) => ({
+        start: entry.startTime,
+        value: entry.value
+      })));
+    });
+    observer.observe({ type: "layout-shift", buffered: true });
+    observers.push(observer);
+  }
+  if (PerformanceObserver.supportedEntryTypes?.includes("paint")) {
+    const observer = new PerformanceObserver((list) => {
+      diagnosis.paints.push(...list.getEntries().map((entry) => ({ name: entry.name, start: entry.startTime })));
+    });
+    observer.observe({ type: "paint", buffered: true });
+    observers.push(observer);
+  }
+  const trackInputFrame = (type) => {
+    let pending = false;
+    return () => {
+      if (pending) return;
+      pending = true;
+      const inputAt = performance.now();
+      diagnosis.lastInput[type] = inputAt;
+      requestAnimationFrame((frameAt) => {
+        pending = false;
+        const samples = diagnosis.inputFrames[type];
+        if (samples.length < 240) samples.push(frameAt - inputAt);
+      });
+    };
+  };
+  const onScroll = trackInputFrame("scroll");
+  const onPointer = trackInputFrame("pointer");
+  window.addEventListener("scroll", onScroll, { passive: true, capture: true });
+  window.addEventListener("pointermove", onPointer, { passive: true, capture: true });
+  addCleanup(() => {
+    window.removeEventListener("scroll", onScroll, { capture: true });
+    window.removeEventListener("pointermove", onPointer, { capture: true });
+    observers.forEach((observer) => observer.disconnect());
+  });
+  window.__motionDiagnosis = diagnosis;
+}
+function recordMotionResponse(system, inputType, detail = {}) {
+  if (!diagnosis || diagnosis.responses.length >= 300) return;
+  const now2 = performance.now();
+  const inputAt = diagnosis.lastInput[inputType] || now2;
+  diagnosis.responses.push({ system, inputType, latency: now2 - inputAt, at: now2, ...detail });
+}
+function updateMotionDiagnosisDataset() {
+  if (!diagnosis) return;
+  document.documentElement.dataset.motionDiagnosis = JSON.stringify(diagnosis);
+}
+function publishMotionDiagnosis() {
+  if (!diagnosis) return;
+  diagnosis.moduleEvaluationFinished = performance.now();
+  diagnosis.moduleEvaluationDuration = diagnosis.moduleEvaluationFinished - moduleEvaluationStarted;
+  requestAnimationFrame((firstFrame) => requestAnimationFrame((secondFrame) => {
+    diagnosis.firstFrameAfterModule = firstFrame - moduleEvaluationStarted;
+    diagnosis.secondFrameAfterModule = secondFrame - moduleEvaluationStarted;
+    updateMotionDiagnosisDataset();
+  }));
+  window.addEventListener("load", () => window.setTimeout(() => {
+    diagnosis.resources = performance.getEntriesByType("resource").filter((entry) => /landing_page|fonts\.|Inter/.test(entry.name)).map((entry) => ({ name: entry.name.split("/").pop(), start: entry.startTime, duration: entry.duration, decoded: entry.decodedBodySize }));
+    diagnosis.navigation = (() => {
+      const entry = performance.getEntriesByType("navigation")[0];
+      return entry ? { dcl: entry.domContentLoadedEventEnd, load: entry.loadEventEnd } : null;
+    })();
+    updateMotionDiagnosisDataset();
+  }, 500), { once: true });
+}
 function createFrameScheduler(callback) {
-  let frame3 = 0;
+  let frame2 = 0;
   let latest;
   const schedule = (value) => {
     latest = value;
-    if (frame3) return;
-    frame3 = requestAnimationFrame(() => {
-      frame3 = 0;
+    if (frame2) return;
+    frame2 = requestAnimationFrame(() => {
+      frame2 = 0;
       callback(latest);
     });
   };
   schedule.cancel = () => {
-    if (frame3) cancelAnimationFrame(frame3);
-    frame3 = 0;
+    if (frame2) cancelAnimationFrame(frame2);
+    frame2 = 0;
   };
   return schedule;
+}
+function initInputPipeline() {
+  const publishScroll = createFrameScheduler(() => scrollPosition.set(window.scrollY));
+  const onScroll = () => publishScroll();
+  window.addEventListener("scroll", onScroll, { passive: true });
+  addCleanup(() => {
+    window.removeEventListener("scroll", onScroll);
+    publishScroll.cancel();
+  });
 }
 function observeActivity(element, onChange, rootMargin = "120px") {
   const observer = new IntersectionObserver(([entry]) => onChange(entry.isIntersecting, entry), { rootMargin });
@@ -6152,23 +5387,14 @@ function initRoutes() {
 function initNavigation() {
   const nav = document.querySelector("[data-nav]");
   let lastState = null;
-  let scrollFrame = 0;
-  const updateNav = () => {
-    scrollFrame = 0;
-    const nextState = window.scrollY > 18;
+  const updateNav = (position = scrollPosition.get()) => {
+    const nextState = position > 18;
     if (nextState === lastState) return;
     lastState = nextState;
     nav?.classList.toggle("is-scrolled", nextState);
   };
-  const onScroll = () => {
-    if (!scrollFrame) scrollFrame = requestAnimationFrame(updateNav);
-  };
   updateNav();
-  window.addEventListener("scroll", onScroll, { passive: true });
-  addCleanup(() => {
-    window.removeEventListener("scroll", onScroll);
-    if (scrollFrame) cancelAnimationFrame(scrollFrame);
-  });
+  addCleanup(scrollPosition.on("change", updateNav));
   const menuToggle = document.querySelector(".menu-toggle");
   const mobileMenu = document.getElementById("mobileMenu");
   if (!menuToggle || !mobileMenu) return;
@@ -6215,9 +5441,9 @@ function initCursorAura() {
     currentY = value;
     render();
   });
-  const applyPointer = createFrameScheduler(({ x: x3, y: y3 }) => {
-    pointerX.set(x3);
-    pointerY.set(y3);
+  const applyPointer = createFrameScheduler(({ x, y }) => {
+    pointerX.set(x);
+    pointerY.set(y);
   });
   const onMove = (event) => {
     applyPointer({ x: event.clientX, y: event.clientY });
@@ -6240,10 +5466,10 @@ function initMagneticButtons() {
     if (performanceTier !== "full" || coarsePointer) return;
     const targetX = motionValue(0);
     const targetY = motionValue(0);
-    const x3 = springValue(targetX, { stiffness: 250, damping: 20, mass: 0.45 });
-    const y3 = springValue(targetY, { stiffness: 250, damping: 20, mass: 0.45 });
-    const unsubscribeX = x3.on("change", (value) => button.style.setProperty("--magnetic-x", `${value}px`));
-    const unsubscribeY = y3.on("change", (value) => button.style.setProperty("--magnetic-y", `${value}px`));
+    const x = springValue(targetX, { stiffness: 250, damping: 20, mass: 0.45 });
+    const y = springValue(targetY, { stiffness: 250, damping: 20, mass: 0.45 });
+    const unsubscribeX = x.on("change", (value) => button.style.setProperty("--magnetic-x", `${value}px`));
+    const unsubscribeY = y.on("change", (value) => button.style.setProperty("--magnetic-y", `${value}px`));
     let rect = null;
     const applyPointer = createFrameScheduler(({ x: clientX, y: clientY }) => {
       if (!rect) return;
@@ -6286,45 +5512,42 @@ function initHeroEntrance() {
   animate(".hero-copy .eyebrow", {
     clipPath: ["inset(0 100% 0 0)", "inset(0 0% 0 0)"],
     x: [-18, 0]
-  }, { duration: 0.72, delay: 0.08, ease: [0.16, 1, 0.3, 1] });
+  }, { duration: 0.5, ease: [0.16, 1, 0.3, 1] });
   animate(words, {
     y: ["115%", "0%"],
-    rotateX: [38, 0],
-    filter: ["blur(12px)", "blur(0px)"]
-  }, { duration: 0.95, delay: stagger(0.055, { startDelay: 0.22 }), ease: [0.16, 1, 0.3, 1] });
+    rotateX: [38, 0]
+  }, { duration: 0.64, delay: stagger(0.028, { startDelay: 0.025 }), ease: [0.16, 1, 0.3, 1] });
   animate(".hero-lede", {
     clipPath: ["inset(0 0 100% 0)", "inset(0 0 0% 0)"],
-    y: [24, 0],
-    filter: ["blur(8px)", "blur(0px)"]
-  }, { duration: 0.8, delay: 0.72, ease: [0.16, 1, 0.3, 1] });
+    y: [24, 0]
+  }, { duration: 0.58, delay: 0.1, ease: [0.16, 1, 0.3, 1] });
   animate(".hero-actions .button", { y: [22, 0], scale: [0.94, 1] }, {
-    duration: 0.65,
-    delay: stagger(0.08, { startDelay: 0.92 }),
+    duration: 0.48,
+    delay: stagger(0.045, { startDelay: 0.16 }),
     ...springOptions
   });
-  animate(".platform-strip > *", { x: [-18, 0], filter: ["blur(5px)", "blur(0px)"] }, {
-    duration: 0.58,
-    delay: stagger(0.045, { startDelay: 1.08 })
+  animate(".platform-strip > *", { x: [-18, 0], opacity: [0.55, 1] }, {
+    duration: 0.46,
+    delay: stagger(0.025, { startDelay: 0.24 })
   });
   animate(".hero-visual", {
-    clipPath: ["inset(48% 48% 48% 48% round 30px)", "inset(0% 0% 0% 0% round 24px)"],
-    scale: [0.9, 1],
-    rotateY: [-6, 0],
-    filter: ["blur(14px)", "blur(0px)"]
-  }, { duration: 1.25, delay: 0.32, ease: [0.16, 1, 0.3, 1] });
+    opacity: [0.72, 1],
+    scale: [0.965, 1],
+    rotateY: [-3, 0]
+  }, { duration: 0.68, ease: [0.16, 1, 0.3, 1] });
   animate(".core-center", { scale: [0.2, 1.06, 1], rotate: [-8, 0] }, {
-    duration: 1.1,
-    delay: 0.92,
+    duration: 0.72,
+    delay: 0.08,
     ...springOptions
   });
-  animate(".core-node", { scale: [0.15, 1], filter: ["blur(10px)", "blur(0px)"] }, {
-    duration: 0.82,
-    delay: stagger(0.09, { startDelay: 1.18 }),
+  animate(".core-node", { scale: [0.6, 1], opacity: [0.3, 1] }, {
+    duration: 0.58,
+    delay: stagger(0.045, { startDelay: 0.12 }),
     ...springOptions
   });
   animate(".core-insight", { x: [42, 0], clipPath: ["inset(0 0 0 100%)", "inset(0 0 0 0%)"] }, {
-    duration: 0.82,
-    delay: 1.72,
+    duration: 0.56,
+    delay: 0.28,
     ease: [0.16, 1, 0.3, 1]
   });
 }
@@ -6376,21 +5599,22 @@ function initHeroCore() {
   const pointerY = motionValue(0);
   const smoothX = springValue(pointerX, { stiffness: 120, damping: 24, mass: 0.75 });
   const smoothY = springValue(pointerY, { stiffness: 120, damping: 24, mass: 0.75 });
-  let x3 = 0;
-  let y3 = 0;
+  let x = 0;
+  let y = 0;
   let stageRect = null;
   const renderTilt = createFrameScheduler(() => {
-    stage.style.setProperty("--tilt-x", `${y3 * -3.2}deg`);
-    stage.style.setProperty("--tilt-y", `${x3 * 4.2}deg`);
-    stage.__pointerX = x3 * 0.5 + 0.5;
-    stage.__pointerY = y3 * 0.5 + 0.5;
+    stage.style.setProperty("--tilt-x", `${y * -3.2}deg`);
+    stage.style.setProperty("--tilt-y", `${x * 4.2}deg`);
+    stage.__pointerX = x * 0.5 + 0.5;
+    stage.__pointerY = y * 0.5 + 0.5;
+    recordMotionResponse("hero-tilt", "pointer");
   });
   const unsubX = smoothX.on("change", (value) => {
-    x3 = value;
+    x = value;
     renderTilt();
   });
   const unsubY = smoothY.on("change", (value) => {
-    y3 = value;
+    y = value;
     renderTilt();
   });
   const onPointerMove = (event) => {
@@ -6412,7 +5636,7 @@ function initHeroCore() {
   stage.addEventListener("pointerleave", onPointerLeave);
   let selected = "rating";
   let userHoldUntil = 0;
-  const activate = async (key, isUser = false) => {
+  const activate = (key, isUser = false) => {
     const config = nodeCopy[key] || nodeCopy.rating;
     selected = key;
     if (isUser) userHoldUntil = performance.now() + 7e3;
@@ -6438,15 +5662,12 @@ function initHeroCore() {
       path.classList.toggle("is-related", pathKey === key || config.related.includes(pathKey));
       path.classList.toggle("is-muted", pathKey !== key && !config.related.includes(pathKey));
     });
-    if (!reduceMotion) {
-      await animate(insight, { x: [0, 16], scale: [1, 0.985], opacity: [1, 0.35] }, { duration: 0.16 });
-    }
     insight.querySelector("strong").textContent = config.title;
     insight.querySelector("p").textContent = config.body;
     insight.querySelector(".core-insight-signals").innerHTML = config.signals.map((signal) => `<i>${signal}</i>`).join("");
     if (!reduceMotion) {
-      animate(insight, { x: [16, 0], scale: [0.985, 1], opacity: [0.35, 1] }, { duration: 0.42, ease: [0.16, 1, 0.3, 1] });
-      animate(insight.querySelectorAll("i"), { y: [8, 0], scale: [0.9, 1] }, { delay: stagger(0.035), ...springOptions });
+      animate(insight, { x: [8, 0], scale: [0.99, 1], opacity: [0.72, 1] }, { duration: 0.22, ease: [0.16, 1, 0.3, 1] });
+      animate(insight.querySelectorAll("i"), { y: [5, 0], scale: [0.94, 1] }, { delay: stagger(0.018), duration: 0.2 });
     }
   };
   nodes.forEach((node) => {
@@ -6499,11 +5720,11 @@ function initCoreStreams() {
       paths.forEach((path, pathIndex) => {
         controls.push(animate(path, { strokeDashoffset: [1, 0], opacity: [0.08, 0.72] }, {
           duration: 0.95,
-          delay: 0.82 + pathIndex * 0.1,
+          delay: 0.12 + pathIndex * 0.035,
           ease: [0.16, 1, 0.3, 1]
         }));
         const length = path.getTotalLength();
-        const samples = Array.from({ length: 28 }, (_, index2) => path.getPointAtLength(length * index2 / 27));
+        const samples = Array.from({ length: 28 }, (_, index) => path.getPointAtLength(length * index / 27));
         const packetCount = performanceTier === "full" ? 2 : 1;
         for (let packetIndex = 0; packetIndex < packetCount; packetIndex += 1) {
           const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -6517,17 +5738,17 @@ function initCoreStreams() {
             opacity: [0, 0.95, 0.95, 0]
           }, {
             duration: 3.2 + pathIndex * 0.22,
-            delay: 1.3 + packetIndex * 1.1 + pathIndex * 0.18,
+            delay: 0.3 + packetIndex * 0.85 + pathIndex * 0.08,
             repeat: Infinity,
             ease: "linear"
           }));
         }
       });
-      if (performanceTier === "full") document.querySelectorAll(".orbital-meta").forEach((label, index2) => {
+      if (performanceTier === "full") document.querySelectorAll(".orbital-meta").forEach((label, index) => {
         controls.push(animate(label, {
-          x: [0, index2 % 2 ? 9 : -8, 0],
-          y: [0, index2 % 2 ? -7 : 8, 0]
-        }, { duration: 6.5 + index2, repeat: Infinity, ease: "easeInOut" }));
+          x: [0, index % 2 ? 9 : -8, 0],
+          y: [0, index % 2 ? -7 : 8, 0]
+        }, { duration: 6.5 + index, repeat: Infinity, ease: "easeInOut" }));
       });
     } else {
       controls.forEach((control) => control.play?.());
@@ -6537,7 +5758,7 @@ function initCoreStreams() {
   addCleanup(() => controls.forEach((control) => control.cancel?.()));
 }
 function initSectionHeadings() {
-  document.querySelectorAll(".section-heading").forEach((heading, index2) => {
+  document.querySelectorAll(".section-heading").forEach((heading, index) => {
     let entered = false;
     addCleanup(inView(heading, () => {
       if (entered || reduceMotion) return;
@@ -6545,15 +5766,14 @@ function initSectionHeadings() {
       const eyebrow = heading.querySelector(".eyebrow");
       const title = heading.querySelector("h2");
       const body = heading.querySelectorAll("p:not(.eyebrow)");
-      if (eyebrow) animate(eyebrow, { x: [-24, 0], clipPath: ["inset(0 100% 0 0)", "inset(0 0 0 0)"] }, { duration: 0.55 });
+      if (eyebrow) animate(eyebrow, { x: [-18, 0], clipPath: ["inset(0 100% 0 0)", "inset(0 0 0 0)"] }, { duration: 0.36 });
       if (title) animate(title, {
-        clipPath: [index2 % 2 ? "inset(0 0 0 100%)" : "inset(0 0 100% 0)", "inset(0 0 0 0)"],
-        y: [index2 % 2 ? 0 : 34, 0],
-        x: [index2 % 2 ? 34 : 0, 0],
-        filter: ["blur(8px)", "blur(0px)"]
-      }, { duration: 0.82, delay: 0.08, ease: [0.16, 1, 0.3, 1] });
-      if (body.length) animate(body, { y: [18, 0], filter: ["blur(5px)", "blur(0px)"] }, { duration: 0.62, delay: 0.2 });
-    }, { margin: "0px 0px -12% 0px" }));
+        clipPath: [index % 2 ? "inset(0 0 0 100%)" : "inset(0 0 100% 0)", "inset(0 0 0 0)"],
+        y: [index % 2 ? 0 : 22, 0],
+        x: [index % 2 ? 22 : 0, 0]
+      }, { duration: 0.52, ease: [0.16, 1, 0.3, 1] });
+      if (body.length) animate(body, { y: [12, 0], opacity: [0.72, 1] }, { duration: 0.4, delay: 0.04 });
+    }, { margin: "35% 0px" }));
   });
 }
 var storyStages = [
@@ -6616,66 +5836,73 @@ function initIntelligenceStory() {
       { x: -24, y: -20, rotate: 0, scale: 1.1, opacity: 1 }
     ]
   ];
-  const setStage = (index2) => {
-    const next = clamp2(index2, 0, storyStages.length - 1);
+  const setStage = (index) => {
+    const next = clamp2(index, 0, storyStages.length - 1);
     if (next === activeStage) return;
     activeStage = next;
     stage.dataset.storyStage = String(next);
     steps.forEach((step, stepIndex) => step.classList.toggle("is-active", stepIndex === next));
     status.textContent = storyStages[next].status;
     coreLabel.textContent = storyStages[next].core;
-    cards.forEach((card, cardIndex) => {
-      const target = configurations[next][cardIndex];
-      if (reduceMotion) {
-        Object.assign(card.style, { opacity: String(target.opacity) });
-      } else {
-        animate(card, { ...target, filter: target.opacity < 0.4 ? "blur(1.5px)" : "blur(0px)" }, springOptions);
-      }
-    });
-    if (!reduceMotion) {
-      animate(core, {
-        scale: next === 3 ? 1.12 : next === 4 ? 0.94 : 1,
-        rotate: next === 3 ? [0, 2, 0] : 0,
-        filter: next >= 3 ? "brightness(1.18)" : "brightness(1)"
-      }, springOptions);
-      animate(output, { opacity: next === 4 ? 1 : 0, y: next === 4 ? 0 : 18, scale: next === 4 ? 1 : 0.94 }, springOptions);
-      eventFragments.forEach((fragment, fragmentIndex) => animate(fragment, {
-        x: next >= 1 ? (50 - parseFloat(fragment.style.getPropertyValue("--sx"))) * 3.5 : 0,
-        y: next >= 2 ? (50 - parseFloat(fragment.style.getPropertyValue("--sy"))) * 2.2 : 0,
-        scale: next >= 3 ? 0.7 : 1,
-        opacity: next === 4 ? 0.12 : next >= 1 ? 0.72 : 0.4
-      }, { ...springOptions, delay: fragmentIndex * 0.025 }));
-      orbitRings.forEach((ring, ringIndex) => animate(ring, {
-        scale: next === 0 ? 0.72 + ringIndex * 0.08 : next >= 3 ? 1.08 - ringIndex * 0.04 : 1,
-        opacity: next === 4 ? 0.22 : 0.82 - ringIndex * 0.16
-      }, springOptions));
-    } else {
-      output.style.opacity = next === 4 ? "1" : "0";
-    }
   };
   const renderProgress = (progress2) => {
     const value = clamp2(progress2);
+    const scaled = value * 4;
+    const fromIndex = Math.min(4, Math.floor(scaled));
+    const toIndex = Math.min(4, fromIndex + 1);
+    const mix2 = scaled - fromIndex;
     stage.style.setProperty("--story-progress", value.toFixed(4));
-    paths.forEach((path, index2) => {
-      const local = index2 === paths.length - 1 ? clamp2((value - 0.68) / 0.28) : clamp2(value * 1.18 - index2 * 0.035);
+    paths.forEach((path, index) => {
+      const local = index === paths.length - 1 ? clamp2((value - 0.68) / 0.28) : clamp2(value * 1.18 - index * 0.035);
       path.style.strokeDashoffset = String(1 - local);
     });
-    setStage(Math.min(4, Math.floor(value * 5)));
+    cards.forEach((card, cardIndex) => {
+      const from = configurations[fromIndex][cardIndex];
+      const to = configurations[toIndex][cardIndex];
+      const x = lerp(from.x, to.x, mix2);
+      const y = lerp(from.y, to.y, mix2);
+      const rotate2 = lerp(from.rotate, to.rotate, mix2);
+      const scale2 = lerp(from.scale, to.scale, mix2);
+      card.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${rotate2}deg) scale(${scale2})`;
+      card.style.opacity = String(lerp(from.opacity, to.opacity, mix2));
+    });
+    const reasoningFocus = 1 - Math.min(1, Math.abs(value - 0.75) / 0.2);
+    const outputProgress = rangeProgress(value, 0.82, 0.96);
+    core.style.transform = `scale(${lerp(1, 1.1, reasoningFocus) * lerp(1, 0.94, outputProgress)})`;
+    output.style.transform = `translate3d(0, ${lerp(18, 0, outputProgress)}px, 0) scale(${lerp(0.94, 1, outputProgress)})`;
+    output.style.opacity = String(outputProgress);
+    eventFragments.forEach((fragment) => {
+      const sourceX = parseFloat(fragment.style.getPropertyValue("--sx"));
+      const sourceY = parseFloat(fragment.style.getPropertyValue("--sy"));
+      const clusterX = rangeProgress(value, 0.12, 0.58);
+      const clusterY = rangeProgress(value, 0.3, 0.68);
+      const reasoning = rangeProgress(value, 0.58, 0.78);
+      fragment.style.translate = `${(50 - sourceX) * 3.5 * clusterX}px ${(50 - sourceY) * 2.2 * clusterY}px`;
+      fragment.style.scale = String(lerp(1, 0.7, reasoning));
+      fragment.style.opacity = String(lerp(0.4, 0.72, clusterX) * lerp(1, 0.17, outputProgress));
+    });
+    orbitRings.forEach((ring, ringIndex) => {
+      const assemble = rangeProgress(value, 0.02, 0.28);
+      ring.style.scale = String(lerp(0.72 + ringIndex * 0.08, 1, assemble) * lerp(1, 1.08 - ringIndex * 0.04, reasoningFocus));
+      ring.style.opacity = String(lerp(0.82 - ringIndex * 0.16, 0.22, outputProgress));
+    });
+    setStage(Math.min(4, Math.round(value * 4)));
+    recordMotionResponse("intelligence-story", "scroll", { progress: value, stage: activeStage });
   };
-  const scrollToStage = (index2) => {
+  const scrollToStage = (index) => {
     if (!desktopMotion.matches || reduceMotion) {
-      renderProgress(index2 / 4);
+      renderProgress(index / 4);
       return;
     }
-    window.scrollTo({ top: sectionTop + scrollDistance * (index2 / 4), behavior: "smooth" });
+    window.scrollTo({ top: sectionTop + scrollDistance * (index / 4), behavior: "smooth" });
   };
-  steps.forEach((step, index2) => step.querySelector("button")?.addEventListener("click", () => scrollToStage(index2)));
+  steps.forEach((step, index) => step.querySelector("button")?.addEventListener("click", () => scrollToStage(index)));
   if (desktopMotion.matches && !reduceMotion) {
     let visible = false;
-    const onScroll = createFrameScheduler(() => {
+    const onScroll = (position = scrollPosition.get()) => {
       if (!visible) return;
-      renderProgress(clamp2((scrollY - sectionTop) / scrollDistance));
-    });
+      renderProgress(clamp2((position - sectionTop) / scrollDistance));
+    };
     const onResize = () => {
       measureSection();
       onScroll();
@@ -6683,13 +5910,12 @@ function initIntelligenceStory() {
     observeActivity(section, (isVisible) => {
       visible = isVisible;
       if (visible) onScroll();
-    }, "40px");
-    window.addEventListener("scroll", onScroll, { passive: true });
+    }, "50% 0px");
+    const unsubscribeScroll = scrollPosition.on("change", onScroll);
     window.addEventListener("resize", onResize, { passive: true });
     addCleanup(() => {
-      window.removeEventListener("scroll", onScroll);
+      unsubscribeScroll();
       window.removeEventListener("resize", onResize);
-      onScroll.cancel();
     });
     renderProgress(0);
   } else {
@@ -6705,29 +5931,28 @@ function initPipeline() {
   packet.setAttribute("aria-hidden", "true");
   pipeline.appendChild(packet);
   let activeIndex = 0;
-  let timer2 = 0;
-  const setActive = (index2) => {
-    activeIndex = index2 % nodes.length;
+  let timer = 0;
+  const setActive = (index) => {
+    activeIndex = index % nodes.length;
     nodes.forEach((node, nodeIndex) => node.classList.toggle("is-active", nodeIndex === activeIndex));
     if (!reduceMotion) animate(nodes[activeIndex], { scale: [0.98, 1.025, 1] }, springOptions);
   };
   addCleanup(inView(pipeline, () => {
     if (!reduceMotion) {
-      nodes.forEach((node, index2) => animate(node, {
-        x: [index2 % 2 ? 32 : -32, 0],
-        rotateY: [index2 % 2 ? -8 : 8, 0],
-        filter: ["blur(6px)", "blur(0px)"]
-      }, { delay: index2 * 0.08, ...springOptions }));
-      const packetControl = animate(packet, { left: ["4%", "96%"], scale: [0.65, 1.2, 0.65] }, { duration: 5.4, repeat: Infinity, ease: "linear" });
-      timer2 = window.setInterval(() => setActive(activeIndex + 1), 1080);
+      nodes.forEach((node, index) => animate(node, {
+        x: [index % 2 ? 32 : -32, 0],
+        rotateY: [index % 2 ? -8 : 8, 0]
+      }, { delay: index * 0.035, ...springOptions }));
+      const packetControl = animate(packet, { x: [0, pipeline.clientWidth * 0.92], scale: [0.65, 1.2, 0.65] }, { duration: 5.4, repeat: Infinity, ease: "linear" });
+      timer = window.setInterval(() => setActive(activeIndex + 1), 1080);
       setActive(0);
       return () => {
         packetControl.cancel();
-        window.clearInterval(timer2);
+        window.clearInterval(timer);
       };
     }
     nodes.forEach((node) => node.classList.add("is-active"));
-  }, { margin: "0px 0px -18% 0px" }));
+  }, { margin: "55% 0px" }));
 }
 function initAnalytics() {
   const wall = document.querySelector(".viz-wall");
@@ -6751,7 +5976,7 @@ function initAnalytics() {
     animate(".mini-heatmap span", { scale: [0, 1], rotate: [-12, 0] }, { delay: stagger(0.012), ...springOptions });
     animate(".bars span", { scaleY: [0.08, 1] }, { delay: stagger(0.1), duration: 0.82, ease: [0.16, 1, 0.3, 1] });
     animate(".rings span", { scale: [0.2, 1], rotate: [32, 0] }, { delay: stagger(0.11), ...springOptions });
-  }, { margin: "0px 0px -16% 0px" }));
+  }, { margin: "45% 0px" }));
   document.querySelectorAll(".viz-panel").forEach((panel) => {
     const cancelHover = hover(panel, () => {
       if (!reduceMotion) animate(panel, { y: -5, rotateX: 1.2, scale: 1.006 }, springOptions);
@@ -6768,9 +5993,9 @@ function initAnalytics() {
     let chartRect = null;
     const updateScrubber = createFrameScheduler((clientX) => {
       if (!chartRect) return;
-      const x3 = clamp2(clientX - chartRect.left, 0, chartRect.width);
-      scrubber.style.transform = `translate3d(${x3}px, 0, 0)`;
-      tooltip.style.transform = `translate3d(${clamp2(x3 + 12, 8, chartRect.width - 142)}px, 0, 0)`;
+      const x = clamp2(clientX - chartRect.left, 0, chartRect.width);
+      scrubber.style.transform = `translate3d(${x}px, 0, 0)`;
+      tooltip.style.transform = `translate3d(${clamp2(x + 12, 8, chartRect.width - 142)}px, 0, 0)`;
     });
     chart.addEventListener("pointerenter", () => {
       chartRect = chart.getBoundingClientRect();
@@ -6805,8 +6030,8 @@ function initContestSimulation() {
   const readout = document.getElementById("routerReadout");
   const routerPath = simulation.querySelector(".router-lines path");
   let activeIndex = 0;
-  const setActive = (index2) => {
-    activeIndex = (index2 + events.length) % events.length;
+  const setActive = (index) => {
+    activeIndex = (index + events.length) % events.length;
     const event = events[activeIndex];
     const [label, description, routerIndex] = contestEvents[event.dataset.contestEvent];
     events.forEach((item, itemIndex) => item.classList.toggle("is-active", itemIndex === activeIndex));
@@ -6818,17 +6043,16 @@ function initContestSimulation() {
       animate(routerNodes.slice(0, routerIndex + 1), { scale: [0.97, 1.015, 1] }, { delay: stagger(0.045), ...springOptions });
     }
   };
-  events.forEach((event, index2) => {
-    event.addEventListener("pointerenter", () => setActive(index2));
-    event.addEventListener("focus", () => setActive(index2));
+  events.forEach((event, index) => {
+    event.addEventListener("pointerenter", () => setActive(index));
+    event.addEventListener("focus", () => setActive(index));
   });
   addCleanup(inView(simulation, () => {
-    events.forEach((event, index2) => {
+    events.forEach((event, index) => {
       if (!reduceMotion) animate(event, {
-        x: [index2 % 2 ? 58 : -58, 0],
-        rotateY: [index2 % 2 ? -8 : 8, 0],
-        filter: ["blur(6px)", "blur(0px)"]
-      }, { delay: index2 * 0.08, ...springOptions });
+        x: [index % 2 ? 58 : -58, 0],
+        rotateY: [index % 2 ? -8 : 8, 0]
+      }, { delay: index * 0.035, ...springOptions });
     });
     if (reduceMotion) {
       setActive(0);
@@ -6837,14 +6061,14 @@ function initContestSimulation() {
     const distance = Math.max(120, rail.getBoundingClientRect().height);
     const playheadControl = animate(playhead, { y: [0, distance] }, { duration: 7.2, repeat: Infinity, ease: "linear" });
     const routerControl = animate(routerPath, { strokeDashoffset: [0, -34] }, { duration: 2.8, repeat: Infinity, ease: "linear" });
-    const timer2 = window.setInterval(() => setActive(activeIndex + 1), 1440);
+    const timer = window.setInterval(() => setActive(activeIndex + 1), 1440);
     setActive(0);
     return () => {
       playheadControl.cancel();
       routerControl.cancel();
-      window.clearInterval(timer2);
+      window.clearInterval(timer);
     };
-  }, { margin: "60px" }));
+  }, { margin: "55% 0px" }));
 }
 var reviewLabels = ["Contest event", "Evidence extracted", "Reasoning connected", "Behavior identified", "Improvement plan"];
 function initReviewStory() {
@@ -6859,87 +6083,84 @@ function initReviewStory() {
   const output = section.querySelector(".review-output");
   const relationshipPaths = [...section.querySelectorAll("[data-review-link]")];
   const packetLayer = section.querySelector(".review-packets");
-  let packetControls = [];
+  const packets = relationshipPaths.map((path) => {
+    const length = path.getTotalLength();
+    const samples = Array.from({ length: 32 }, (_, sampleIndex) => {
+      const point = path.getPointAtLength(length * sampleIndex / 31);
+      return { x: point.x / 900, y: point.y / 610 };
+    });
+    const packet = document.createElement("span");
+    packet.className = "review-packet";
+    packet.style.opacity = "0";
+    packetLayer.appendChild(packet);
+    return { packet, samples };
+  });
   let activeStage = -1;
   let sectionTop = 0;
   let scrollDistance = 0;
+  let consoleWidth = consoleEl.clientWidth;
+  let consoleHeight = consoleEl.clientHeight;
   const measureSection = () => {
     sectionTop = section.offsetTop;
     scrollDistance = Math.max(1, section.offsetHeight - innerHeight);
+    consoleWidth = consoleEl.clientWidth;
+    consoleHeight = consoleEl.clientHeight;
   };
   measureSection();
-  const setStage = (index2) => {
-    const next = clamp2(index2, 0, 4);
+  const setStage = (index) => {
+    const next = clamp2(index, 0, 4);
     if (next === activeStage) return;
     activeStage = next;
     consoleEl.dataset.reviewStage = String(next);
     steps.forEach((step, stepIndex) => step.classList.toggle("is-active", stepIndex === next));
     eventLabel.textContent = reviewLabels[next];
     relationshipPaths.forEach((path, pathIndex) => path.classList.toggle("is-active", pathIndex + 1 === next || next === 4));
-    cards.forEach((card, cardIndex) => {
-      const cardStage = cardIndex + 1;
-      const active = next === cardStage || next === 4 && cardStage === 4;
-      const passed = next > cardStage;
-      card.classList.toggle("is-active", active);
-      if (!reduceMotion) {
-        animate(card, {
-          x: active ? -8 : passed ? 10 : 28,
-          scale: active ? 1.035 : passed ? 0.96 : 0.92,
-          opacity: active ? 1 : passed ? 0.52 : 0.26
-        }, springOptions);
-      } else {
-        card.style.opacity = active ? "1" : "0.62";
-      }
-    });
-    if (!reduceMotion) {
-      animate(eventCard, {
-        x: next * 12,
-        scale: 1 - next * 0.035,
-        opacity: next === 4 ? 0.4 : 1 - next * 0.1
-      }, springOptions);
-      animate(output, { opacity: next === 4 ? 1 : 0, y: next === 4 ? 0 : 18, scale: next === 4 ? 1 : 0.94 }, springOptions);
-      packetControls.forEach((control) => control.cancel?.());
-      packetControls = [];
-      packetLayer.innerHTML = "";
-      if (next > 0) {
-        const activePath = relationshipPaths[Math.min(next - 1, relationshipPaths.length - 1)];
-        const length = activePath.getTotalLength();
-        const samples = Array.from({ length: 24 }, (_, sampleIndex) => activePath.getPointAtLength(length * sampleIndex / 23));
-        for (let packetIndex = 0; packetIndex < 2; packetIndex += 1) {
-          const packet = document.createElement("span");
-          packet.className = "review-packet";
-          packetLayer.appendChild(packet);
-          packetControls.push(animate(packet, {
-            x: samples.map((point) => point.x),
-            y: samples.map((point) => point.y),
-            opacity: [0, 1, 1, 0]
-          }, { duration: 2.2, delay: packetIndex * 1.05, repeat: Infinity, ease: "linear" }));
-        }
-      }
-    } else {
-      output.style.opacity = next === 4 ? "1" : "0";
-    }
+    cards.forEach((card, cardIndex) => card.classList.toggle("is-active", cardIndex + 1 === next));
   };
   const renderProgress = (progress2) => {
     const value = clamp2(progress2);
     arrowPath.style.strokeDashoffset = String(1 - clamp2(value * 1.35));
-    setStage(Math.min(4, Math.floor(value * 5)));
+    cards.forEach((card, cardIndex) => {
+      const center = (cardIndex + 1) / 4;
+      const focus = 1 - clamp2(Math.abs(value - center) / 0.25);
+      const passed = value > center;
+      const x = lerp(passed ? 10 : 28, -8, focus);
+      const scale2 = lerp(passed ? 0.96 : 0.92, 1.035, focus);
+      const opacity = lerp(passed ? 0.52 : 0.26, 1, focus);
+      card.style.transform = `translate3d(${x}px, 0, 0) scale(${scale2})`;
+      card.style.opacity = String(opacity);
+    });
+    eventCard.style.transform = `translate3d(${value * 48}px, 0, 0) scale(${1 - value * 0.14})`;
+    eventCard.style.opacity = String(1 - value * 0.6);
+    const outputProgress = rangeProgress(value, 0.84, 0.97);
+    output.style.transform = `translate3d(0, ${lerp(18, 0, outputProgress)}px, 0) scale(${lerp(0.94, 1, outputProgress)})`;
+    output.style.opacity = String(outputProgress);
+    relationshipPaths.forEach((path, pathIndex) => {
+      const local = rangeProgress(value, pathIndex * 0.2 + 0.04, pathIndex * 0.2 + 0.28);
+      path.style.opacity = String(lerp(0.18, 0.9, local));
+      const { packet, samples } = packets[pathIndex];
+      const point = samples[Math.min(samples.length - 1, Math.round(local * (samples.length - 1)))];
+      packet.style.transform = `translate3d(${point.x * consoleWidth}px, ${point.y * consoleHeight}px, 0)`;
+      packet.style.opacity = String(Math.sin(local * Math.PI));
+    });
+    setStage(Math.min(4, Math.round(value * 4)));
     consoleEl.style.setProperty("--review-progress", value.toFixed(4));
+    recordMotionResponse("review-story", "scroll", { progress: value, stage: activeStage });
   };
-  const scrollToStage = (index2) => {
+  const scrollToStage = (index) => {
     if (!desktopMotion.matches || reduceMotion) {
-      renderProgress(index2 / 4);
+      renderProgress(index / 4);
       return;
     }
-    window.scrollTo({ top: sectionTop + scrollDistance * (index2 / 4), behavior: "smooth" });
+    window.scrollTo({ top: sectionTop + scrollDistance * (index / 4), behavior: "smooth" });
   };
-  steps.forEach((step, index2) => step.querySelector("button")?.addEventListener("click", () => scrollToStage(index2)));
+  steps.forEach((step, index) => step.querySelector("button")?.addEventListener("click", () => scrollToStage(index)));
   if (desktopMotion.matches && !reduceMotion) {
     let visible = false;
-    const onScroll = createFrameScheduler(() => {
+    const onScroll = (position = scrollPosition.get()) => {
       if (!visible) return;
-      renderProgress(clamp2((scrollY - sectionTop) / scrollDistance));
-    });
+      renderProgress(clamp2((position - sectionTop) / scrollDistance));
+    };
     const onResize = () => {
       measureSection();
       onScroll();
@@ -6947,14 +6168,12 @@ function initReviewStory() {
     observeActivity(section, (isVisible) => {
       visible = isVisible;
       if (visible) onScroll();
-    }, "40px");
-    window.addEventListener("scroll", onScroll, { passive: true });
+    }, "50% 0px");
+    const unsubscribeScroll = scrollPosition.on("change", onScroll);
     window.addEventListener("resize", onResize, { passive: true });
     addCleanup(() => {
-      window.removeEventListener("scroll", onScroll);
+      unsubscribeScroll();
       window.removeEventListener("resize", onResize);
-      onScroll.cancel();
-      packetControls.forEach((control) => control.cancel?.());
     });
     renderProgress(0);
   } else {
@@ -6973,6 +6192,7 @@ function initCoach() {
   const packetLayer = coach.querySelector(".coach-packets");
   const routes = [...coach.querySelectorAll(".coach-routes path")];
   let packetControls = [];
+  let packetFrame = 0;
   const clearPackets = () => {
     packetControls.forEach((control) => control.cancel?.());
     packetControls = [];
@@ -6988,18 +6208,18 @@ function initCoach() {
     const endX = end.left - flowRect.left;
     const startY = start.top - flowRect.top + start.height / 2;
     const count = mode === "personal" ? performanceTier === "full" ? 3 : 2 : 1;
-    for (let index2 = 0; index2 < count; index2 += 1) {
+    for (let index = 0; index < count; index += 1) {
       const packet = document.createElement("span");
       packet.className = "coach-packet";
       packet.style.left = `${startX}px`;
-      packet.style.top = `${startY + (index2 - (count - 1) / 2) * 14}px`;
+      packet.style.top = `${startY + (index - (count - 1) / 2) * 14}px`;
       packetLayer.appendChild(packet);
       packetControls.push(animate(packet, {
         x: [0, (endX - startX) * 0.48, endX - startX],
-        y: [0, index2 % 2 ? -10 : 10, 0],
+        y: [0, index % 2 ? -10 : 10, 0],
         opacity: [0, 1, 1, 0],
         scale: [0.5, 1.15, 0.7]
-      }, { duration: 2.4, delay: index2 * 0.28, repeat: Infinity, ease: "linear" }));
+      }, { duration: 2.4, delay: index * 0.28, repeat: Infinity, ease: "linear" }));
     }
   };
   const setMode = (mode) => {
@@ -7011,26 +6231,29 @@ function initCoach() {
       animate(contextWell, {
         scale: personal ? 1 : 0.88,
         opacity: personal ? 1 : 0.28,
-        y: personal ? 0 : 18,
-        filter: personal ? "blur(0px)" : "blur(2px)"
+        y: personal ? 0 : 18
       }, springOptions);
-      animate(answer, { scale: [0.94, 1.035, 1], filter: ["brightness(0.8)", "brightness(1.18)", "brightness(1)"] }, springOptions);
-      routes.forEach((path, index2) => animate(path, {
-        strokeDashoffset: [1, index2 === 1 && !personal ? 1 : 0],
-        opacity: index2 === 1 && !personal ? 0.18 : 1
-      }, { duration: 0.62, delay: index2 * 0.08 }));
+      animate(answer, { scale: [0.97, 1.025, 1] }, springOptions);
+      routes.forEach((path, index) => animate(path, {
+        strokeDashoffset: [1, index === 1 && !personal ? 1 : 0],
+        opacity: index === 1 && !personal ? 0.18 : 1
+      }, { duration: 0.32 }));
     }
-    createPackets(mode);
+    cancelAnimationFrame(packetFrame);
+    packetFrame = requestAnimationFrame(() => createPackets(mode));
   };
   selectors.forEach((button) => button.addEventListener("click", () => setMode(button.dataset.coachSelect)));
   cards.forEach((card) => card.addEventListener("click", () => setMode(card.dataset.coachCard)));
   addCleanup(inView(coach, () => {
     setMode(coach.dataset.coachMode || "personal");
     if (!reduceMotion) {
-      animate([question, reasoning, answer], { y: [24, 0], rotateX: [-8, 0], filter: ["blur(6px)", "blur(0px)"] }, { delay: stagger(0.09), ...springOptions });
+      animate([question, reasoning, answer], { y: [18, 0], rotateX: [-5, 0] }, { delay: stagger(0.04), ...springOptions });
     }
-    return clearPackets;
-  }, { margin: "60px" }));
+    return () => {
+      cancelAnimationFrame(packetFrame);
+      clearPackets();
+    };
+  }, { margin: "55% 0px" }));
 }
 function flipLayout(elements, mutate) {
   const first = new Map(elements.map((element) => [element, element.getBoundingClientRect()]));
@@ -7097,7 +6320,7 @@ var recommendations = {
   Trees: "Recommended when hierarchical structures are appearing in missed or skipped problems.",
   "Two Pointers": "Recommended when linear scanning patterns can unlock faster early-contest solves."
 };
-function initSkillGraph() {
+async function initSkillGraph() {
   const graph = document.getElementById("skillNetwork");
   const svg = document.getElementById("skillEdges");
   const detail = document.getElementById("recommendationDetail");
@@ -7113,14 +6336,14 @@ function initSkillGraph() {
     ["DP", "Greedy"],
     ["Graphs", "Two Pointers"]
   ];
-  const simulationNodes = nodes.map((node, index2) => ({
+  const simulationNodes = nodes.map((node, index) => ({
     id: node.dataset.topic,
     node,
     x: graph.clientWidth * parseFloat(node.style.getPropertyValue("--nx")) / 100,
     y: graph.clientHeight * parseFloat(node.style.getPropertyValue("--ny")) / 100,
     anchorX: graph.clientWidth * parseFloat(node.style.getPropertyValue("--nx")) / 100,
     anchorY: graph.clientHeight * parseFloat(node.style.getPropertyValue("--ny")) / 100,
-    index: index2
+    index
   }));
   const simulationLinks = edgePairs.map(([source, target]) => ({ source, target }));
   const nodeById = new Map(simulationNodes.map((datum) => [datum.id, datum]));
@@ -7135,36 +6358,43 @@ function initSkillGraph() {
     svg.setAttribute("viewBox", `0 0 ${graphWidth} ${graphHeight}`);
     if (edgePaths.length !== edgePairs.length) {
       svg.innerHTML = "";
-      edgePaths = edgePairs.map(([a2, b]) => {
+      edgePaths = edgePairs.map(([a, b]) => {
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
         path.setAttribute("pathLength", "1");
-        path.dataset.a = a2;
+        path.dataset.a = a;
         path.dataset.b = b;
         svg.appendChild(path);
         return path;
       });
     }
-    edgePairs.forEach(([a2, b], index2) => {
-      const nodeA = nodeById.get(a2);
+    edgePairs.forEach(([a, b], index) => {
+      const nodeA = nodeById.get(a);
       const nodeB = nodeById.get(b);
       const ax = clamp2(nodeA.x, 72, graphWidth - 72);
       const ay = clamp2(nodeA.y, 62, graphHeight - 62);
       const bx = clamp2(nodeB.x, 72, graphWidth - 72);
       const by = clamp2(nodeB.y, 62, graphHeight - 62);
-      const path = edgePaths[index2];
+      const path = edgePaths[index];
       const bend = Math.abs(ax - bx) * 0.08 + 18;
       path.setAttribute("d", `M${ax} ${ay} Q${(ax + bx) / 2} ${(ay + by) / 2 - bend} ${bx} ${by}`);
     });
   };
   const renderSimulation = () => {
     simulationNodes.forEach((datum) => {
-      const x3 = clamp2(datum.x, 72, graphWidth - 72);
-      const y3 = clamp2(datum.y, 62, graphHeight - 62);
-      datum.node.style.transform = `translate3d(${x3}px, ${y3}px, 0) translate(-50%, -50%) scale(var(--node-scale, 1))`;
+      const x = clamp2(datum.x, 72, graphWidth - 72);
+      const y = clamp2(datum.y, 62, graphHeight - 62);
+      datum.node.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(var(--node-scale, 1))`;
     });
     drawEdges();
   };
-  const simulation = simulation_default(simulationNodes).force("link", link_default(simulationLinks).id((datum) => datum.id).distance(180).strength(0.16)).force("charge", manyBody_default().strength(-150)).force("collide", collide_default(70)).force("center", center_default(graphWidth / 2, graphHeight / 2).strength(0.025)).force("anchor-x", x_default2((datum) => datum.anchorX).strength(0.05)).force("anchor-y", y_default2((datum) => datum.anchorY).strength(0.05)).alphaDecay(0.085).alphaMin(0.015).velocityDecay(0.58).on("tick", renderSimulation).stop();
+  const { createSkillSimulation } = await preloadSkillGraph();
+  const simulation = createSkillSimulation({
+    nodes: simulationNodes,
+    links: simulationLinks,
+    width: graphWidth,
+    height: graphHeight,
+    onTick: renderSimulation
+  });
   graph.classList.add("is-simulated");
   renderSimulation();
   const releaseNode = (datum, node, pointerId) => {
@@ -7175,7 +6405,7 @@ function initSkillGraph() {
     node.classList.remove("is-dragging");
     simulation.alphaTarget(0).alpha(0.2).restart();
   };
-  const activate = async (topic, commit = false) => {
+  const activate = (topic, commit = false) => {
     if (commit) selected = topic;
     const source = nodes.find((node) => node.dataset.topic === topic);
     const related = (source.dataset.related || "").split(",").filter(Boolean);
@@ -7197,10 +6427,9 @@ function initSkillGraph() {
     graph.style.setProperty("--focus-x", `${sourceDatum?.x ?? graphWidth / 2}px`);
     graph.style.setProperty("--focus-y", `${sourceDatum?.y ?? graphHeight / 2}px`);
     if (!commit) return;
-    if (!reduceMotion) await animate(detail, { x: [0, 18], scale: [1, 0.985], opacity: [1, 0.3] }, { duration: 0.16 });
     detail.querySelector("h3").textContent = topic;
     detail.querySelector("p").textContent = recommendations[topic];
-    if (!reduceMotion) animate(detail, { x: [18, 0], scale: [0.985, 1], opacity: [0.3, 1] }, { duration: 0.4, ease: [0.16, 1, 0.3, 1] });
+    if (!reduceMotion) animate(detail, { x: [8, 0], scale: [0.99, 1], opacity: [0.7, 1] }, { duration: 0.2, ease: [0.16, 1, 0.3, 1] });
   };
   nodes.forEach((node) => {
     const datum = simulationNodes.find((candidate) => candidate.id === node.dataset.topic);
@@ -7262,7 +6491,7 @@ function initSkillGraph() {
       datum.anchorX = graphWidth * parseFloat(datum.node.style.getPropertyValue("--nx")) / 100;
       datum.anchorY = graphHeight * parseFloat(datum.node.style.getPropertyValue("--ny")) / 100;
     });
-    simulation.force("center", center_default(graphWidth / 2, graphHeight / 2).strength(0.025));
+    simulation.updateCenter(graphWidth, graphHeight);
     if (graphVisible) simulation.alpha(0.24).restart();
     drawEdges();
   };
@@ -7285,19 +6514,18 @@ function initSkillGraph() {
       graphVisible = false;
       simulation.alphaTarget(0).stop();
     };
-  }, { margin: "0px 0px -12% 0px" }));
+  }, { margin: "120% 0px" }));
 }
 function initSkillStack() {
   const detail = document.getElementById("skillDetail");
   const buttons = [...document.querySelectorAll(".skill-stack button")];
   if (!detail || !buttons.length) return;
-  buttons.forEach((button) => button.addEventListener("click", async () => {
+  buttons.forEach((button) => button.addEventListener("click", () => {
     buttons.forEach((item) => item.classList.toggle("is-active", item === button));
-    if (!reduceMotion) await animate(detail, { y: [0, 14], opacity: [1, 0.3], filter: ["blur(0px)", "blur(5px)"] }, { duration: 0.16 });
     detail.querySelector("h3").textContent = button.dataset.skill;
     detail.querySelector("p").textContent = `Inspect recent activity, difficulty exposure, and the next recommended step for ${button.dataset.skill}.`;
     if (!reduceMotion) {
-      animate(detail, { y: [14, 0], opacity: [0.3, 1], filter: ["blur(5px)", "blur(0px)"] }, { duration: 0.4 });
+      animate(detail, { y: [8, 0], opacity: [0.7, 1] }, { duration: 0.2 });
       animate(button, { scale: [0.96, 1.04, 1] }, springOptions);
     }
   }));
@@ -7359,23 +6587,16 @@ function initTour() {
   const tabs = [...document.querySelectorAll(".tour-tabs button")];
   if (!stage || !tabs.length) return;
   const shell = stage.closest(".tour-shell");
-  let switching = false;
   let currentName = "analytics";
   let paused = false;
   let userPauseUntil = 0;
   let rotationTimer = 0;
-  const render = async (name, immediate = false) => {
-    if (switching) return;
-    switching = true;
-    const oldCards = [...stage.children];
-    if (oldCards.length && !immediate && !reduceMotion) {
-      await animate(oldCards, { x: [0, -42], scale: [1, 0.96], opacity: [1, 0], filter: ["blur(0px)", "blur(6px)"] }, { delay: stagger(0.035), duration: 0.24 });
-    }
-    const tour = tours[name];
-    currentName = name;
-    tabs.forEach((item) => item.setAttribute("aria-selected", String(item.dataset.tour === name)));
-    stage.className = `tour-stage tour-stage-${tour.className}`;
-    stage.innerHTML = `
+  const scenes = /* @__PURE__ */ new Map();
+  Object.entries(tours).forEach(([name, tour]) => {
+    const scene = document.createElement("div");
+    scene.className = `tour-view tour-view-${tour.className}`;
+    scene.hidden = name !== currentName;
+    scene.innerHTML = `
       <div class="tour-scene">
         <div class="tour-scene-hud"><span>${name.toUpperCase()} / ILLUSTRATIVE</span><strong>${tour.status}</strong></div>
         ${tour.scene}
@@ -7383,13 +6604,25 @@ function initTour() {
       <div class="tour-step-list">
         ${tour.steps.map(([label, title, body]) => `<article class="tour-card"><span>${label}</span><h3>${title}</h3><p>${body}</p></article>`).join("")}
       </div>`;
+    stage.appendChild(scene);
+    scenes.set(name, scene);
+  });
+  const render = (name, immediate = false) => {
+    if (name === currentName && !immediate) return;
+    const tour = tours[name];
+    currentName = name;
+    tabs.forEach((item) => item.setAttribute("aria-selected", String(item.dataset.tour === name)));
+    stage.className = `tour-stage tour-stage-${tour.className}`;
+    scenes.forEach((scene, sceneName) => {
+      scene.hidden = sceneName !== name;
+    });
+    const activeScene = scenes.get(name);
     if (!immediate && !reduceMotion) {
-      animate(stage.querySelector(".tour-scene"), { x: [-52, 0], rotateY: [8, 0], scale: [0.94, 1], filter: ["blur(6px)", "blur(0px)"] }, springOptions);
-      animate(stage.querySelectorAll(".tour-card"), { x: [52, 0], rotateY: [-8, 0], scale: [0.94, 1], filter: ["blur(6px)", "blur(0px)"] }, { delay: stagger(0.07), ...springOptions });
+      animate(activeScene, { x: [14, 0], opacity: [0.78, 1], scale: [0.992, 1] }, { duration: 0.22, ease: [0.16, 1, 0.3, 1] });
+      animate(activeScene.querySelectorAll(".tour-card"), { x: [12, 0], opacity: [0.78, 1] }, { delay: stagger(0.025), duration: 0.2 });
     }
-    switching = false;
   };
-  tabs.forEach((button, index2) => {
+  tabs.forEach((button, index) => {
     button.addEventListener("click", () => {
       userPauseUntil = Date.now() + 16e3;
       render(button.dataset.tour);
@@ -7398,7 +6631,7 @@ function initTour() {
       if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
       event.preventDefault();
       const direction = event.key === "ArrowRight" ? 1 : -1;
-      const next = tabs[(index2 + direction + tabs.length) % tabs.length];
+      const next = tabs[(index + direction + tabs.length) % tabs.length];
       next.focus();
       next.click();
     });
@@ -7407,9 +6640,9 @@ function initTour() {
     const startRotation = () => {
       window.clearInterval(rotationTimer);
       rotationTimer = window.setInterval(() => {
-        if (paused || switching || Date.now() < userPauseUntil || document.hidden) return;
-        const index2 = tabs.findIndex((tab) => tab.dataset.tour === currentName);
-        render(tabs[(index2 + 1) % tabs.length].dataset.tour);
+        if (paused || Date.now() < userPauseUntil || document.hidden) return;
+        const index = tabs.findIndex((tab) => tab.dataset.tour === currentName);
+        render(tabs[(index + 1) % tabs.length].dataset.tour);
       }, 7200);
     };
     const stopRotation = () => window.clearInterval(rotationTimer);
@@ -7428,17 +6661,17 @@ function initTour() {
     addCleanup(inView(stage, () => {
       startRotation();
       return stopRotation;
-    }, { margin: "0px 0px -10% 0px" }));
+    }, { margin: "55% 0px" }));
     addCleanup(stopRotation);
   }
   render("analytics", true);
 }
 function initArchitecture() {
   const items = [...document.querySelectorAll(".architecture-strip span")];
-  items.forEach((item, index2) => {
+  items.forEach((item, index) => {
     item.tabIndex = 0;
     const cancelHover = hover(item, () => {
-      items.forEach((candidate, candidateIndex) => candidate.classList.toggle("is-active", Math.abs(candidateIndex - index2) <= 1));
+      items.forEach((candidate, candidateIndex) => candidate.classList.toggle("is-active", Math.abs(candidateIndex - index) <= 1));
       if (!reduceMotion) animate(item, { y: -6, scale: 1.035 }, springOptions);
       return () => {
         items.forEach((candidate) => candidate.classList.remove("is-active"));
@@ -7470,15 +6703,15 @@ function initAmbientCanvas() {
   let running = true;
   const pointCount = 26;
   const connections = [];
-  const points = Array.from({ length: pointCount }, (_, index2) => ({
-    x: index2 * 137 % Math.max(size.width, 1),
-    y: index2 * 79 % Math.max(size.height, 1),
-    speed: 0.12 + index2 % 5 * 0.035,
-    phase: index2 * 0.73
+  const points = Array.from({ length: pointCount }, (_, index) => ({
+    x: index * 137 % Math.max(size.width, 1),
+    y: index * 79 % Math.max(size.height, 1),
+    speed: 0.12 + index % 5 * 0.035,
+    phase: index * 0.73
   }));
-  for (let index2 = 0; index2 < points.length - 1; index2 += 1) {
-    const next = (index2 + 1) % points.length;
-    if (Math.hypot(points[index2].x - points[next].x, points[index2].y - points[next].y) <= 180) connections.push([index2, next]);
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const next = (index + 1) % points.length;
+    if (Math.hypot(points[index].x - points[next].x, points[index].y - points[next].y) <= 180) connections.push([index, next]);
   }
   const draw = (time2) => {
     if (!running) return;
@@ -7486,13 +6719,13 @@ function initAmbientCanvas() {
     if (time2 - lastFrame < 48) return;
     lastFrame = time2;
     ctx.clearRect(0, 0, size.width, size.height);
-    points.forEach((point, index2) => {
+    points.forEach((point, index) => {
       point.y -= point.speed;
       point.x += Math.sin(time2 * 25e-5 + point.phase) * 0.08;
       if (point.y < -12) point.y = size.height + 12;
-      ctx.fillStyle = index2 % 4 === 0 ? "rgba(52, 211, 153, 0.28)" : "rgba(103, 232, 249, 0.22)";
+      ctx.fillStyle = index % 4 === 0 ? "rgba(52, 211, 153, 0.28)" : "rgba(103, 232, 249, 0.22)";
       ctx.beginPath();
-      ctx.arc(point.x, point.y, index2 % 5 === 0 ? 1.7 : 1.05, 0, Math.PI * 2);
+      ctx.arc(point.x, point.y, index % 5 === 0 ? 1.7 : 1.05, 0, Math.PI * 2);
       ctx.fill();
     });
     if (connections.length) {
@@ -7500,9 +6733,9 @@ function initAmbientCanvas() {
       ctx.lineWidth = 0.7;
       ctx.beginPath();
       connections.forEach(([aIndex, bIndex]) => {
-        const a2 = points[aIndex];
+        const a = points[aIndex];
         const b = points[bIndex];
-        ctx.moveTo(a2.x, a2.y);
+        ctx.moveTo(a.x, a.y);
         ctx.lineTo(b.x, b.y);
       });
       ctx.stroke();
@@ -7537,10 +6770,10 @@ function initCoreCanvas() {
   let time2 = 0;
   let lastFrame = 0;
   const targetFrame = performanceTier === "full" ? 32 : 48;
-  const fieldPoints = Array.from({ length: performanceTier === "full" ? 22 : 14 }, (_, index2) => ({
-    x: index2 * 83 % 970 / 1e3,
-    y: index2 * 127 % 720 / 760,
-    phase: index2 * 0.6
+  const fieldPoints = Array.from({ length: performanceTier === "full" ? 22 : 14 }, (_, index) => ({
+    x: index * 83 % 970 / 1e3,
+    y: index * 127 % 720 / 760,
+    phase: index * 0.6
   }));
   const draw = (timestamp) => {
     if (!running) return;
@@ -7551,12 +6784,12 @@ function initCoreCanvas() {
     const pointerX = stage.__pointerX ?? 0.5;
     const pointerY = stage.__pointerY ?? 0.5;
     ctx.clearRect(0, 0, size.width, size.height);
-    fieldPoints.forEach((point, index2) => {
-      const x3 = size.width * point.x + (pointerX - 0.5) * (index2 % 2 ? 18 : -14) + Math.sin(time2 / 90 + point.phase) * 4;
-      const y3 = size.height * point.y + (pointerY - 0.5) * (index2 % 2 ? -12 : 14) + Math.cos(time2 / 110 + point.phase) * 4;
-      ctx.fillStyle = index2 % 4 === 0 ? "rgba(52, 211, 153, 0.34)" : "rgba(103, 232, 249, 0.25)";
+    fieldPoints.forEach((point, index) => {
+      const x = size.width * point.x + (pointerX - 0.5) * (index % 2 ? 18 : -14) + Math.sin(time2 / 90 + point.phase) * 4;
+      const y = size.height * point.y + (pointerY - 0.5) * (index % 2 ? -12 : 14) + Math.cos(time2 / 110 + point.phase) * 4;
+      ctx.fillStyle = index % 4 === 0 ? "rgba(52, 211, 153, 0.34)" : "rgba(103, 232, 249, 0.25)";
       ctx.beginPath();
-      ctx.arc(x3, y3, index2 % 6 === 0 ? 1.7 : 1.05, 0, Math.PI * 2);
+      ctx.arc(x, y, index % 6 === 0 ? 1.7 : 1.05, 0, Math.PI * 2);
       ctx.fill();
     });
   };
@@ -7606,7 +6839,7 @@ function initMotionVisibility() {
 }
 function initPerformanceProbe() {
   if (!motionParams.has("perf")) return;
-  window.addEventListener("load", () => window.setTimeout(() => {
+  const startProbe = () => window.setTimeout(() => {
     const longTasks = [];
     const observer = typeof PerformanceObserver !== "undefined" && PerformanceObserver.supportedEntryTypes?.includes("longtask") ? new PerformanceObserver((list) => longTasks.push(...list.getEntries().map((entry) => entry.duration))) : null;
     observer?.observe({ type: "longtask", buffered: true });
@@ -7614,29 +6847,30 @@ function initPerformanceProbe() {
     let previous = performance.now();
     const started = previous;
     const maximum = document.documentElement.scrollHeight - innerHeight;
-    const sample = (now3) => {
-      frames.push(now3 - previous);
-      previous = now3;
-      const elapsed = now3 - started;
-      scrollTo(0, maximum * Math.min(1, elapsed / 4200));
+    const sample = (now2) => {
+      frames.push(now2 - previous);
+      previous = now2;
+      const elapsed = now2 - started;
+      scrollTo({ top: maximum * Math.min(1, elapsed / 4200), behavior: "instant" });
       if (elapsed < 4200) {
         requestAnimationFrame(sample);
         return;
       }
       window.setTimeout(() => {
         observer?.disconnect();
-        const sorted = frames.slice(5).sort((a2, b) => a2 - b);
+        const sorted = frames.slice(5).sort((a, b) => a - b);
         const percentile = (value) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * value))] || 0;
         const navigation = performance.getEntriesByType("navigation")[0];
         const resources = performance.getEntriesByType("resource");
         const bundle = resources.find((entry) => entry.name.includes("landing_page.bundle"));
         const css = resources.find((entry) => entry.name.includes("landing_page.css"));
-        const runningAnimations = document.getAnimations().filter((animation) => animation.playState === "running");
+        const allAnimations = document.getAnimations?.() || [];
+        const runningAnimations = allAnimations.filter((animation) => animation.playState === "running");
         document.documentElement.dataset.performanceProbe = JSON.stringify({
           domNodes: document.querySelectorAll("*").length,
           animations: {
             running: runningAnimations.length,
-            total: document.getAnimations().length
+            total: allAnimations.length
           },
           navigation: { dcl: navigation?.domContentLoadedEventEnd, load: navigation?.loadEventEnd },
           bundle: { transfer: bundle?.transferSize, decoded: bundle?.decodedBodySize, duration: bundle?.duration },
@@ -7663,31 +6897,73 @@ function initPerformanceProbe() {
       }, 350);
     };
     requestAnimationFrame(sample);
-  }, 300), { once: true });
+  }, 300);
+  if (document.readyState === "complete") startProbe();
+  else window.addEventListener("load", startProbe, { once: true });
 }
-initRoutes();
-initNavigation();
-initCursorAura();
-initMagneticButtons();
-initHeroEntrance();
-initHeroCore();
-initCoreStreams();
-initSectionHeadings();
-initIntelligenceStory();
-initPipeline();
-initAnalytics();
-initContestSimulation();
-initReviewStory();
-initCoach();
-initPlanner();
-initSkillGraph();
-initSkillStack();
-initTour();
-initArchitecture();
-initAmbientCanvas();
-initCoreCanvas();
-initMotionVisibility();
-initPerformanceProbe();
+initMotionDiagnosis();
+runInitializer("routes", initRoutes);
+runInitializer("inputPipeline", initInputPipeline);
+runInitializer("navigation", initNavigation);
+runInitializer("heroEntrance", initHeroEntrance);
+runInitializer("heroCore", initHeroCore);
+runInitializer("motionVisibility", initMotionVisibility);
+requestAnimationFrame(() => {
+  runInitializer("cursorAura", initCursorAura);
+  runInitializer("magneticButtons", initMagneticButtons);
+  runInitializer("coreStreams", initCoreStreams);
+  runInitializer("coreCanvas", initCoreCanvas);
+  requestAnimationFrame(() => {
+    runInitializer("sectionHeadings", initSectionHeadings);
+    runInitializer("intelligenceStory", initIntelligenceStory);
+    runInitializer("pipeline", initPipeline);
+    runInitializer("analytics", initAnalytics);
+    scheduleIdle(() => runInitializer("skillGraphPreload", preloadSkillGraph), 240);
+  });
+});
+var warmInitializers = [
+  ["contestSimulation", initContestSimulation, "#intelligence"],
+  ["reviewStory", initReviewStory, "#review"],
+  ["coach", initCoach, "#review"],
+  ["planner", initPlanner, "#review"],
+  ["skillGraph", initSkillGraph, "#intelligence"],
+  ["skillStack", initSkillStack, "#intelligence"],
+  ["tour", initTour, "#system-tour"],
+  ["architecture", initArchitecture, "#technology"],
+  ["ambientCanvas", initAmbientCanvas, "#hero"],
+  ["performanceProbe", initPerformanceProbe, "#hero"]
+];
+var initialHash = location.hash;
+var warmQueue = [...warmInitializers];
+if (initialHash) warmQueue.sort((a, b) => Number(b[2] === initialHash) - Number(a[2] === initialHash));
+var promoteWarmers = (hash) => {
+  warmInitializers.filter(([, , sectionHash]) => sectionHash === hash).forEach(([name, initializer]) => runInitializer(name, initializer));
+};
+var onInternalDestination = (event) => {
+  const anchor = event.target.closest?.('a[href^="#"]');
+  if (anchor) promoteWarmers(anchor.getAttribute("href"));
+};
+document.addEventListener("pointerdown", onInternalDestination, { capture: true, passive: true });
+document.addEventListener("click", onInternalDestination, { capture: true });
+addCleanup(() => {
+  document.removeEventListener("pointerdown", onInternalDestination, { capture: true });
+  document.removeEventListener("click", onInternalDestination, { capture: true });
+});
+if (initialHash && initialHash !== "#hero" && initialHash !== "#main") {
+  promoteWarmers(initialHash);
+  requestAnimationFrame(() => document.querySelector(initialHash)?.scrollIntoView({ behavior: "instant", block: "start" }));
+}
+var warmNextSystem = () => {
+  const next = warmQueue.shift();
+  if (!next) {
+    updateMotionDiagnosisDataset();
+    return;
+  }
+  runInitializer(next[0], next[1]);
+  requestAnimationFrame(() => scheduleIdle(warmNextSystem, 420));
+};
+scheduleIdle(warmNextSystem, 420);
+publishMotionDiagnosis();
 window.addEventListener("pagehide", () => {
   cleanups.splice(0).forEach((cleanup) => {
     try {
