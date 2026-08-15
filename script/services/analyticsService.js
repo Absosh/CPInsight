@@ -9,6 +9,10 @@ class AnalyticsService {
     return {
       platform: data.platform || 'combined',
       handle: data.handle || null,
+      syncStatus: data.syncStatus || null,
+      lastSyncedAt: data.lastSyncedAt || null,
+      dataAvailability: data.dataAvailability || {},
+      warnings: Array.isArray(data.warnings) ? data.warnings : [],
       solvedProblems: data.solvedProblems || 0,
       solvedLastYear: data.solvedLastYear || 0,
       solvedLastMonth: data.solvedLastMonth || 0,
@@ -18,13 +22,18 @@ class AnalyticsService {
       currentRating: data.currentRating ?? null,
       maxRating: data.maxRating ?? null,
       activityHeatmap: data.activityHeatmap || {},
+      activityIntelligence: data.activityIntelligence || null,
       topicStrength: data.topicStrength || [],
+      difficultyIntelligence: data.difficultyIntelligence || null,
+      contestIntelligence: data.contestIntelligence || null,
       ratingProgression: data.ratingProgression || [],
+      ratingChange: data.ratingChange ?? null,
       streak: data.streak || 0,
       recentSubmissions: data.recentSubmissions || [],
       cpInsightScore: data.cpInsightScore ?? null,
       platforms: data.platforms || [],
-      skippedPlatforms: data.skippedPlatforms || []
+      skippedPlatforms: data.skippedPlatforms || [],
+      analyticsVersion: data.analyticsVersion || null
     };
   }
 

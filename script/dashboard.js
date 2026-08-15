@@ -359,11 +359,18 @@ async function createChart(points, layout) {
     if (!chart) return;
     const allowedPlatforms = new Set(layout?.ratingPlatforms || []);
     const normalizedPoints = points
-        .map((point) => ({
-            ...point,
-            platform: point.platform || layout?.platform || 'combined',
-            timestamp: point.participatedAt ? new Date(point.participatedAt).getTime() : null
-        }))
+        .map((point) => {
+            const rating = Number(point.rating ?? point.newRating ?? point.ratingAfter);
+            const delta = Number(point.delta ?? point.ratingDelta ?? 0);
+            const participatedAt = point.participatedAt || point.participated_at || point.date || point.ratingUpdatedAt;
+            return {
+                ...point,
+                rating: Number.isFinite(rating) ? rating : null,
+                delta: Number.isFinite(delta) ? delta : 0,
+                platform: point.platform || layout?.platform || 'combined',
+                timestamp: participatedAt ? new Date(participatedAt).getTime() : null
+            };
+        })
         .filter((point) => typeof point.rating === 'number')
         .filter((point) => !allowedPlatforms.size || allowedPlatforms.has(point.platform))
         .filter((point) => Number.isFinite(point.timestamp))
@@ -638,7 +645,9 @@ function sortTable(column) {
 }
 
 function renderSummaryStats(analytics, activePlatforms, layout) {
-    const ratingProgression = analytics.ratingProgression.filter((point) => typeof point.rating === 'number');
+    const ratingProgression = (analytics.ratingProgression || [])
+        .map((point) => ({ ...point, rating: Number(point.rating ?? point.newRating ?? point.ratingAfter) }))
+        .filter((point) => Number.isFinite(point.rating));
     const hasData = hasAnalyticsData(analytics);
     const singlePlatform = layout.mode === 'single';
     const currentValue = singlePlatform ? analytics.currentRating : analytics.cpInsightScore;
@@ -734,7 +743,9 @@ function renderDeepStats(analytics, layout) {
         return;
     }
 
-    const ratingProgression = analytics.ratingProgression.filter((point) => typeof point.rating === 'number');
+    const ratingProgression = (analytics.ratingProgression || [])
+        .map((point) => ({ ...point, rating: Number(point.rating ?? point.newRating ?? point.ratingAfter) }))
+        .filter((point) => Number.isFinite(point.rating));
 
     if (ratingProgression.length) {
         createChart(ratingProgression, layout);
@@ -767,15 +778,20 @@ function renderDeepStats(analytics, layout) {
     currentRows = (analytics.ratingProgression || [])
         .slice()
         .reverse()
-        .map((point) => ({
-            contestName: point.contestName || 'Contest',
-            platform: point.platform || analytics.platform,
-            rank: point.rank ?? null,
-            oldRating: typeof point.rating === 'number' && typeof point.delta === 'number' ? point.rating - point.delta : null,
-            newRating: point.rating ?? null,
-            change: point.delta || 0,
-            date: point.participatedAt ? new Date(point.participatedAt).getTime() : 0
-        }));
+        .map((point) => {
+            const rating = Number(point.rating ?? point.newRating ?? point.ratingAfter);
+            const delta = Number(point.delta ?? point.ratingDelta ?? 0);
+            const participatedAt = point.participatedAt || point.participated_at || point.date;
+            return {
+                contestName: point.contestName || 'Contest',
+                platform: point.platform || analytics.platform,
+                rank: point.rank ?? null,
+                oldRating: Number.isFinite(rating) && Number.isFinite(delta) ? rating - delta : null,
+                newRating: Number.isFinite(rating) ? rating : null,
+                change: Number.isFinite(delta) ? delta : 0,
+                date: participatedAt ? new Date(participatedAt).getTime() : 0
+            };
+        });
     updateSortIcons();
     renderContestTable();
 }

@@ -10,7 +10,9 @@
     "verify:review-worker": "node scripts/verify-review-worker.js",
     "dev:ai-coach": "vite",
     "build:landing-runtime": "esbuild script/landing_skill_graph.js --bundle --format=esm --platform=browser --target=es2020 --outfile=script/landing_skill_graph.bundle.js && esbuild script/landing_page.js --bundle --format=esm --platform=browser --target=es2020 --external:./landing_skill_graph.bundle.js --outfile=script/landing_page.bundle.js",
-    "build:frontend": "npm run build:landing-runtime && vite build",
+    "build:visualization-runtime": "esbuild src/visualization/index.js --bundle --minify --format=esm --platform=browser --target=es2020 --outfile=script/visualization.bundle.js",
+    "build:ai-coach-runtime": "esbuild src/apps/ai-coach/main.jsx --bundle --minify --format=esm --platform=browser --target=es2020 --outfile=script/ai_coach.bundle.js --jsx=automatic",
+    "build:frontend": "npm run build:landing-runtime && npm run build:visualization-runtime && npm run build:ai-coach-runtime && vite build",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

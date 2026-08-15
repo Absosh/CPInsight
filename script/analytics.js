@@ -5,6 +5,8 @@
             window.addEventListener('cpinsight:visualization-ready', (event) => resolve(event.detail), { once: true });
         });
 
+    let activeAnalyticsPlatform = "combined";
+
     // --- NEON PARTICLE BACKGROUND SYSTEM ---
     initParticles();
    
@@ -20,35 +22,46 @@
             console.error("Failed to load connected platforms:", e);
         }
 
+        const connectedAccount = accounts.find(account => account.handle);
         const codeforcesAccount = accounts.find(account => account.platform === 'codeforces' && account.handle);
-        if (!codeforcesAccount) {
+        if (!connectedAccount) {
             renderCodeforcesNotConnected();
             renderAdvancedAnalyticsVisuals();
             return;
         }
 
-        handle = codeforcesAccount.handle;
+        const primaryAccount = codeforcesAccount || connectedAccount;
+        activeAnalyticsPlatform = accounts.length > 1 || !codeforcesAccount ? 'combined' : 'codeforces';
+        handle = primaryAccount.handle || 'combined';
         renderSidebarProfile({
-            handle: codeforcesAccount.handle,
-            rank: codeforcesAccount.rating ? `Rating ${codeforcesAccount.rating}` : "Codeforces connected",
-            titlePhoto: codeforcesAccount.avatar_url || ""
+            handle: primaryAccount.handle || "Connected platforms",
+            rank: primaryAccount.rating ? `Rating ${primaryAccount.rating}` : `${formatPlatformLabel(activeAnalyticsPlatform)} analytics`,
+            titlePhoto: primaryAccount.avatar_url || ""
         });
 
-        // Reset Skeletons for retry/reload scenarios
+        resetAnalyticsSkeletons();
+
+        loadAnalyticsData();
+        renderAdvancedAnalyticsVisuals();
+    }
+
+    function resetAnalyticsSkeletons() {
         document.querySelectorAll('.content-fade.show').forEach(el => el.classList.remove('show'));
         const radarLoader = document.getElementById('radarLoader');
         if(radarLoader) {
             radarLoader.classList.remove('hidden');
-            document.getElementById('radarWrapper').classList.add('hidden');
+            document.getElementById('radarWrapper')?.classList.add('hidden');
         }
         const diffLoader = document.getElementById('diffLoader');
         if(diffLoader) {
             diffLoader.classList.remove('hidden');
-            document.getElementById('diffWrapper').classList.add('hidden');
+            document.getElementById('diffWrapper')?.classList.add('hidden');
         }
-        
-        loadAnalyticsData();
-        renderAdvancedAnalyticsVisuals();
+    }
+
+    function formatPlatformLabel(platform) {
+        if (!platform) return "Combined";
+        return platform.toString().replace(/[-_]/g, " ").replace(/\b\w/g, char => char.toUpperCase());
     }
 
     function renderCodeforcesNotConnected() {
@@ -99,46 +112,43 @@
   async function loadAnalyticsData() {
 
     const requestHandle = handle;
+    const requestPlatform = activeAnalyticsPlatform;
 
     try {
 
-        const minTimePromise =
-            new Promise(resolve =>
-                setTimeout(resolve, MIN_SKELETON_TIME)
-            );
+        const backendPromise = requestPlatform === 'combined'
+            ? analyticsService.getCombinedAnalytics()
+            : analyticsService.getAnalytics(requestPlatform);
+        const analytics = await backendPromise;
 
-        const dataPromise = Promise.all([
-            fetch(
-                `https://codeforces.com/api/user.rating?handle=${requestHandle}`
-            ).then(r => r.json()),
+        if (requestHandle !== handle || requestPlatform !== activeAnalyticsPlatform) {
+            return;
+        }
 
-            fetch(
-                `https://codeforces.com/api/user.status?handle=${requestHandle}`
-            ).then(r => r.json())
-        ]);
+        renderBackendAnalyticsPayload(analytics);
 
-        const [[ratingRes, statusRes]] =
-            await Promise.all([
-                dataPromise,
-                minTimePromise
-            ]);
+        revealAnalyticsContent(requestHandle, requestPlatform);
+
+    } catch (e) {
 
         if (requestHandle !== handle) {
             return;
         }
 
-        if (ratingRes.status === "OK") {
-            renderContestAnalytics(ratingRes.result);
-        }
+        console.error(
+            "Backend analytics fetch failed:",
+            e
+        );
 
-        if (statusRes.status === "OK") {
-            renderStatusAnalytics(statusRes.result);
-        }
+        renderAnalyticsLoadFailed(e.message || "Unable to load analytics.");
+    }
+}
 
+    function revealAnalyticsContent(requestHandle, requestPlatform) {
         requestAnimationFrame(() => {
             setTimeout(() => {
 
-                if (requestHandle !== handle) {
+                if (requestHandle !== handle || requestPlatform !== activeAnalyticsPlatform) {
                     return;
                 }
 
@@ -150,21 +160,97 @@
 
             }, 50);
         });
+    }
 
-    } catch (e) {
+    function renderBackendAnalyticsPayload(analytics) {
+        const normalized = analyticsService.normalizeAnalytics(analytics);
+        if (!normalized) return false;
 
-        if (requestHandle !== handle) {
-            return;
+        const ratings = normalizeBackendRatingProgression(normalized.ratingProgression);
+        renderContestAnalytics(ratings, normalized.contestIntelligence);
+        const topicData = buildTopicViewModel(normalized.topicStrength);
+        if (topicData.strongest) {
+            renderTopicIntelligence(topicData);
+            setupRadarChartObserver(topicData.radarLabels, topicData.radarScores);
+        } else {
+            renderEmptyState("topicIntelContainer", "No Topic Data", "Accepted solves with topic metadata are required.", "T");
+            document.getElementById("radarLoader")?.classList.add("hidden");
+            document.getElementById("radarWrapper")?.classList.remove("hidden");
+            renderEmptyState("radarWrapper", "No Topic Data", "Accepted solves with topic metadata are required for skill radar.", "T");
         }
 
-        console.error(
-            "Background Data Fetch Failed:",
-            e
-        );
+        const activityData = normalized.activityIntelligence;
+        renderActivityAnalytics(activityData);
+        renderGrowthAnalytics(activityData?.submissionsLast90Days || 0);
 
-        renderAnalyticsLoadFailed(e.message || "Unable to load analytics.");
+        const difficultyData = normalized.difficultyIntelligence;
+        if (difficultyData?.available) {
+            renderDifficultyAnalytics(difficultyData);
+            setupDifficultyChartObserver(difficultyData.histogram?.values || []);
+        } else {
+            document.getElementById("diffLoader")?.classList.add("hidden");
+            document.getElementById("diffWrapper")?.classList.remove("hidden");
+            renderEmptyState("diffWrapper", "No Difficulty Data", "Accepted solves with difficulty metadata are required.", "D");
+            ["avgDiffCard", "medianDiffCard", "highDiffCard"].forEach((id) => {
+                const element = document.getElementById(id);
+                if (element) element.innerHTML = '<span class="text-2xl font-black text-gray-400">--</span>';
+            });
+        }
+
+        return ratings.length > 0
+            || normalized.totalSubmissions > 0
+            || topicData.topics.length > 0
+            || Object.keys(normalized.activityHeatmap || {}).length > 0;
     }
-}
+
+    function buildTopicViewModel(topicStrength) {
+        const radarLabels = ['dp', 'graphs', 'trees', 'greedy', 'math', 'strings', 'binary search', 'data structures', 'practice'];
+        const topics = (Array.isArray(topicStrength) ? topicStrength : [])
+            .filter((topic) => Number(topic.solved ?? topic.accepted ?? 0) > 0)
+            .map((topic) => ({
+                name: String(topic.topic || topic.name || '').trim(),
+                score: Number(topic.strength || 0),
+                successRate: Number(topic.successRate ?? (topic.attempts ? (topic.accepted / topic.attempts) * 100 : 0)),
+                avgDiff: Number(topic.averageDifficulty || 0),
+                solved: Number(topic.solved ?? topic.accepted ?? 0),
+                lastSolved: Number(topic.lastSolved || 0)
+            }))
+            .filter((topic) => topic.name);
+        const byScore = [...topics].sort((left, right) => right.score - left.score);
+        const bySolved = [...topics].sort((left, right) => right.solved - left.solved);
+        const comparisonPool = topics.filter((topic) => topic.solved >= 5);
+        const eligible = comparisonPool.length ? comparisonPool : topics;
+        return {
+            strongest: byScore[0] || null,
+            weakest: [...eligible].sort((left, right) => left.score - right.score)[0] || null,
+            mostPracticed: bySolved[0] || null,
+            mostNeglected: [...eligible].sort((left, right) => left.lastSolved - right.lastSolved)[0] || null,
+            topics,
+            radarLabels,
+            radarScores: radarLabels.map((label) => topics.find((topic) => topic.name === label)?.score || 0)
+        };
+    }
+
+    function normalizeBackendRatingProgression(points) {
+        return (Array.isArray(points) ? points : [])
+            .map((point) => {
+                const rating = Number(point.rating ?? point.newRating ?? point.ratingAfter);
+                if (!Number.isFinite(rating)) return null;
+                const delta = Number(point.delta ?? point.ratingDelta ?? 0);
+                const participatedAt = point.participatedAt || point.participated_at || point.date;
+                const timestamp = participatedAt ? new Date(participatedAt).getTime() : null;
+                return {
+                    contestId: point.contestId || point.externalContestId,
+                    contestName: point.contestName || point.name || "Contest",
+                    oldRating: Number.isFinite(Number(point.oldRating)) ? Number(point.oldRating) : rating - delta,
+                    newRating: rating,
+                    ratingUpdateTimeSeconds: Number.isFinite(timestamp) ? Math.floor(timestamp / 1000) : Math.floor(Date.now() / 1000),
+                    rank: point.rank
+                };
+            })
+            .filter(Boolean);
+    }
+
 
     function renderAnalyticsLoadFailed(message) {
         const detail = message && message.includes("fetch")
@@ -195,8 +281,10 @@
         document.getElementById("profileImage").classList.remove("hidden");
     }
 
-    function renderContestAnalytics(ratings) {
+    function renderContestAnalytics(ratings, intelligence = null) {
             if(!ratings || ratings.length === 0){
+
+            window.tempRatingData = null;
 
             document.getElementById("bestContestCard").innerHTML = `
                 <div class="content-fade show flex flex-col items-center justify-center h-full text-center">
@@ -244,24 +332,32 @@
         }
 
         const currentRating = revRatings[0].newRating;
-        const change30 = currentRating - rating30DaysAgo;
-        const change90 = currentRating - rating90DaysAgo;
-        const consistency = Math.round((posCount / ratings.length) * 100);
-        const volatility = standardDeviation(deltas);
+        const computedChange30 = currentRating - rating30DaysAgo;
+        const computedChange90 = currentRating - rating90DaysAgo;
+        const bestChange = Number.isFinite(Number(intelligence?.bestChange)) ? Number(intelligence.bestChange) : best;
+        const worstChange = Number.isFinite(Number(intelligence?.worstChange)) ? Number(intelligence.worstChange) : worst;
+        const change30 = Number.isFinite(Number(intelligence?.change30Days)) ? Number(intelligence.change30Days) : computedChange30;
+        const change90 = Number.isFinite(Number(intelligence?.change90Days)) ? Number(intelligence.change90Days) : computedChange90;
+        const consistency = Number.isFinite(Number(intelligence?.consistency))
+            ? Number(intelligence.consistency)
+            : Math.round((posCount / ratings.length) * 100);
+        const volatility = Number.isFinite(Number(intelligence?.volatility))
+            ? Number(intelligence.volatility)
+            : standardDeviation(deltas);
 
         // Inject Content structure with content-fade class
         document.getElementById("bestContestCard").innerHTML = `
             <div class="content-fade w-full h-full">
                 <p class="text-gray-400 text-sm tracking-wide uppercase font-semibold">Best Contest</p>
                 <h2 id="bestContest" class="text-4xl font-black mt-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200">0</h2>
-                <div class="tooltip absolute z-50 bottom-full left-0 mb-2 w-[250px] p-3 bg-gray-900 border border-white/10 rounded-xl shadow-2xl text-xs text-gray-300"><span class="font-bold text-white block mb-1">Data: Codeforces user.rating</span>Maximum positive rating change (delta) achieved in a single contest.</div>
+                <div class="tooltip absolute z-50 bottom-full left-0 mb-2 w-[250px] p-3 bg-gray-900 border border-white/10 rounded-xl shadow-2xl text-xs text-gray-300"><span class="font-bold text-white block mb-1">Data: synced contest history</span>Maximum positive rating change achieved in a single contest.</div>
             </div>`;
             
         document.getElementById("worstContestCard").innerHTML = `
             <div class="content-fade w-full h-full">
                 <p class="text-gray-400 text-sm tracking-wide uppercase font-semibold">Worst Contest</p>
                 <h2 id="worstContest" class="text-4xl font-black mt-2 text-rose-400">0</h2>
-                <div class="tooltip absolute z-50 bottom-full left-0 mb-2 w-[250px] p-3 bg-gray-900 border border-white/10 rounded-xl shadow-2xl text-xs text-gray-300"><span class="font-bold text-white block mb-1">Data: Codeforces user.rating</span>Maximum negative rating change (delta) experienced in a single contest.</div>
+                <div class="tooltip absolute z-50 bottom-full left-0 mb-2 w-[250px] p-3 bg-gray-900 border border-white/10 rounded-xl shadow-2xl text-xs text-gray-300"><span class="font-bold text-white block mb-1">Data: synced contest history</span>Maximum negative rating change experienced in a single contest.</div>
             </div>`;
             
        document.getElementById("consistencyCard").innerHTML = `
@@ -293,8 +389,8 @@
             </div>`;
 
         // Apply Scroll Observers to the newly injected elements
-        triggerOnScroll("bestContest", 0, best, 2000, "", "+");
-        triggerOnScroll("worstContest", 0, worst, 2000, "", "");
+        triggerOnScroll("bestContest", 0, bestChange, 2000, "", bestChange > 0 ? "+" : "");
+        triggerOnScroll("worstContest", 0, worstChange, 2000, "", "");
         triggerOnScroll("consistencyScore", 0, consistency, 2000, "%");
         triggerOnScroll("volatilityScore", 0, volatility, 2000, "", "", true);
 
@@ -349,6 +445,7 @@
 
    
 
+    const activityData = computeActivityAnalytics(submissions);
     const topicData = computeTopicAnalytics(submissions);
    if (!topicData.strongest) {
 
@@ -379,13 +476,12 @@
     document.getElementById("radarWrapper")?.classList.remove("hidden");
     document.getElementById("diffWrapper")?.classList.remove("hidden");
 
-    renderActivityAnalytics(null);
-    renderGrowthAnalytics(0);
+    renderActivityAnalytics(activityData);
+    renderGrowthAnalytics(activityData.subs90Days);
 
     return;
 }
 
-const activityData = computeActivityAnalytics(submissions);
     const difficultyData = computeDifficultyAnalytics(submissions);
 
     renderTopicIntelligence(topicData);
@@ -425,10 +521,10 @@ const activityData = computeActivityAnalytics(submissions);
             "schedules", "sortings", "binary search", "dfs and similar",
             "trees", "strings", "number theory", "combinatorics", "math",
             "greedy", "dp", "data structures", "brute force",
-            "constructive algorithms", "graphs", "implementation"
+            "constructive algorithms", "graphs", "implementation", "practice"
         ]);
 
-        const radarTags = ['dp', 'graphs', 'trees', 'greedy', 'math', 'strings', 'binary search', 'data structures'];
+        const radarTags = ['dp', 'graphs', 'trees', 'greedy', 'math', 'strings', 'binary search', 'data structures', 'practice'];
         let topicStats = {}; 
         let filteredTags = new Set(); // For debugging blocked tags
 
