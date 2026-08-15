@@ -47,6 +47,18 @@ function activeSession(state) {
   return state.sessions.find((session) => session.sessionId === state.activeSessionId);
 }
 
+function mergeConversation(existing, incoming) {
+  if (!existing) return incoming;
+  const incomingMessages = Array.isArray(incoming.messages) ? incoming.messages : null;
+  const existingMessages = Array.isArray(existing.messages) ? existing.messages : [];
+  const shouldPreserveMessages = !incomingMessages || incomingMessages.length < existingMessages.length;
+  return {
+    ...existing,
+    ...incoming,
+    messages: shouldPreserveMessages ? existingMessages : incomingMessages
+  };
+}
+
 export function aiCoachReducer(state, action) {
   switch (action.type) {
     case 'workspace/viewChanged':
@@ -62,16 +74,32 @@ export function aiCoachReducer(state, action) {
     case 'conversations/loading':
       return { ...state, conversationsLoading: true };
     case 'conversations/loaded':
-      return {
-        ...state,
-        conversationsLoading: false,
-        activeSessionId: action.activeSessionId || action.conversations?.[0]?.sessionId || null,
-        sessions: action.conversations || []
-      };
+      {
+        const incoming = action.conversations || [];
+        const sessions = action.authoritative
+          ? incoming
+          : incoming.map((conversation) => mergeConversation(
+            state.sessions.find((session) => session.sessionId === conversation.sessionId),
+            conversation
+          ));
+        const included = new Set(sessions.map((session) => session.sessionId));
+        const localActiveSession = !action.authoritative && state.activeSessionId
+          ? state.sessions.find((session) => session.sessionId === state.activeSessionId && !included.has(session.sessionId))
+          : null;
+        if (localActiveSession?.messages?.length) sessions.unshift(localActiveSession);
+        return {
+          ...state,
+          conversationsLoading: false,
+          activeSessionId: action.activeSessionId || sessions?.[0]?.sessionId || null,
+          sessions
+        };
+      }
     case 'conversations/upserted': {
       const exists = state.sessions.some((session) => session.sessionId === action.conversation.sessionId);
       const sessions = exists
-        ? state.sessions.map((session) => session.sessionId === action.conversation.sessionId ? { ...session, ...action.conversation } : session)
+        ? state.sessions.map((session) => session.sessionId === action.conversation.sessionId
+          ? (action.authoritative ? action.conversation : mergeConversation(session, action.conversation))
+          : session)
         : [action.conversation, ...state.sessions];
       return {
         ...state,
@@ -133,9 +161,9 @@ export function aiCoachReducer(state, action) {
       };
       return updateSession(state, session.sessionId, (item) => ({
         ...item,
-        title: item.messages.length ? item.title : action.question.slice(0, 72),
+        title: (item.messages || []).length ? item.title : action.question.slice(0, 72),
         updatedAt: now,
-        messages: [...item.messages, userMessage, coachMessage]
+        messages: [...(item.messages || []), userMessage, coachMessage]
       }));
     }
     case 'messages/streamingStarted':

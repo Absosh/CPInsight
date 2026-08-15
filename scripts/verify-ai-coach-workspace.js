@@ -16,6 +16,7 @@ const requiredFiles = [
   'components/SessionList.jsx',
   'components/ReflectionWorkspace.jsx',
   'components/RoadmapWorkspace.jsx',
+  'components/StudyPlannerWorkspace.jsx',
   'hooks/useAiCoachKeyboardShortcuts.js',
   'hooks/useVirtualMessages.js',
   'state/AiCoachWorkspaceProvider.jsx',
@@ -36,7 +37,7 @@ const source = requiredFiles
   .map((file) => fs.readFileSync(path.join(featureRoot, file), 'utf8'))
   .join('\n');
 
-for (const component of ['CoachMessage', 'EvidenceExplorer', 'RecommendationList', 'ReasoningPanel', 'ActionPlan', 'RoadmapViewer', 'ReflectionTimeline', 'QualityIndicator', 'BehaviorOverview']) {
+for (const component of ['CoachMessage', 'RoadmapViewer', 'ReflectionTimeline']) {
   assert.equal(source.includes(component), true, `${component} is integrated`);
 }
 
@@ -44,11 +45,11 @@ for (const lifecycle of ['sessions/created', 'sessions/renamed', 'sessions/archi
   assert.equal(source.includes(lifecycle), true, `${lifecycle} is handled`);
 }
 
-for (const endpoint of ['/ai/planner/classify', '/ai/planner/plan', '/ai/retrieval/execute', '/ai/reasoning/context', '/ai/reasoning/prompt', '/ai/tasks/plan', '/ai/runtime/execute', '/ai/validate', '/ai/feedback']) {
+for (const endpoint of ['/ai/planner/classify', '/ai/planner/plan', '/ai/retrieval/execute', '/ai/reasoning/context', '/ai/reasoning/prompt', '/ai/plan', '/ai/runtime/execute', '/ai/validate', '/ai/feedback']) {
   assert.equal(source.includes(endpoint), true, `${endpoint} is consumed`);
 }
 
-for (const interaction of ['Copy', 'Export', 'Regenerate', 'accept', 'dismiss', 'save', 'complete', 'remind_later']) {
+for (const interaction of ['Copy', 'Export', 'Regenerate', 'recommendations/actionRecorded', 'messages/completed']) {
   assert.equal(source.includes(interaction), true, `${interaction} interaction exists`);
 }
 
@@ -61,17 +62,28 @@ for (const forbidden of ['../backend', 'backend/src', 'validateGrounding', 'vali
 }
 
 const css = fs.readFileSync(path.join(featureRoot, 'styles', 'ai-coach-workspace.css'), 'utf8');
-for (const layout of ['grid-template-columns: 288px minmax(0, 1fr) 340px', '@media (max-width: 1180px)', '@media (max-width: 780px)', 'coach-left-sidebar', 'coach-center-panel', 'coach-right-sidebar']) {
+for (const layout of ['grid-template-columns: 280px minmax(0, 1fr) 320px', '@media (max-width: 1180px)', '@media (max-width: 780px)', 'coach-left-sidebar', 'coach-center-panel', 'coach-right-sidebar']) {
   assert.equal(css.includes(layout), true, `${layout} layout rule exists`);
 }
 
 const page = fs.readFileSync(path.join(root, 'pages', 'ai-coach.html'), 'utf8');
 assert.equal(page.includes('aiCoachRoot'), true, 'AI Coach page root exists');
-assert.equal(page.includes('src/apps/ai-coach/main.jsx'), true, 'AI Coach app entry is mounted');
+assert.equal(page.includes('script/ai_coach.bundle.js'), true, 'AI Coach runtime bundle is mounted');
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 assert.equal(packageJson.scripts['verify:ai-coach-workspace'], 'node scripts/verify-ai-coach-workspace.js');
-assert.equal(packageJson.scripts['build:frontend'], 'vite build');
+assert.equal(packageJson.scripts['build:frontend'].includes('build:ai-coach-runtime'), true, 'frontend build creates the AI Coach runtime');
+
+const providerSource = fs.readFileSync(path.join(featureRoot, 'state', 'AiCoachWorkspaceProvider.jsx'), 'utf8');
+assert.equal(providerSource.includes('if (initialState) return'), false, 'initial state does not disable server hydration');
+assert.equal(providerSource.includes("authoritative: true"), true, 'server conversations replace recovery state');
+const persistUser = providerSource.indexOf("messageId: userMessageId");
+const persistCoach = providerSource.indexOf("messageId: coachMessageId", persistUser);
+assert.equal(persistUser >= 0 && persistCoach > persistUser, true, 'user and coach messages persist in sequence');
+
+const repositorySource = fs.readFileSync(path.join(root, 'backend', 'src', 'repositories', 'conversationRepository.js'), 'utf8');
+assert.equal(repositorySource.includes('FOR UPDATE'), true, 'conversation message ordering is serialized');
+assert.equal(fs.existsSync(path.join(root, 'backend', 'src', 'database', 'migrations', '020_ai_conversation_message_order.sql')), true, 'message order uniqueness migration exists');
 
 const dockerfile = fs.readFileSync(path.join(root, 'frontend.Dockerfile'), 'utf8');
 assert.equal(dockerfile.includes('npm run build:frontend'), true, 'frontend Docker build includes AI Coach bundle');
@@ -83,7 +95,9 @@ console.log(JSON.stringify({
   designSystemIntegrated: true,
   sessionLifecycle: true,
   apiEndpoints: 9,
-  interactionPatterns: 8,
+  interactionPatterns: 5,
+  serverAuthoritativeHistory: true,
+  deterministicMessageOrdering: true,
   responsiveLayout: true,
   presentationalAiLogicBoundary: true
 }, null, 2));

@@ -43,7 +43,12 @@ function list(value) {
   return Array.isArray(value) ? value.filter(Boolean) : [value];
 }
 
+function record(value) {
+  return value && typeof value === 'object' ? value : {};
+}
+
 function latestReviewPayload(review = {}) {
+  review = record(review);
   const response = review.validatedResponse || review.validated_response || {};
   return {
     title: review.title || response.summary || 'Latest contest review',
@@ -78,6 +83,8 @@ function requiredTopicsForTarget(targetRating) {
 }
 
 function buildTopicInputs({ analytics = {}, latestReview = {}, reflections = [], targetRating }) {
+  analytics = record(analytics);
+  latestReview = record(latestReview);
   const topicMap = new Map();
 
   function ensureTopic(name) {
@@ -280,6 +287,8 @@ function problemFromRecommendation(recommendation, source, analytics, index) {
 }
 
 function fallbackProblems(source, analytics = {}) {
+  source = record(source);
+  analytics = record(analytics);
   const topic = titleCase(source.topic || source.label);
   const difficulty = normalizeDifficulty(source.difficulty, source);
   return ['Codeforces', 'LeetCode'].map((platform, index) => {
@@ -301,6 +310,9 @@ function fallbackProblems(source, analytics = {}) {
 }
 
 export function buildProblemBank({ source = {}, planner = {}, analytics = {} } = {}) {
+  source = record(source);
+  planner = record(planner);
+  analytics = record(analytics);
   const normalizedSource = {
     id: source.id || `${source.type || 'study'}-${titleCase(source.topic || source.label)}`,
     type: source.type || 'study-item',
@@ -356,6 +368,7 @@ export function buildProblemBank({ source = {}, planner = {}, analytics = {} } =
 
 export function refreshProblemBankStatuses(problemBank, analytics = {}) {
   if (!problemBank) return problemBank;
+  analytics = record(analytics);
   const problems = list(problemBank.problems).map((problem) => ({ ...problem, status: statusForProblem(problem, analytics) }));
   return {
     ...problemBank,
@@ -419,6 +432,10 @@ function buildMilestones(priorities, targetRating) {
 }
 
 export function buildStudyPlanner({ contextualInsights = {}, analytics = {}, latestReview = {}, behaviorProfile = {}, behaviorFeatures = [], reflections = [], targetRating } = {}) {
+  contextualInsights = record(contextualInsights);
+  analytics = record(analytics);
+  latestReview = record(latestReview);
+  behaviorProfile = record(behaviorProfile);
   const currentRating = contextualInsights.currentRating || analytics.currentRating || analytics.ratingProgression?.at?.(-1)?.rating || 1200;
   const target = targetRating || contextualInsights.targetRating || Math.max(1400, Math.ceil((Number(currentRating) + 200) / 100) * 100);
   const review = latestReviewPayload(latestReview);

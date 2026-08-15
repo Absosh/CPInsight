@@ -106,7 +106,16 @@ async function update(userId, conversationId, patch = {}, db = pool) {
   return result.rowCount ? rowToConversation(result.rows[0]) : null;
 }
 
-async function appendMessage(userId, conversationId, message = {}, db = pool) {
+async function appendMessageInTransaction(userId, conversationId, message, db) {
+  const conversation = await db.query(
+    `SELECT id
+       FROM ai_conversations
+      WHERE user_id = $1 AND id = $2 AND deleted_at IS NULL
+      FOR UPDATE`,
+    [userId, conversationId]
+  );
+  if (!conversation.rowCount) throw new Error('Conversation not found');
+
   const orderResult = await db.query(
     `SELECT COALESCE(MAX(message_order), -1) + 1 AS next_order
        FROM ai_conversation_messages
@@ -151,6 +160,25 @@ async function appendMessage(userId, conversationId, message = {}, db = pool) {
     summary: message.role === 'user' ? message.content : undefined
   }, db);
   return rowToMessage(result.rows[0]);
+}
+
+async function appendMessage(userId, conversationId, message = {}, db = pool) {
+  if (typeof db.connect !== 'function') {
+    return appendMessageInTransaction(userId, conversationId, message, db);
+  }
+
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    const persisted = await appendMessageInTransaction(userId, conversationId, message, client);
+    await client.query('COMMIT');
+    return persisted;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function softDelete(userId, conversationId, db = pool) {
