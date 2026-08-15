@@ -25,6 +25,8 @@ services:
       - ${CPINSIGHT_ENV_FILE:-.env.deploy}
     ports:
       - "4000:4000"
+    volumes:
+      - uploads-data:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -115,3 +117,4 @@ networks:
 volumes:
   postgres-data:
   redis-data:
+  uploads-data:

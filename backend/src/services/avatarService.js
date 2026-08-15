@@ -128,6 +128,25 @@ async function deleteAvatarFiles(userId) {
   );
 }
 
+async function avatarExists(avatarUrl) {
+  if (!avatarUrl) return true;
+  let pathname;
+  try {
+    pathname = new URL(avatarUrl, env.apiBaseUrl).pathname;
+  } catch {
+    return false;
+  }
+  if (!pathname.startsWith('/uploads/avatars/')) return true;
+  const filename = path.basename(pathname);
+  if (!filename || filename !== pathname.split('/').at(-1)) return false;
+  try {
+    await fs.access(path.join(avatarsDir, filename));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function storeAvatar(userId, imageData) {
   const { mimeType, buffer } = parseDataUrl(imageData);
   validateAvatar(buffer, mimeType);
@@ -152,5 +171,6 @@ async function storeAvatar(userId, imageData) {
 
 module.exports = {
   storeAvatar,
-  deleteAvatarFiles
+  deleteAvatarFiles,
+  avatarExists
 };

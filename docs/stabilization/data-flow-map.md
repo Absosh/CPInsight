@@ -102,17 +102,28 @@ Question submission
 
 The shared AI API client owns access-token refresh and request retry. Conversation refresh must not replace an active streaming/completed local message with an older server transcript.
 
-## Confirmed Competing Logic
+## Removed Competing Logic
 
-- `script/analytics.js` directly calls Codeforces and synthesizes fake submission-shaped rows when backend fields appear incomplete. This masks cache/schema and contract failures.
-- `script/services/analyticsService.js` can merge selected platform analytics independently of the backend combined endpoint. The formulas must match the backend or be removed.
-- AI local-session backup currently participates in boot selection. Server conversations must load on every authenticated boot and supersede recovery data when available.
+- `script/analytics.js` no longer calls Codeforces directly or synthesizes submission-shaped rows. It renders the versioned backend contract.
+- `script/services/analyticsService.js` preserves platform identity when it merges an explicitly selected subset for the dashboard. The backend owns metric formulas.
+- AI local-session backup is recovery-only. A successful server list/get response is authoritative on every authenticated boot.
 
-## Confirmed Failure Boundaries
+## Stabilized Failure Boundaries
 
-- Resync persistence is not atomic when `syncService` uses the pool directly; profile status can update before history replacement finishes.
-- A partial CodeChef activity fetch is represented as `submissions: []`; the current persistence path can delete the previous valid history.
-- Platform analytics cache reads accept old payload versions, so bumping `analyticsVersion` does not invalidate platform caches.
-- Analytics-page intelligence is recomputed from only the recent-submission slice and can display empty metrics despite complete stored history.
-- AI boot skips server conversation loading whenever `initialState` is supplied; the application always supplies it.
-- User and queued coach messages are persisted concurrently and can receive the same `message_order`.
+- Resync writes now use one transaction; profile/history changes commit together.
+- A partial CodeChef activity fetch is explicitly unavailable and preserves the last valid submission snapshot.
+- Redis and PostgreSQL analytics cache reads reject payloads whose `analyticsVersion` is not current.
+- Analytics intelligence uses complete stored history in the backend rather than the recent-submission slice.
+- AI boot always loads server conversations, even when URL-derived initial UI state is supplied.
+- Message append locks the conversation row and a unique database index enforces one `message_order` per conversation.
+
+## Avatar Storage
+
+`POST /api/user/profile/avatar`
+-> `avatarService.storeAvatar`
+-> `/app/uploads/avatars`
+-> persistent Docker volume/bind mount
+-> avatar URL in `user_profiles`
+-> `GET /uploads/avatars/<file>`.
+
+Profile hydration verifies local avatar existence. A missing local file clears its dangling database reference and profile cache instead of repeatedly returning a broken URL.

@@ -12,10 +12,21 @@ function serializeCollege(collegeId) {
 async function getProfile(userId) {
   const cacheKey = `profile:${userId}`;
   const cached = await getJson(cacheKey).catch(() => null);
-  if (cached) return cached;
+  if (cached) {
+    const available = await avatarService.avatarExists(cached.profile?.avatarUrl);
+    if (available) return cached;
+    await userRepository.deleteAvatar(userId);
+    await delByPattern(cacheKey).catch(() => {});
+  }
 
   const profile = await userRepository.getProfile(userId);
   if (!profile) throw new HttpError(404, 'User profile not found');
+  if (profile.avatar_url && !(await avatarService.avatarExists(profile.avatar_url))) {
+    await userRepository.deleteAvatar(userId);
+    profile.avatar_url = null;
+    profile.avatar_thumbnail = null;
+    profile.avatar_updated_at = new Date();
+  }
 
   const platformAccounts = await platformRepository.listAccounts(userId);
   const payload = {
