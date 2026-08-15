@@ -4,6 +4,8 @@ const env = require('../../config/env');
 const { getJson, setJson } = require('../../redis/client');
 
 const CACHE_TTL_SECONDS = 12 * 60;
+const RECENT_PAGE_DELAY_MS = 450;
+const RECENT_PAGE_MAX_ATTEMPTS = 3;
 
 const client = axios.create({
   baseURL: env.platforms.codechefBaseUrl,
@@ -52,7 +54,7 @@ function codeChefTimestampSeconds(value) {
   const match = text.match(/^(\d{1,2}):(\d{2})\s*([AP]M)\s+(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/i);
   if (!match) return epochSeconds(text);
 
-  let [, hourText, minuteText, meridiem, monthText, dayText, yearText] = match;
+  let [, hourText, minuteText, meridiem, dayText, monthText, yearText] = match;
   let hour = Number(hourText);
   const minute = Number(minuteText);
   const month = Number(monthText);
@@ -65,6 +67,28 @@ function codeChefTimestampSeconds(value) {
 
   const millis = Date.UTC(year, month - 1, day, hour, minute, 0);
   return Number.isFinite(millis) ? Math.floor(millis / 1000) : null;
+}
+
+function legacyCodeChefTimestampSeconds(value) {
+  const text = cleanText(value);
+  const match = text.match(/^(\d{1,2}):(\d{2})\s*([AP]M)\s+(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/i);
+  if (!match) return null;
+
+  let [, hourText, minuteText, meridiem, monthText, dayText, yearText] = match;
+  let hour = Number(hourText);
+  let year = Number(yearText);
+  if (year < 100) year += 2000;
+  if (/pm/i.test(meridiem) && hour !== 12) hour += 12;
+  if (/am/i.test(meridiem) && hour === 12) hour = 0;
+  return Math.floor(Date.UTC(year, Number(monthText) - 1, Number(dayText), hour, Number(minuteText), 0) / 1000);
+}
+
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function isChallengePage(html) {
+  return /(?:cf-chl|challenge-platform|Just a moment\.\.\.|Enable JavaScript and cookies to continue)/i.test(String(html || ''));
 }
 
 function dateKeyFromValue(value) {
@@ -207,14 +231,14 @@ function normalizeContest(item, index) {
   const dateValue = item.end_date || item.date || item.time || item.ratingUpdateTimeSeconds || item.x || item[4];
   const seconds = epochSeconds(dateValue);
 
-  if (!seconds && rating === null && !contestName) return null;
+  if (!seconds) return null;
 
   return {
     contestId: contestCode || `codechef-contest-${index + 1}`,
     contestName,
     oldRating: null,
     newRating: rating,
-    ratingUpdateTimeSeconds: seconds || Math.floor(Date.now() / 1000),
+    ratingUpdateTimeSeconds: seconds,
     rank,
     metadata: {
       contestCode: contestCode || null,
@@ -409,8 +433,14 @@ function parseRecentSubmissions(html) {
 
     if (!problemCode || !submittedAt) return;
 
+    const id = submissionIdFrom($, row, problemCode, submittedAt, rowIndex);
+    const legacySubmittedAt = legacyCodeChefTimestampSeconds(timeCell);
+    const legacyId = id.startsWith('codechef-') && legacySubmittedAt && legacySubmittedAt !== submittedAt
+      ? `codechef-${problemCode || 'submission'}-${legacySubmittedAt}-${rowIndex + 1}`
+      : null;
     submissions.push({
-      id: submissionIdFrom($, row, problemCode, submittedAt, rowIndex),
+      id,
+      legacyIds: legacyId ? [legacyId] : [],
       problem: {
         name: cleanText(problemLink?.text) || problemCode,
         slug: problemCode,
@@ -434,7 +464,7 @@ async function cachedHtml(cacheKey, path, params) {
   try {
     const response = await client.get(path, { params });
     const html = typeof response.data === 'string' ? response.data : response.data?.content;
-    if (response.status < 200 || response.status >= 300 || typeof html !== 'string') {
+    if (response.status < 200 || response.status >= 300 || typeof html !== 'string' || isChallengePage(html)) {
       throw new CodeChefError(`CodeChef returned an unexpected response for ${path}`);
     }
     await setJson(cacheKey, { html }, CACHE_TTL_SECONDS).catch(() => {});
@@ -453,11 +483,29 @@ async function cachedRecentPage(handle, page) {
   if (cached?.html) return cached;
 
   try {
-    const response = await client.get('/recent/user', {
-      params: { user_handle: handle, page }
-    });
+    let response;
+    let lastError;
+    for (let attempt = 1; attempt <= RECENT_PAGE_MAX_ATTEMPTS; attempt += 1) {
+      try {
+        response = await client.get('/recent/user', {
+          params: { user_handle: handle, page }
+        });
+        break;
+      } catch (error) {
+        lastError = error;
+        const status = error.response?.status;
+        if (status !== 429 || attempt === RECENT_PAGE_MAX_ATTEMPTS) throw error;
+        const retryAfterSeconds = Number(error.response?.headers?.['retry-after']);
+        const retryDelay = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+          ? Math.min(15000, retryAfterSeconds * 1000)
+          : 1000 * (2 ** (attempt - 1));
+        await wait(retryDelay);
+      }
+    }
+    if (!response) throw lastError || new Error('CodeChef recent activity request failed');
+
     const html = typeof response.data === 'string' ? response.data : response.data?.content;
-    if (response.status < 200 || response.status >= 300 || typeof html !== 'string') {
+    if (response.status < 200 || response.status >= 300 || typeof html !== 'string' || isChallengePage(html)) {
       throw new CodeChefError(`CodeChef returned an unexpected response for recent page ${page}`);
     }
 
@@ -476,23 +524,46 @@ async function cachedRecentPage(handle, page) {
 }
 
 async function getAllRecentSubmissions(handle) {
-  const firstPage = await cachedRecentPage(handle, 1);
-  const pages = [firstPage.html];
-  const maxPage = Math.max(1, Math.min(firstPage.maxPage || 1, 100));
+  const pages = [];
+  let maxPage = 1;
+  let warning = null;
+
+  try {
+    const firstPage = await cachedRecentPage(handle, 1);
+    pages.push(firstPage.html);
+    maxPage = Math.max(1, Math.min(firstPage.maxPage || 1, 100));
+  } catch (error) {
+    return {
+      submissions: [],
+      complete: false,
+      warnings: [error.message || 'CodeChef recent activity is unavailable']
+    };
+  }
 
   for (let page = 2; page <= maxPage; page += 1) {
-    const pageData = await cachedRecentPage(handle, page);
-    pages.push(pageData.html);
+    await wait(RECENT_PAGE_DELAY_MS);
+    try {
+      const pageData = await cachedRecentPage(handle, page);
+      pages.push(pageData.html);
+    } catch (error) {
+      warning = error.message || `CodeChef recent activity page ${page} is unavailable`;
+      break;
+    }
   }
 
   const seen = new Set();
-  return pages
+  const submissions = pages
     .flatMap(parseRecentSubmissions)
     .filter((submission) => {
       if (!submission.id || seen.has(submission.id)) return false;
       seen.add(submission.id);
       return true;
     });
+  return {
+    submissions,
+    complete: !warning,
+    warnings: warning ? [warning] : []
+  };
 }
 
 async function getPublicProfile(handle) {
@@ -503,13 +574,25 @@ async function getPublicProfile(handle) {
   const profile = parseProfile(profileHtml, handle, settings);
   const heatmap = parseHeatmap(profileHtml);
   const contests = parseContestHistory(profileHtml);
-  const submissions = await getAllRecentSubmissions(handle);
+  const profileDocument = cheerio.load(profileHtml);
+  const titleIdentifiesUser = new RegExp(`^${handle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+-\\s+CodeChef`, 'i')
+    .test(cleanText(profileDocument('title').text()));
+  const hasProfileEvidence = titleIdentifiesUser
+    || profileDocument('.user-details-container, .rating-number, .rating-header').length > 0;
+  if (!hasProfileEvidence) {
+    throw new CodeChefError(`CodeChef profile could not be verified for ${handle}`);
+  }
+  const recentActivity = await getAllRecentSubmissions(handle);
+  const submissions = recentActivity.submissions;
+  const submissionsError = recentActivity.complete ? null : recentActivity.warnings[0];
 
   return {
     profile,
     contests,
     submissions,
     heatmap,
+    partial: Boolean(submissionsError),
+    warnings: submissionsError ? [submissionsError] : [],
     stats: {
       totalProblemsSolved: profile.totalProblemsSolved || 0,
       contestCount: contests.length,
