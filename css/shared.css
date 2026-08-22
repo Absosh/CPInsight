@@ -2,8 +2,46 @@
    GLOBAL RESETS & TYPOGRAPHY
    ================================================== */
 * { font-family: 'Inter', sans-serif; }
-body { background: #070b17; color: white; overflow-x: hidden; }
+html { height: 100%; }
+body { min-height: 100%; background: #070b17; color: white; overflow-x: hidden; }
 aside * { max-width: 100%; }
+
+/* Keep the app navigation and page content as separate scroll regions. */
+body:has(#mainApp) {
+    height: 100%;
+    overflow: hidden;
+}
+
+#mainApp {
+    height: 100vh;
+    min-height: 0 !important;
+    overflow: hidden;
+}
+
+#appSidebar {
+    height: 100vh;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-color: rgba(16, 185, 129, 0.45) transparent;
+    scrollbar-width: thin;
+}
+
+#appSidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+#appSidebar::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(16, 185, 129, 0.45);
+}
+
+#mainApp > main {
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
 
 /* ==================================================
    GLASSMORPHISM

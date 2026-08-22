@@ -2204,9 +2204,16 @@ body:has(#aiCoachRoot),
   overflow: hidden;
 }
 
+#aiCoachRoot > .ai-theme-root {
+  block-size: 100%;
+  min-block-size: 0;
+  overflow: hidden;
+}
+
 .coach-workspace {
   grid-template-columns: 280px minmax(0, 1fr) 320px;
   block-size: 100vh;
+  min-block-size: 0;
   max-block-size: 100vh;
   overflow: hidden;
   background: #070b17;
@@ -2217,6 +2224,7 @@ body:has(#aiCoachRoot),
 .coach-right-sidebar {
   min-block-size: 0;
   block-size: 100vh;
+  max-block-size: 100vh;
 }
 
 .coach-left-sidebar,
@@ -2234,6 +2242,7 @@ body:has(#aiCoachRoot),
 .coach-center-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
+  min-inline-size: 0;
   overflow: hidden;
   background: #070b17;
 }
@@ -2253,6 +2262,7 @@ body:has(#aiCoachRoot),
 .coach-center-panel .ai-conversation-view {
   min-block-size: 0;
   block-size: 100%;
+  max-block-size: 100%;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   overflow: hidden;
@@ -2260,6 +2270,7 @@ body:has(#aiCoachRoot),
 
 .coach-center-panel .ai-conversation-scroll {
   min-block-size: 0;
+  max-block-size: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
