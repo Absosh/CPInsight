@@ -83,9 +83,23 @@
                   </button>
                   <div class="flex items-center gap-3">
                       <h2 id="calendarMonthYear" class="text-xl sm:text-3xl font-bold tracking-tight text-white">--</h2>
-                      <button onclick="goToToday()" class="px-3 py-1 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-lg hover:bg-emerald-600/40 transition text-xs sm:text-sm font-semibold shadow-[0_0_10px_rgba(16,185,129,0.1)]">
-                          Today
-                      </button>
+                      <div class="flex items-center gap-2">
+                          <button onclick="goToToday()" class="px-3 py-1 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-lg hover:bg-emerald-600/40 transition text-xs sm:text-sm font-semibold shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                              Today
+                          </button>
+                          <button
+                              id="calendarResyncBtn"
+                              type="button"
+                              onclick="resyncCalendar()"
+                              class="grid place-items-center w-8 h-8 bg-white/5 text-emerald-300 border border-emerald-500/20 rounded-lg hover:bg-emerald-600/20 hover:border-emerald-500/40 transition shadow-[0_0_10px_rgba(16,185,129,0.08)]"
+                              aria-label="Resync calendar contests"
+                              title="Resync calendar contests"
+                          >
+                              <svg id="calendarResyncIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M5.6 15A7 7 0 0 0 17.7 18.4M18.4 9A7 7 0 0 0 6.3 5.6"></path>
+                              </svg>
+                          </button>
+                      </div>
                   </div>
                   <button onclick="changeMonth(1)" class="px-3 sm:px-5 py-2 hover:bg-white/10 border border-transparent hover:border-white/10 rounded-xl text-emerald-400 transition font-bold tracking-wide text-sm sm:text-base">
                       Next &rarr;

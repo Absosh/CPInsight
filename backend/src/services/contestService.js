@@ -112,8 +112,8 @@ async function getCodeChefContests() {
   ];
 }
 
-async function getCombinedContestCalendar() {
-  const cached = await getJson(CACHE_KEY).catch(() => null);
+async function getCombinedContestCalendar({ forceRefresh = false } = {}) {
+  const cached = forceRefresh ? null : await getJson(CACHE_KEY).catch(() => null);
 
   if (Array.isArray(cached) && cached.length > 0) {
     return cached;

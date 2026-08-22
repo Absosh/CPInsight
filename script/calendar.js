@@ -1,6 +1,7 @@
 // --- GLOBAL STATE ---
 let calendarEvents = [];
 let calDate = new Date();
+let calendarSyncInProgress = false;
 
 // Note: initParticles() is automatically called by shared.js now.
 
@@ -51,27 +52,59 @@ function renderCalendarSidebar() {
 }
 
 // --- CALENDAR LOGIC ---
-async function loadCalendar() {
-    if (calendarEvents.length === 0) {
+function setCalendarSyncState(isSyncing) {
+    calendarSyncInProgress = isSyncing;
+    const button = document.getElementById('calendarResyncBtn');
+    const icon = document.getElementById('calendarResyncIcon');
+
+    if (button) {
+        button.disabled = isSyncing;
+        button.classList.toggle('opacity-60', isSyncing);
+        button.classList.toggle('cursor-not-allowed', isSyncing);
+        button.setAttribute('aria-busy', String(isSyncing));
+    }
+
+    if (icon) {
+        icon.classList.toggle('animate-spin', isSyncing);
+    }
+}
+
+async function fetchCalendarContests(forceFresh = false) {
+    const freshQuery = forceFresh ? `?fresh=1&t=${Date.now()}` : '';
+
+    if (window.httpClient) {
+        return httpClient.get(`/calendar/contests${freshQuery}`);
+    }
+
+    return fetch(`/api/calendar/contests${freshQuery}`).then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+    });
+}
+
+async function loadCalendar(forceFresh = false) {
+    if (calendarEvents.length === 0 || forceFresh) {
         document.getElementById('calendarLoader').classList.remove('hidden');
         document.getElementById('calendarGrid').classList.add('hidden');
+        setCalendarSyncState(forceFresh);
         
         try {
-            const data = window.httpClient
-                ? await httpClient.get('/calendar/contests')
-                : await fetch('/api/calendar/contests').then((res) => {
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    return res.json();
-                });
-            calendarEvents = data;
+            const data = await fetchCalendarContests(forceFresh);
+            calendarEvents = Array.isArray(data) ? data : [];
         } catch (e) {
             console.error("Failed to fetch contests:", e);
+        } finally {
+            document.getElementById('calendarLoader').classList.add('hidden');
+            document.getElementById('calendarGrid').classList.remove('hidden');
+            setCalendarSyncState(false);
         }
-        
-        document.getElementById('calendarLoader').classList.add('hidden');
-        document.getElementById('calendarGrid').classList.remove('hidden');
     }
     renderCalendar();
+}
+
+async function resyncCalendar() {
+    if (calendarSyncInProgress) return;
+    await loadCalendar(true);
 }
 
 function changeMonth(dir) {
