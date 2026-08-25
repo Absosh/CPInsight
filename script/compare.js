@@ -194,10 +194,53 @@ function buildSummaryInsights(data) {
   ];
 }
 
+function createMatchupVsMark() {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'matchup-vs-mark');
+  svg.setAttribute('viewBox', '0 0 128 64');
+  svg.setAttribute('aria-label', 'versus');
+  svg.setAttribute('role', 'img');
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="vsGreenPanel" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" stop-color="#6ee7b7" />
+        <stop offset="100%" stop-color="#10b981" />
+      </linearGradient>
+      <linearGradient id="vsRedPanel" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" stop-color="#fb7185" />
+        <stop offset="100%" stop-color="#ef4444" />
+      </linearGradient>
+      <filter id="vsSoftShadow" x="-20%" y="-40%" width="140%" height="180%">
+        <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#020617" flood-opacity="0.45" />
+      </filter>
+    </defs>
+    <g filter="url(#vsSoftShadow)">
+      <path d="M8 15 Q10 9 17 9 H64 L50 55 H16 Q9 55 8 48 Z" fill="url(#vsGreenPanel)" />
+      <path d="M64 9 H112 Q119 9 121 16 L119 49 Q117 55 110 55 H50 Z" fill="url(#vsRedPanel)" />
+      <path d="M69 3 L55 31 H68 L51 61 L58 37 H45 Z" fill="#f8fafc" />
+      <path d="M70 3 L56 31 H69 L52 61 L59 37 H46 Z" fill="#dbeafe" opacity="0.5" />
+    </g>
+    <text x="38" y="39" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="19" font-weight="900" fill="#052e2b" opacity="0.82">v</text>
+    <text x="89" y="39" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="19" font-weight="900" fill="#450a0a" opacity="0.82">s</text>
+  `;
+  return svg;
+}
+
 function renderOverview(data) {
   const current = data.users.current;
   const compared = data.users.compared;
-  setText('matchupTitle', `${current.displayName} VS ${compared.displayName}`);
+  const matchupTitle = document.getElementById('matchupTitle');
+  matchupTitle.replaceChildren();
+  [
+    { text: current.displayName, className: 'text-emerald-300' },
+    { text: compared.displayName, className: 'text-red-400' }
+  ].forEach((part, index) => {
+    const span = document.createElement('span');
+    span.className = part.className;
+    span.textContent = part.text;
+    if (index === 1) matchupTitle.append(createMatchupVsMark());
+    matchupTitle.append(span);
+  });
   setText('currentHeader', current.displayName);
   setText('comparedHeader', compared.displayName);
 
