@@ -13,10 +13,37 @@ const COLORS = {
 };
 
 const DISTRIBUTION_COLORS = [
-  'rgba(16, 185, 129, 0.4)',
-  'rgba(99, 102, 241, 0.4)',
-  'rgba(168, 85, 247, 0.3)'
+  'rgba(16, 185, 129, 0.78)',
+  'rgba(14, 165, 233, 0.76)',
+  'rgba(99, 102, 241, 0.78)'
 ];
+
+const RATING_PLATFORMS = [
+  { key: 'codeforces', label: 'Codeforces' },
+  { key: 'codechef', label: 'CodeChef' },
+  { key: 'leetcode', label: 'LeetCode' }
+];
+
+const PLATFORM_DONUT_THEME = {
+  codeforces: {
+    fill: 'rgba(16, 185, 129, 0.82)',
+    hover: 'rgba(52, 211, 153, 0.96)',
+    border: '#34d399',
+    glow: 'rgba(16, 185, 129, 0.36)'
+  },
+  codechef: {
+    fill: 'rgba(14, 165, 233, 0.78)',
+    hover: 'rgba(56, 189, 248, 0.95)',
+    border: '#38bdf8',
+    glow: 'rgba(14, 165, 233, 0.32)'
+  },
+  leetcode: {
+    fill: 'rgba(99, 102, 241, 0.82)',
+    hover: 'rgba(129, 140, 248, 0.96)',
+    border: '#818cf8',
+    glow: 'rgba(99, 102, 241, 0.34)'
+  }
+};
 
 function setText(id, value) {
   const element = document.getElementById(id);
@@ -210,27 +237,48 @@ function createLazyChart(key, element, draw) {
   observer.observe(element);
 }
 
+function platformKeyFromTitle(title = '') {
+  const normalized = title.toLowerCase().replace(/\s+/g, '');
+  return RATING_PLATFORMS.find((platform) => normalized.includes(platform.key))?.key || normalized;
+}
+
+function normalizeRatingComparisonCharts(charts = []) {
+  const chartByPlatform = (charts || []).reduce((map, chart) => {
+    map[platformKeyFromTitle(chart.title)] = chart;
+    return map;
+  }, {});
+
+  return RATING_PLATFORMS.map((platform) => ({
+    title: `${platform.label} Rating`,
+    current: [],
+    compared: [],
+    ...chartByPlatform[platform.key],
+    platform: platform.key
+  }));
+}
+
 function renderRatingCharts(data) {
   const container = document.getElementById('ratingCharts');
-  if (!data.ratingComparison.length) {
+  const charts = normalizeRatingComparisonCharts(data.ratingComparison);
+  if (!charts.length) {
     container.innerHTML = '<div class="glass compare-card p-8 text-center text-gray-400">No contest rating history available for common platforms.</div>';
     return;
   }
 
-  container.innerHTML = data.ratingComparison.map((chart, index) => `
-    <div class="glass compare-card section-shell p-6">
+  container.innerHTML = charts.map((chart, index) => `
+    <div class="glass compare-card section-shell p-7">
       <div class="flex items-start justify-between mb-4 gap-4">
         <div>
           <h3 class="font-black text-xl">${chart.title}</h3>
-          <p class="text-gray-400 text-sm">Zoom, pan, and hover for contest detail.</p>
+          <p class="text-gray-400 text-sm">${normalizeChartPoints([...chart.current, ...chart.compared]).length ? 'Zoom, pan, and hover for contest detail.' : 'No contest appearances yet.'}</p>
         </div>
         <button class="metric-pill px-4 py-2 text-xs font-bold text-emerald-300 hover:bg-white/10 transition" onclick="resetCompareChart('rating${index}')">Reset</button>
       </div>
-      <div class="chart-box relative"><canvas id="ratingChart${index}" class="absolute inset-0"></canvas></div>
+      <div class="chart-box rating-chart-box relative"><canvas id="ratingChart${index}" class="absolute inset-0"></canvas></div>
     </div>
   `).join('');
 
-  data.ratingComparison.forEach((chart, index) => {
+  charts.forEach((chart, index) => {
     const canvas = document.getElementById(`ratingChart${index}`);
     createLazyChart(`rating${index}`, canvas.parentElement, () => drawRatingChart(`rating${index}`, canvas, chart, data));
   });
@@ -246,7 +294,14 @@ function normalizeChartPoints(points) {
 function drawRatingChart(key, canvas, chart, data) {
   const current = normalizeChartPoints(chart.current);
   const compared = normalizeChartPoints(chart.compared);
-  const labels = Array.from(new Set([...current, ...compared].map((point) => new Date(point.timestamp).toLocaleDateString())));
+  const hasContestPoints = current.length || compared.length;
+  const labels = hasContestPoints
+    ? Array.from(new Set([...current, ...compared].map((point) => new Date(point.timestamp).toLocaleDateString())))
+    : ['No contests'];
+  const ratings = [...current, ...compared].map((point) => point.rating).filter(Number.isFinite);
+  const minRating = ratings.length ? Math.min(...ratings) : 0;
+  const maxRating = ratings.length ? Math.max(...ratings) : 3000;
+  const padding = Math.max(80, Math.round((maxRating - minRating) * 0.16));
 
   function dataset(label, points, color) {
     const byLabel = points.reduce((map, point) => {
@@ -279,13 +334,24 @@ function drawRatingChart(key, canvas, chart, data) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 8, right: 20, bottom: 8, left: 8 } },
       interaction: { mode: 'index', intersect: false },
       animation: { duration: 1200, easing: 'easeOutQuart' },
       plugins: {
-        legend: { labels: { color: '#d1d5db', usePointStyle: true } },
+        legend: {
+          align: 'center',
+          labels: {
+            color: '#d1d5db',
+            usePointStyle: true,
+            boxWidth: 8,
+            boxHeight: 8,
+            padding: 18
+          }
+        },
         zoom: { zoom: { wheel: { enabled: true, speed: 0.05 }, pinch: { enabled: true }, mode: 'x' }, pan: { enabled: true, mode: 'x' } },
         tooltip: {
           backgroundColor: 'rgba(17,24,39,0.96)',
+          enabled: Boolean(hasContestPoints),
           callbacks: {
             afterLabel(context) {
               const point = context.dataset.metaPoints?.[context.dataIndex];
@@ -295,8 +361,20 @@ function drawRatingChart(key, canvas, chart, data) {
         }
       },
       scales: {
-        x: { ticks: { display: false }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        x: {
+          ticks: { display: false },
+          grid: { color: 'rgba(255,255,255,0.045)' }
+        },
+        y: {
+          suggestedMin: Math.max(0, minRating - padding),
+          suggestedMax: maxRating + padding,
+          ticks: {
+            color: '#9ca3af',
+            maxTicksLimit: 6,
+            padding: 10
+          },
+          grid: { color: 'rgba(255,255,255,0.045)' }
+        }
       }
     }
   });
@@ -473,40 +551,131 @@ function renderContest(data) {
   `).join('');
 }
 
-function drawPie(key, canvas, rows) {
-  const colorAt = (index) => DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length];
-  const borderAt = (index) => colorAt(index).replace(/,\s*[\d.]+\)$/, ', 0.9)');
-  const hoverAt = (index) => colorAt(index).replace(/,\s*[\d.]+\)$/, ', 0.58)');
+function getDistributionTheme(platform, index = 0) {
+  const key = (platform || '').toLowerCase();
+  const fallback = DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length];
+  return PLATFORM_DONUT_THEME[key] || {
+    fill: fallback,
+    hover: fallback.replace(/,\s*[\d.]+\)$/, ', 0.95)'),
+    border: '#a7f3d0',
+    glow: fallback.replace(/,\s*[\d.]+\)$/, ', 0.3)')
+  };
+}
+
+function drawDonut(key, canvas, rows) {
+  const total = rows.reduce((sum, item) => sum + Number(item.count || 0), 0);
+  const centerTextPlugin = {
+    id: `${key}CenterText`,
+    afterDraw(chart) {
+      const { ctx, chartArea } = chart;
+      if (!chartArea) return;
+      const centerX = (chartArea.left + chartArea.right) / 2;
+      const centerY = (chartArea.top + chartArea.bottom) / 2;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = '800 22px Inter, system-ui, sans-serif';
+      ctx.fillText(total.toLocaleString(), centerX, centerY - 6);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '700 10px Inter, system-ui, sans-serif';
+      ctx.letterSpacing = '0px';
+      ctx.fillText('SUBMISSIONS', centerX, centerY + 15);
+      ctx.restore();
+    }
+  };
 
   compareCharts[key] = new Chart(canvas, {
-    type: 'pie',
+    type: 'doughnut',
     data: {
       labels: rows.map((item) => titleCase(item.platform)),
       datasets: [{
         data: rows.map((item) => item.count),
-        backgroundColor: rows.map((_, index) => colorAt(index)),
-        hoverBackgroundColor: rows.map((_, index) => hoverAt(index)),
-        borderColor: rows.map((_, index) => borderAt(index)),
-        hoverBorderColor: rows.map((_, index) => borderAt(index)),
+        backgroundColor: rows.map((item, index) => getDistributionTheme(item.platform, index).fill),
+        hoverBackgroundColor: rows.map((item, index) => getDistributionTheme(item.platform, index).hover),
+        borderColor: rows.map((item, index) => getDistributionTheme(item.platform, index).border),
+        hoverBorderColor: rows.map((item, index) => getDistributionTheme(item.platform, index).border),
         borderWidth: 2,
+        borderRadius: 8,
+        spacing: 3,
         hoverOffset: 8
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#d1d5db' } }, tooltip: { backgroundColor: 'rgba(17,24,39,0.96)' } }
-    }
+      cutout: '72%',
+      rotation: -115,
+      animation: {
+        animateRotate: true,
+        animateScale: true,
+        duration: 1800,
+        easing: 'easeOutQuart'
+      },
+      animations: {
+        circumference: {
+          duration: 1700,
+          easing: 'easeOutQuart',
+          from: 0,
+          delay(context) {
+            return context.type === 'data' ? context.dataIndex * 140 : 0;
+          }
+        },
+        outerRadius: {
+          duration: 820,
+          easing: 'easeOutQuart',
+          from: 0,
+          delay(context) {
+            return context.type === 'data' ? 140 + context.dataIndex * 100 : 0;
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            color: '#dbeafe',
+            usePointStyle: true,
+            pointStyle: 'circle',
+            boxWidth: 8,
+            boxHeight: 8,
+            padding: 18,
+            font: { family: 'Inter', weight: 700 }
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(7, 11, 23, 0.96)',
+          borderColor: 'rgba(56, 189, 248, 0.3)',
+          borderWidth: 1,
+          titleColor: '#f8fafc',
+          bodyColor: '#dbeafe',
+          displayColors: true,
+          callbacks: {
+            label(context) {
+              const item = rows[context.dataIndex];
+              return ` ${context.label}: ${item.count} submissions (${item.percentage}%)`;
+            }
+          }
+        }
+      }
+    },
+    plugins: [centerTextPlugin]
   });
 }
 
 function renderPieTable(id, rows) {
-  document.getElementById(id).innerHTML = rows.map((item) => `
-    <div class="flex items-center justify-between gap-3 bg-black/20 border border-white/5 rounded-2xl px-4 py-3">
-      <span class="font-bold">${titleCase(item.platform)}</span>
-      <span class="text-gray-300">${item.count} submissions | ${item.percentage}%</span>
+  document.getElementById(id).innerHTML = rows.map((item, index) => {
+    const theme = getDistributionTheme(item.platform, index);
+    return `
+    <div class="distribution-row flex items-center justify-between gap-3 rounded-2xl px-4 py-3" style="--platform-glow: ${theme.glow}; --platform-border: ${theme.border};">
+      <span class="font-bold inline-flex items-center gap-3">
+        <span class="distribution-swatch" style="background: ${theme.fill}; box-shadow: 0 0 18px ${theme.glow};"></span>
+        ${titleCase(item.platform)}
+      </span>
+      <span class="text-gray-300">${item.count} submissions <span class="text-sky-200">|</span> ${item.percentage}%</span>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function renderDistribution(data) {
@@ -514,8 +683,8 @@ function renderDistribution(data) {
   setText('comparedPieTitle', `${data.users.compared.displayName} Distribution`);
   renderPieTable('currentPieTable', data.platformDistribution.current);
   renderPieTable('comparedPieTable', data.platformDistribution.compared);
-  createLazyChart('currentPie', document.getElementById('currentPie').parentElement, () => drawPie('currentPie', document.getElementById('currentPie'), data.platformDistribution.current));
-  createLazyChart('comparedPie', document.getElementById('comparedPie').parentElement, () => drawPie('comparedPie', document.getElementById('comparedPie'), data.platformDistribution.compared));
+  createLazyChart('currentPie', document.getElementById('currentPie').parentElement, () => drawDonut('currentPie', document.getElementById('currentPie'), data.platformDistribution.current));
+  createLazyChart('comparedPie', document.getElementById('comparedPie').parentElement, () => drawDonut('comparedPie', document.getElementById('comparedPie'), data.platformDistribution.compared));
 }
 
 function renderComparison(data) {
