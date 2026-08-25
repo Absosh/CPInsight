@@ -15,9 +15,14 @@
         initRevealAnimations();
 
         let accounts = [];
+        let profile = null;
         try {
-            const data = await httpClient.get('/platforms/accounts');
-            accounts = platformService.normalizeAccounts(data);
+            const [profileData, accountsData] = await Promise.all([
+                typeof userService !== 'undefined' ? userService.getProfile() : Promise.resolve(null),
+                httpClient.get('/platforms/accounts')
+            ]);
+            profile = profileData;
+            accounts = platformService.normalizeAccounts(accountsData);
         } catch (e) {
             console.error("Failed to load connected platforms:", e);
         }
@@ -25,7 +30,7 @@
         const connectedAccount = accounts.find(account => account.handle);
         const codeforcesAccount = accounts.find(account => account.platform === 'codeforces' && account.handle);
         if (!connectedAccount) {
-            renderCodeforcesNotConnected();
+            renderCodeforcesNotConnected(profile);
             renderAdvancedAnalyticsVisuals();
             return;
         }
@@ -33,10 +38,10 @@
         const primaryAccount = codeforcesAccount || connectedAccount;
         activeAnalyticsPlatform = accounts.length > 1 || !codeforcesAccount ? 'combined' : 'codeforces';
         handle = primaryAccount.handle || 'combined';
-        renderSidebarProfile({
-            handle: primaryAccount.handle || "Connected platforms",
-            rank: primaryAccount.rating ? `Rating ${primaryAccount.rating}` : `${formatPlatformLabel(activeAnalyticsPlatform)} analytics`,
-            titlePhoto: primaryAccount.avatar_url || ""
+        renderUnifiedSidebarProfile({
+            profile: profile || {},
+            name: profile?.user_profile?.display_name || profile?.username || primaryAccount.handle || "Connected platforms",
+            avatarUrl: profile?.user_profile?.avatar_thumbnail || profile?.user_profile?.avatar_url || primaryAccount.avatar_url || ""
         });
 
         resetAnalyticsSkeletons();
@@ -64,7 +69,7 @@
         return platform.toString().replace(/[-_]/g, " ").replace(/\b\w/g, char => char.toUpperCase());
     }
 
-    function renderCodeforcesNotConnected() {
+    function renderCodeforcesNotConnected(profile = null) {
         const loaderIds = ["radarLoader", "diffLoader"];
         loaderIds.forEach(id => document.getElementById(id)?.classList.add("hidden"));
         document.getElementById("radarWrapper")?.classList.add("hidden");
@@ -102,10 +107,10 @@
             badge.innerHTML = `<div class="w-2 h-2 bg-gray-400 rounded-full"></div> Not connected`;
         }
 
-        renderSidebarProfile({
-            handle: "Codeforces",
-            rank: "Not connected",
-            titlePhoto: ""
+        renderUnifiedSidebarProfile({
+            profile: profile || {},
+            name: profile?.user_profile?.display_name || profile?.username || "Analytics",
+            avatarUrl: profile?.user_profile?.avatar_thumbnail || profile?.user_profile?.avatar_url || ""
         });
     }
 
@@ -274,11 +279,10 @@
 
     // --- RENDER LOGIC ---
     function renderUserInfo(user) {
-        document.getElementById("username").innerText = user.handle;
-        document.getElementById("rank").innerText = user.rank || "Unrated";
-        document.getElementById("profileImage").src = user.titlePhoto;
-        document.getElementById("profileLoader").classList.add("hidden");
-        document.getElementById("profileImage").classList.remove("hidden");
+        renderUnifiedSidebarProfile({
+            name: user.handle,
+            avatarUrl: user.titlePhoto
+        });
     }
 
     function renderContestAnalytics(ratings, intelligence = null) {

@@ -33,6 +33,17 @@ function contestText(id, value) {
   if (element) element.textContent = value;
 }
 
+function renderContestSidebar(state) {
+  const profile = state?.profile?.data;
+  if (!profile) return;
+
+  renderUnifiedSidebarProfile({
+    profile,
+    name: profile.user_profile?.display_name || profile.username || 'User',
+    avatarUrl: profile.user_profile?.avatar_thumbnail || profile.user_profile?.avatar_url || ''
+  });
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -1340,7 +1351,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initRevealAnimations();
   const mainApp = document.getElementById('mainApp');
   mainApp?.classList.remove('blur-md', 'pointer-events-none');
-  if (typeof loadUserProfile === 'function') loadUserProfile();
+  renderContestSidebar(stateManager.getState());
 
   const list = document.getElementById('contestList');
   list?.addEventListener('click', (event) => {
@@ -1471,6 +1482,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const unsubscribe = stateManager.subscribe((state) => {
+    renderContestSidebar(state);
     if (!state.platforms.loading && state.profile.data && !contestsState.contests.length) {
       loadContestAnalytics();
       unsubscribe?.();

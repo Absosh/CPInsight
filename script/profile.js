@@ -25,7 +25,6 @@ const ProfilePage = {
 
   cacheElements() {
     [
-      'sidebarProfileLoader', 'sidebarProfileImage', 'sidebarFallbackAvatar', 'sidebarUsername',
       'pageError', 'pageErrorMessage', 'retryBtn', 'avatarLoader', 'avatarContent',
       'avatarPreview', 'avatarFallback', 'avatarInput', 'chooseAvatarBtn', 'saveAvatarBtn',
       'deleteAvatarBtn', 'avatarHelp', 'avatarError', 'avatarStatus', 'profileLoader',
@@ -165,21 +164,11 @@ const ProfilePage = {
   },
 
   renderSidebar(profile, avatarUrl, fallbackText) {
-    this.elements.sidebarUsername.textContent = profile.user_profile?.display_name || profile.username || 'User';
-    this.elements.sidebarProfileLoader?.classList.add('hidden');
-
-    if (avatarUrl) {
-      this.elements.sidebarProfileImage.src = avatarUrl;
-      this.elements.sidebarProfileImage.classList.remove('hidden');
-      this.elements.sidebarFallbackAvatar.classList.add('hidden');
-      this.elements.sidebarFallbackAvatar.classList.remove('flex');
-      return;
-    }
-
-    this.elements.sidebarProfileImage.classList.add('hidden');
-    this.elements.sidebarFallbackAvatar.textContent = fallbackText;
-    this.elements.sidebarFallbackAvatar.classList.remove('hidden');
-    this.elements.sidebarFallbackAvatar.classList.add('flex');
+    renderUnifiedSidebarProfile({
+      profile,
+      name: profile.user_profile?.display_name || profile.username || 'User',
+      avatarUrl
+    });
   },
 
   renderAvatar(avatarUrl, fallbackText) {

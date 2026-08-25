@@ -13,22 +13,111 @@ function showMainApp() {
 // ==================================================
 // USER PROFILE RENDERING
 // ==================================================
-function renderSidebarProfile(user) {
-    const unEl = document.getElementById("username");
-    const rEl = document.getElementById("rank");
-    const imgEl = document.getElementById("profileImage");
-    const loaderEl = document.getElementById("profileLoader");
+function normalizeSidebarProfileInput(input = {}) {
+    const profile = input.profile || input;
+    const details = profile.user_profile || profile.userProfile || {};
+    const name =
+        input.name ||
+        input.displayName ||
+        details.display_name ||
+        details.displayName ||
+        profile.username ||
+        profile.handle ||
+        "User";
+    const subtitle = input.publicDisplay ? (input.subtitle || "CPInsight") : "CPInsight Account";
+    const avatarUrl =
+        input.avatarUrl ||
+        input.titlePhoto ||
+        details.avatar_thumbnail ||
+        details.avatar_url ||
+        details.avatarUrl ||
+        profile.avatar_url ||
+        "";
 
-    if(unEl) unEl.innerText = user.handle;
-    if(rEl) rEl.innerText = user.rank || "Unrated";
-    if(imgEl && user.titlePhoto) {
-        imgEl.src = user.titlePhoto;
-        imgEl.classList.remove("hidden");
-    } else if (imgEl) {
-        imgEl.classList.add("hidden");
-    }
-    if(loaderEl) loaderEl.classList.add("hidden");
+    return {
+        name,
+        subtitle,
+        avatarUrl,
+        fallbackText: (name || "U").trim().charAt(0).toUpperCase() || "U"
+    };
 }
+
+function getSidebarProfileMount() {
+    return document.getElementById("sidebarProfileCard")
+        || document.querySelector("#appSidebar > .glass:has(#profileLoader)")
+        || document.querySelector("#appSidebar > .glass:has(#sidebarProfileLoader)");
+}
+
+function ensureSidebarProfileComponent() {
+    const card = getSidebarProfileMount();
+    if (!card) return null;
+
+    card.id = "sidebarProfileCard";
+    card.className = "glass sidebar-profile-card";
+    card.setAttribute("aria-label", "User profile");
+
+    if (!card.dataset.componentMounted) {
+        card.innerHTML = `
+            <div id="sidebarProfileLoader" class="sidebar-profile-avatar skeleton flex items-center justify-center">
+                <div class="loader !w-5 !h-5 border-2"></div>
+            </div>
+            <img id="sidebarProfileImage" src="" alt="" class="sidebar-profile-avatar sidebar-profile-image hidden" />
+            <div id="sidebarProfileFallback" class="sidebar-profile-avatar sidebar-profile-fallback hidden"></div>
+            <div id="sidebarProfileDisplay" class="sidebar-profile-copy hidden">
+                <h2 id="sidebarProfileName">--</h2>
+                <p id="sidebarProfileSubtitle">--</p>
+            </div>
+        `;
+        card.dataset.componentMounted = "true";
+    }
+
+    return card;
+}
+
+function setSidebarAvatar(imageEl, fallbackEl, loaderEl, avatarUrl, fallbackText) {
+    if (loaderEl) loaderEl.classList.add("hidden");
+
+    if (imageEl && avatarUrl) {
+        imageEl.src = avatarUrl;
+        imageEl.classList.remove("hidden");
+        fallbackEl?.classList.add("hidden");
+        fallbackEl?.classList.remove("flex");
+        return;
+    }
+
+    if (imageEl) imageEl.classList.add("hidden");
+    if (fallbackEl) {
+        fallbackEl.textContent = fallbackText;
+        fallbackEl.classList.remove("hidden");
+        fallbackEl.classList.add("flex");
+    }
+}
+
+function renderUnifiedSidebarProfile(input = {}) {
+    const profile = normalizeSidebarProfileInput(input);
+    ensureSidebarProfileComponent();
+
+    const usernameEl = document.getElementById("sidebarProfileName");
+    const subtitleEl = document.getElementById("sidebarProfileSubtitle");
+    const imageEl = document.getElementById("sidebarProfileImage");
+    const loaderEl = document.getElementById("sidebarProfileLoader");
+    const userDisplayEl = document.getElementById("sidebarProfileDisplay");
+    const fallbackEl = document.getElementById("sidebarProfileFallback");
+
+    if (usernameEl) usernameEl.textContent = profile.name;
+    if (subtitleEl) subtitleEl.textContent = profile.subtitle;
+    if (userDisplayEl) userDisplayEl.classList.remove("hidden");
+    setSidebarAvatar(imageEl, fallbackEl, loaderEl, profile.avatarUrl, profile.fallbackText);
+}
+
+function renderSidebarProfile(user) {
+    renderUnifiedSidebarProfile({
+        name: user.handle,
+        avatarUrl: user.titlePhoto
+    });
+}
+
+document.addEventListener("DOMContentLoaded", ensureSidebarProfileComponent);
 
 // ==================================================
 // UTILITY FUNCTIONS

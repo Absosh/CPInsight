@@ -12,9 +12,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   
-  <link rel="stylesheet" href="../css/shared.css" />
+  <link rel="stylesheet" href="../css/shared.css?v=5" />
   <script src="../script/services/httpClient.js"></script>
-  <script src="../script/shared.js"></script>
+  <script src="../script/services/authService.js"></script>
+  <script src="../script/services/userService.js"></script>
+  <script src="../script/shared.js?v=5"></script>
 </head>
 
 <body>
@@ -40,14 +42,7 @@
             <h1 class="text-3xl font-black tracking-tight leading-none text-white group-hover:text-emerald-300 transition">CPInsight</h1>
         </a>
 
-      <div class="glass rounded-3xl p-5 mb-10 flex items-center gap-4">
-        <div id="profileLoader" class="w-12 h-12 rounded-full skeleton flex items-center justify-center"><div class="loader !w-5 !h-5 border-2"></div></div>
-        <img id="profileImage" src="" class="hidden w-12 h-12 rounded-full object-cover border-2 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
-        <div>
-            <h2 id="username" class="text-lg font-bold tracking-tight">--</h2>
-            <p id="rank" class="text-emerald-400 text-xs uppercase tracking-widest font-semibold">--</p>
-        </div>
-      </div>
+      <div id="sidebarProfileCard" class="glass sidebar-profile-card" aria-label="User profile"></div>
 
        <div class="space-y-3">
           <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='dashboard.html'">📊 Dashboard</button>

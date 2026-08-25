@@ -43,6 +43,75 @@ body:has(#mainApp) {
     overscroll-behavior: contain;
 }
 
+/* Unified minimal sidebar identity card. */
+#appSidebar .sidebar-profile-card {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    min-height: 72px;
+    margin-bottom: 28px !important;
+    padding: 12px !important;
+    border-radius: 18px !important;
+}
+
+#appSidebar .sidebar-profile-copy {
+    display: grid !important;
+    flex: 1 1 auto;
+    gap: 2px !important;
+    min-width: 0;
+}
+
+#appSidebar .sidebar-profile-avatar {
+    display: flex;
+    flex: 0 0 44px;
+    align-items: center;
+    justify-content: center;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    border-radius: 999px !important;
+}
+
+#appSidebar .sidebar-profile-avatar.hidden,
+#appSidebar .sidebar-profile-copy.hidden {
+    display: none !important;
+}
+
+#appSidebar .sidebar-profile-image {
+    object-fit: cover;
+    border: 2px solid #10b981;
+    box-shadow: 0 0 10px rgba(16,185,129,0.3);
+}
+
+#appSidebar .sidebar-profile-fallback {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(99, 102, 241, 0.9));
+    color: white;
+    font-weight: 800;
+}
+
+#appSidebar .sidebar-profile-copy h2 {
+    overflow: hidden;
+    color: white;
+    font-size: 1rem !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#appSidebar .sidebar-profile-copy p {
+    overflow: hidden;
+    margin-top: 3px !important;
+    color: #34d399 !important;
+    font-size: 0.72rem !important;
+    font-weight: 750 !important;
+    letter-spacing: 0.08em !important;
+    line-height: 1.25 !important;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
 /* ==================================================
    GLASSMORPHISM
    ================================================== */

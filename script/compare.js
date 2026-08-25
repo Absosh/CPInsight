@@ -61,17 +61,10 @@ function renderSidebar(state) {
   const profile = state.profile.data;
   if (!profile) return;
   const displayName = profile.user_profile?.display_name || profile.username || 'User';
-  setText('username', displayName);
-  setText('rank', 'Compare Mode');
-  const loader = document.getElementById('profileLoader');
-  const userDisplay = document.getElementById('userDisplay');
-  const image = document.getElementById('profileImage');
-  if (profile.user_profile?.avatar_url) {
-    image.src = profile.user_profile.avatar_url;
-    image.classList.remove('hidden');
-  }
-  loader?.classList.add('hidden');
-  userDisplay?.classList.remove('hidden');
+  renderUnifiedSidebarProfile({
+    name: displayName,
+    avatarUrl: profile.user_profile?.avatar_thumbnail || profile.user_profile?.avatar_url || ''
+  });
 }
 
 async function loadComparison(username) {

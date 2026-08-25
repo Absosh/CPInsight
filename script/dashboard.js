@@ -169,26 +169,11 @@ function resetVisualState() {
 
 function renderSidebarProfile(profile, activePlatforms) {
     const displayName = profile?.user_profile?.display_name || profile?.username || 'User';
-    const subtitle = activePlatforms.length
-        ? `Tracking ${activePlatforms.map(capitalize).join(', ')}`
-        : 'Connect a platform to begin';
 
-    setText('username', displayName);
-    setText('rank', subtitle);
-
-    const loader = document.getElementById('profileLoader');
-    const userDisplay = document.getElementById('userDisplay');
-    const image = document.getElementById('profileImage');
-
-    if (profile?.user_profile?.avatar_url) {
-        image.src = profile.user_profile.avatar_url;
-        image.classList.remove('hidden');
-    } else {
-        image.classList.add('hidden');
-    }
-
-    loader.classList.add('hidden');
-    userDisplay.classList.remove('hidden');
+    renderUnifiedSidebarProfile({
+        name: displayName,
+        avatarUrl: profile?.user_profile?.avatar_thumbnail || profile?.user_profile?.avatar_url || ''
+    });
 }
 
 function updateMetricLabels(layout) {
@@ -660,10 +645,10 @@ function renderSummaryStats(analytics, activePlatforms, layout) {
 
     const currentLoader = document.getElementById('currentRatingLoader');
     const maxLoader = document.getElementById('maxRatingLoader');
-    currentLoader.classList.add('hidden');
-    maxLoader.classList.add('hidden');
-    document.getElementById('currentRating').classList.remove('hidden');
-    document.getElementById('maxRating').classList.remove('hidden');
+    currentLoader?.classList.add('hidden');
+    maxLoader?.classList.add('hidden');
+    document.getElementById('currentRating')?.classList.remove('hidden');
+    document.getElementById('maxRating')?.classList.remove('hidden');
 
     if (!hasData) {
         showMetricValue('currentRating', '--');

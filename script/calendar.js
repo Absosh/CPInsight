@@ -41,14 +41,25 @@ async function loadCalendarPageData() {
     await loadCalendar();
 }
 
-function renderCalendarSidebar() {
-    const username = document.getElementById('username');
-    const rank = document.getElementById('rank');
-    const loader = document.getElementById('profileLoader');
+async function renderCalendarSidebar() {
+    try {
+        if (typeof authService !== 'undefined' && authService.isLoggedIn() && typeof userService !== 'undefined') {
+            const profile = await userService.getProfile();
+            renderUnifiedSidebarProfile({
+                profile
+            });
+            return;
+        }
+    } catch (error) {
+        console.error('Failed to load calendar sidebar profile:', error);
+    }
 
-    if (username) username.innerText = 'Contest Calendar';
-    if (rank) rank.innerText = 'Public schedule';
-    if (loader) loader.classList.add('hidden');
+    renderUnifiedSidebarProfile({
+        name: 'Contest Calendar',
+        subtitle: 'Public schedule',
+        publicDisplay: true,
+        avatarUrl: ''
+    });
 }
 
 // --- CALENDAR LOGIC ---

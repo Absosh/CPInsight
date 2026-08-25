@@ -11,9 +11,9 @@
   <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="../css/shared.css?v=3" />
+  <link rel="stylesheet" href="../css/shared.css?v=5" />
   <script src="../script/auth.js?v=2"></script>
-  <script src="../script/shared.js?v=2"></script>
+  <script src="../script/shared.js?v=5"></script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
@@ -49,16 +49,7 @@
         <h1 class="text-3xl font-black tracking-tight leading-none group-hover:text-emerald-300 transition">CPInsight</h1>
       </a>
 
-      <div class="glass rounded-3xl p-5 mb-10">
-        <div class="flex flex-col items-center gap-5">
-          <div id="profileLoader" class="w-20 h-20 rounded-full skeleton flex items-center justify-center"><div class="loader"></div></div>
-          <img id="profileImage" src="" class="hidden w-20 h-20 rounded-full object-cover border-2 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]" />
-          <div id="userDisplay" class="hidden text-center">
-            <h2 id="username" class="text-2xl font-bold tracking-tight">--</h2>
-            <p id="rank" class="text-emerald-400 text-sm mt-1 uppercase tracking-widest font-semibold">--</p>
-          </div>
-        </div>
-      </div>
+      <div id="sidebarProfileCard" class="glass sidebar-profile-card" aria-label="User profile"></div>
 
        <div class="space-y-3">
           <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='dashboard.html'">📊 Dashboard</button>

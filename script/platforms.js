@@ -77,26 +77,11 @@ const PlatformsPage = {
 
     const details = profile.user_profile || {};
     const avatarUrl = details.avatar_thumbnail || details.avatar_url || '';
-    const fallbackText = (details.display_name || profile.username || 'U').charAt(0).toUpperCase();
-
-    document.getElementById('sidebarUsername').textContent = details.display_name || profile.username || 'User';
-    document.getElementById('sidebarProfileLoader')?.classList.add('hidden');
-
-    const image = document.getElementById('sidebarProfileImage');
-    const fallback = document.getElementById('sidebarFallbackAvatar');
-
-    if (avatarUrl) {
-      image.src = avatarUrl;
-      image.classList.remove('hidden');
-      fallback.classList.add('hidden');
-      fallback.classList.remove('flex');
-      return;
-    }
-
-    image.classList.add('hidden');
-    fallback.textContent = fallbackText;
-    fallback.classList.remove('hidden');
-    fallback.classList.add('flex');
+    renderUnifiedSidebarProfile({
+      profile,
+      name: details.display_name || profile.username || 'User',
+      avatarUrl
+    });
   },
 
   renderAccounts(hasError = false) {
