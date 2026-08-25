@@ -74,6 +74,24 @@ function ensureSidebarProfileComponent() {
     return card;
 }
 
+function renderSidebarProfilePlaceholder(input = {}) {
+    const name = input.name || "CPInsight";
+    const subtitle = input.subtitle || "CPInsight Account";
+    ensureSidebarProfileComponent();
+
+    const usernameEl = document.getElementById("sidebarProfileName");
+    const subtitleEl = document.getElementById("sidebarProfileSubtitle");
+    const imageEl = document.getElementById("sidebarProfileImage");
+    const loaderEl = document.getElementById("sidebarProfileLoader");
+    const userDisplayEl = document.getElementById("sidebarProfileDisplay");
+    const fallbackEl = document.getElementById("sidebarProfileFallback");
+
+    if (usernameEl) usernameEl.textContent = name;
+    if (subtitleEl) subtitleEl.textContent = subtitle;
+    if (userDisplayEl) userDisplayEl.classList.remove("hidden");
+    setSidebarAvatar(imageEl, fallbackEl, loaderEl, "", name.trim().charAt(0).toUpperCase() || "C");
+}
+
 function setSidebarAvatar(imageEl, fallbackEl, loaderEl, avatarUrl, fallbackText) {
     if (loaderEl) loaderEl.classList.add("hidden");
 
@@ -117,7 +135,7 @@ function renderSidebarProfile(user) {
     });
 }
 
-document.addEventListener("DOMContentLoaded", ensureSidebarProfileComponent);
+document.addEventListener("DOMContentLoaded", () => renderSidebarProfilePlaceholder());
 
 // ==================================================
 // UTILITY FUNCTIONS

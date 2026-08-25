@@ -59,7 +59,10 @@ function clearRememberedCompareHandle() {
 
 function renderSidebar(state) {
   const profile = state.profile.data;
-  if (!profile) return;
+  if (!profile) {
+    renderSidebarProfilePlaceholder();
+    return;
+  }
   const displayName = profile.user_profile?.display_name || profile.username || 'User';
   renderUnifiedSidebarProfile({
     name: displayName,
