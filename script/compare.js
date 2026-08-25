@@ -303,6 +303,14 @@ function drawRatingChart(key, canvas, chart, data) {
   const maxRating = ratings.length ? Math.max(...ratings) : 3000;
   const padding = Math.max(80, Math.round((maxRating - minRating) * 0.16));
 
+  function areaFill(color) {
+    const gradient = canvas.getContext('2d').createLinearGradient(0, 0, 0, canvas.parentElement?.clientHeight || 260);
+    gradient.addColorStop(0, `${color}40`);
+    gradient.addColorStop(0.55, `${color}18`);
+    gradient.addColorStop(1, `${color}04`);
+    return gradient;
+  }
+
   function dataset(label, points, color) {
     const byLabel = points.reduce((map, point) => {
       map[new Date(point.timestamp).toLocaleDateString()] = point;
@@ -312,12 +320,14 @@ function drawRatingChart(key, canvas, chart, data) {
       label,
       data: labels.map((labelText) => byLabel[labelText]?.rating ?? null),
       borderColor: color,
-      backgroundColor: `${color}20`,
-      tension: 0.35,
+      backgroundColor: areaFill(color),
+      fill: 'origin',
+      tension: 0.42,
       spanGaps: true,
-      borderWidth: 3,
+      borderWidth: 2.5,
       pointRadius: 0,
       pointHoverRadius: 6,
+      pointHitRadius: 14,
       metaPoints: labels.map((labelText) => byLabel[labelText] || null)
     };
   }
@@ -366,6 +376,7 @@ function drawRatingChart(key, canvas, chart, data) {
           grid: { color: 'rgba(255,255,255,0.045)' }
         },
         y: {
+          stacked: false,
           suggestedMin: Math.max(0, minRating - padding),
           suggestedMax: maxRating + padding,
           ticks: {
