@@ -213,9 +213,8 @@ function renderOverview(data) {
   document.getElementById('overviewTable').innerHTML = data.overview.rows.map((row) => `
     <tr class="winner-${row.winner} border-b border-white/5">
       <td class="py-4 px-3 font-bold">${row.metric}</td>
-      <td class="py-4 px-3">${fmt(row.current)}</td>
-      <td class="py-4 px-3">${fmt(row.compared)}</td>
-      <td class="py-4 px-3 font-black">${winnerLabel(row.winner, data)}</td>
+      <td class="py-4 px-3 font-bold text-emerald-300">${fmt(row.current)}</td>
+      <td class="py-4 px-3 font-bold text-rose-300">${fmt(row.compared)}</td>
     </tr>
   `).join('');
 
