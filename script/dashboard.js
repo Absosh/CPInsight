@@ -72,6 +72,64 @@ function animateSkeletons() {
         skeleton.style.setProperty('--speed', `${speed}s`);
         skeleton.style.setProperty('--delay', `-${delay}s`);
     });
+
+    document.querySelectorAll('.heatmap-skeleton-cell').forEach((cell, index) => {
+        const speed = (Math.random() * 1.2 + 2).toFixed(2);
+        const delay = ((index % 13) * 0.05 + Math.random() * 0.35).toFixed(2);
+        const alpha = (0.08 + ((index * 7) % 10) * 0.025).toFixed(2);
+        cell.style.setProperty('--speed', `${speed}s`);
+        cell.style.setProperty('--delay', `${delay}s`);
+        cell.style.setProperty('--cell-alpha', alpha);
+    });
+}
+
+function setDashboardLoading(isLoading) {
+    [
+        'mainRating',
+        'mainMaxRating',
+        'monthChange',
+        'globalRank',
+        'topPercent',
+        'avgPerDay',
+        'contestCount',
+        'activeDays'
+    ].forEach((id) => {
+        const element = document.getElementById(id);
+        if (!element) return;
+        element.classList.toggle('skeleton', isLoading);
+        element.classList.toggle('dashboard-value-skeleton', isLoading);
+        if (isLoading) {
+            element.textContent = '';
+        }
+    });
+}
+
+function buildHeatmapSkeleton() {
+    const grid = document.getElementById('heatmapSkeletonGrid');
+    if (!grid || grid.children.length) return;
+    grid.innerHTML = Array.from({ length: 156 }, () => '<span class="heatmap-skeleton-cell"></span>').join('');
+}
+
+function renderContestSkeleton() {
+    const table = document.getElementById('contestTable');
+    if (!table) return;
+    table.innerHTML = Array.from({ length: 6 }, (_, index) => `
+        <tr class="border-b border-white/5">
+            <td class="py-4 pr-4"><div class="skeleton h-4 w-${index % 2 ? '48' : '64'} rounded-full"></div></td>
+            <td class="py-4 pr-4"><div class="skeleton h-4 w-24 rounded-full"></div></td>
+            <td class="py-4 pr-4"><div class="skeleton h-4 w-16 rounded-full"></div></td>
+            <td class="py-4 pr-4"><div class="skeleton h-4 w-20 rounded-full"></div></td>
+            <td class="py-4 pr-4"><div class="skeleton h-4 w-20 rounded-full"></div></td>
+            <td class="py-4"><div class="skeleton h-4 w-16 rounded-full"></div></td>
+        </tr>
+    `).join('');
+}
+
+function showRatingFrame(show) {
+    const frame = document.getElementById('ratingChartFrame');
+    if (frame) {
+        frame.classList.toggle('hidden', !show);
+    }
 }
 
 function showDashboardApp() {
@@ -158,12 +216,16 @@ function resetVisualState() {
     
     el('contestTable')?.innerHTML && (el('contestTable').innerHTML = '');
     el('chartLoader')?.classList.remove('hidden');
+    showRatingFrame(false);
     el('ratingChart')?.classList.add('hidden');
     el('resetZoomBtn')?.classList.add('hidden');
     el('heatmapLoader')?.classList.remove('hidden');
     el('heatmapContainer')?.classList.add('hidden');
     el('heatmap')?.innerHTML && (el('heatmap').innerHTML = '');
     el('monthLabels')?.innerHTML && (el('monthLabels').innerHTML = '');
+    buildHeatmapSkeleton();
+    setDashboardLoading(true);
+    renderContestSkeleton();
     animateSkeletons();
 }
 
@@ -363,6 +425,7 @@ async function createChart(points, layout) {
 
     if (!normalizedPoints.length) {
         document.getElementById('chartLoader')?.classList.add('hidden');
+        showRatingFrame(true);
         renderEmptyState('ratingChart', 'No contest history available', 'Contest performance will appear here once synced.', '📈');
         return;
     }
@@ -440,8 +503,9 @@ async function createChart(points, layout) {
         }
     });
 
-    document.getElementById('chartLoader').classList.add('hidden');
-    document.getElementById('ratingChart').classList.remove('hidden');
+    document.getElementById('chartLoader')?.classList.add('hidden');
+    showRatingFrame(true);
+    document.getElementById('ratingChart')?.classList.remove('hidden');
     document.getElementById('resetZoomBtn')?.classList.remove('hidden');
 }
 
@@ -642,18 +706,10 @@ function renderSummaryStats(analytics, activePlatforms, layout) {
 
     applyKpiLayout(layout);
     updateMetricLabels(layout);
-
-    const currentLoader = document.getElementById('currentRatingLoader');
-    const maxLoader = document.getElementById('maxRatingLoader');
-    currentLoader?.classList.add('hidden');
-    maxLoader?.classList.add('hidden');
-    document.getElementById('currentRating')?.classList.remove('hidden');
-    document.getElementById('maxRating')?.classList.remove('hidden');
+    setDashboardLoading(false);
 
     if (!hasData) {
-        showMetricValue('currentRating', '--');
         showMetricValue('mainRating', '--');
-        showMetricValue('maxRating', '--');
         showMetricValue('mainMaxRating', '--');
         showMetricValue('monthChange', 'Sync pending');
         showMetricValue('globalRank', 'Pending');
@@ -669,18 +725,14 @@ function renderSummaryStats(analytics, activePlatforms, layout) {
     }
 
     if (typeof currentValue === 'number') {
-        showMetricValue('currentRating', `${currentValue}`);
         showMetricValue('mainRating', `${currentValue}`);
     } else {
-        showMetricValue('currentRating', '--');
         showMetricValue('mainRating', '--');
     }
 
     if (typeof maxValue === 'number') {
-        showMetricValue('maxRating', `${maxValue}`);
         showMetricValue('mainMaxRating', `${maxValue}`);
     } else {
-        showMetricValue('maxRating', '--');
         showMetricValue('mainMaxRating', '--');
     }
 
@@ -709,6 +761,7 @@ function renderDeepStats(analytics, layout) {
     if (!hasAnalyticsData(analytics)) {
         document.getElementById('chartLoader')?.classList.add('hidden');
         document.getElementById('heatmapLoader')?.classList.add('hidden');
+        showRatingFrame(true);
         renderEmptyState('ratingChart', 'Analytics sync pending', 'Connected accounts are ready, but normalized contest and submission history has not been synced yet.', '⏳');
         document.getElementById('heatmapContainer')?.classList.remove('hidden');
         const monthLabels = document.getElementById('monthLabels');
@@ -736,6 +789,7 @@ function renderDeepStats(analytics, layout) {
         createChart(ratingProgression, layout);
     } else {
         document.getElementById('chartLoader')?.classList.add('hidden');
+        showRatingFrame(true);
         renderEmptyState('ratingChart', 'No contest history available', 'Contest performance will appear here once synced.', '📈');
     }
 
@@ -782,9 +836,11 @@ function renderDeepStats(analytics, layout) {
 }
 
 function renderNoPlatforms() {
+    setDashboardLoading(false);
     setText('dashboardStatus', 'No platforms connected yet. Connect at least one account to unlock your dashboard.');
     document.getElementById('chartLoader')?.classList.add('hidden');
     document.getElementById('heatmapLoader')?.classList.add('hidden');
+    showRatingFrame(true);
     renderEmptyState('ratingChart', 'Connect a platform first', 'Rating progression will appear after your first platform sync.', '📊');
     document.getElementById('heatmapContainer')?.classList.remove('hidden');
     const monthLabels = document.getElementById('monthLabels');

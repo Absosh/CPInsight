@@ -29,6 +29,55 @@
     .table-row-animate {
       animation: rowFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards;
     }
+    .dashboard-value-skeleton {
+      display: block;
+      width: min(9rem, 70%);
+      height: 2.75rem;
+      color: transparent !important;
+      background-clip: padding-box;
+    }
+    .dashboard-chart-skeleton {
+      background:
+        linear-gradient(180deg, rgba(15,23,42,0.88), rgba(2,6,23,0.46)),
+        radial-gradient(circle at 22% 24%, rgba(16,185,129,0.10), transparent 28%),
+        radial-gradient(circle at 78% 32%, rgba(14,165,233,0.08), transparent 32%);
+      border: 1px solid rgba(56,189,248,0.12);
+      min-height: 420px;
+    }
+    .dashboard-chart-skeleton-grid {
+      background-image:
+        linear-gradient(rgba(148,163,184,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148,163,184,0.08) 1px, transparent 1px);
+      background-size: 100% 25%, 8.333% 100%;
+    }
+    .dashboard-chart-skeleton-line {
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(16,185,129,0.9), rgba(14,165,233,0.78), transparent);
+      filter: drop-shadow(0 0 14px rgba(16,185,129,0.35));
+      animation: dashboardLinePulse 1.8s ease-in-out infinite alternate;
+    }
+    .heatmap-skeleton-grid {
+      display: grid;
+      grid-template-columns: repeat(26, minmax(6px, 1fr));
+      gap: 4px;
+    }
+    .heatmap-skeleton-cell {
+      aspect-ratio: 1;
+      border-radius: 3px;
+      background: rgba(16,185,129,var(--cell-alpha,0.14));
+      border: 1px solid rgba(255,255,255,0.035);
+      animation: dashboardCellPulse var(--speed, 2.4s) ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+    }
+    @keyframes dashboardLinePulse {
+      from { opacity: 0.45; transform: translateY(8px) scaleX(0.96); }
+      to { opacity: 1; transform: translateY(-4px) scaleX(1); }
+    }
+    @keyframes dashboardCellPulse {
+      0%, 100% { opacity: 0.35; }
+      50% { opacity: 0.95; }
+    }
 
   </style>
 </head>
@@ -171,10 +220,21 @@
               <div class="flex justify-between items-center mb-6 shrink-0">
                   <h2 class="text-2xl font-bold tracking-tight">Rating Progression</h2>
               </div>
-              <div id="chartLoader" class="skeleton w-full flex-1 min-h-[350px] rounded-3xl flex items-center justify-center">
-                  <div class="loader"></div>
+              <div id="chartLoader" class="dashboard-chart-skeleton w-full rounded-3xl p-5">
+                  <div class="flex items-center justify-between mb-5">
+                      <div class="skeleton h-4 w-36 rounded-full"></div>
+                      <div class="flex gap-2">
+                          <div class="skeleton h-3 w-14 rounded-full"></div>
+                          <div class="skeleton h-3 w-14 rounded-full"></div>
+                      </div>
+                  </div>
+                  <div class="dashboard-chart-skeleton-grid relative h-[330px] rounded-2xl overflow-hidden">
+                      <div class="absolute left-[4%] right-[5%] top-[66%] dashboard-chart-skeleton-line rotate-[-7deg]"></div>
+                      <div class="absolute left-[18%] right-[18%] top-[43%] dashboard-chart-skeleton-line rotate-[5deg] opacity-70"></div>
+                      <div class="absolute left-[55%] right-[8%] top-[30%] dashboard-chart-skeleton-line rotate-[-18deg] opacity-80"></div>
+                  </div>
               </div>
-              <div class="w-full flex-1 relative min-h-[420px]">
+              <div id="ratingChartFrame" class="hidden w-full flex-1 relative min-h-[420px]">
                   <div id="ratingChart" class="hidden absolute inset-0"></div>
               </div>
           </div>
@@ -189,13 +249,12 @@
                 </select>
             </div>
             
-            <div id="heatmapLoader" class="w-full flex gap-4 mb-4">
-                <div class="flex flex-col justify-between h-[110px] py-1">
-                    <div class="skeleton h-3 w-6 rounded"></div>
-                    <div class="skeleton h-3 w-6 rounded"></div>
-                    <div class="skeleton h-3 w-6 rounded"></div>
+            <div id="heatmapLoader" class="w-full mb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="skeleton h-3 w-28 rounded-full"></div>
+                    <div class="skeleton h-3 w-20 rounded-full"></div>
                 </div>
-                <div class="skeleton flex-1 h-[110px] rounded-xl"></div>
+                <div id="heatmapSkeletonGrid" class="heatmap-skeleton-grid"></div>
             </div>
 
             <div id="heatmapContainer" class="hidden w-full flex-col">
@@ -296,7 +355,7 @@
   </div>
 
  <script src="../script/components/heatmapRenderer.js?v=1"></script>
- <script src="../script/dashboard.js?v=17"></script>
+ <script src="../script/dashboard.js?v=18"></script>
     <div id="notificationContainer"></div>
 
 
