@@ -22,6 +22,11 @@
     .winner-compared { background: linear-gradient(90deg, rgba(244,63,94,0.16), rgba(244,63,94,0.03)); box-shadow: inset 3px 0 0 rgba(251,113,133,0.9), 0 0 22px rgba(244,63,94,0.08); }
     .winner-tie { background: linear-gradient(90deg, rgba(148,163,184,0.12), rgba(148,163,184,0.03)); box-shadow: inset 3px 0 0 rgba(148,163,184,0.65); }
     .chart-box { min-height: 340px; }
+    .skill-chart-box {
+      height: 360px;
+      min-height: 360px;
+      max-height: 360px;
+    }
     .rating-chart-box { min-height: 215px; }
     .metric-pill { border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.22); border-radius: 999px; }
     .section-shell { overflow: visible; }
@@ -187,10 +192,10 @@
           <div id="heatmapStats" class="grid md:grid-cols-4 gap-3"></div>
         </section>
 
-        <section class="grid grid-cols-1 xl:grid-cols-2 gap-6 reveal visible">
-          <div class="glass compare-card section-shell p-6">
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start reveal visible">
+          <div class="glass compare-card section-shell p-6 self-start">
             <h2 class="text-2xl font-black mb-4">Skill Comparison</h2>
-            <div class="chart-box relative"><canvas id="skillRadar" class="absolute inset-0"></canvas></div>
+            <div class="chart-box skill-chart-box relative"><canvas id="skillRadar" class="absolute inset-0"></canvas></div>
           </div>
           <div class="glass compare-card section-shell p-6">
             <h2 class="text-2xl font-black mb-4">Problem Solving</h2>
@@ -223,7 +228,7 @@
 
   <div id="notificationContainer"></div>
   <script src="../script/components/heatmapRenderer.js?v=1"></script>
-  <script src="../script/compare.js?v=6"></script>
+  <script src="../script/compare.js?v=7"></script>
 </body>
 
 </html>

@@ -481,8 +481,33 @@ Winner: ${winnerLabel(day.winner, data)}`;
   `).join('');
 }
 
+function clampRadarPercent(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, Math.min(100, number));
+}
+
+function buildSkillRadarValues(currentSkills, comparedSkills) {
+  const allSkills = [...currentSkills, ...comparedSkills];
+  const maxSolved = Math.max(...allSkills.map((item) => Number(item.solved) || 0), 1);
+
+  const toVisualScore = (item) => {
+    const solved = Number(item.solved) || 0;
+    const successRate = clampRadarPercent(item.successRate);
+    const volumeScore = (solved / maxSolved) * 72;
+    const accuracyScore = successRate * 0.28;
+    return Math.round((volumeScore + accuracyScore) * 10) / 10;
+  };
+
+  return {
+    current: currentSkills.map(toVisualScore),
+    compared: comparedSkills.map(toVisualScore)
+  };
+}
+
 function drawSkillChart(data) {
   const canvas = document.getElementById('skillRadar');
+  const radarValues = buildSkillRadarValues(data.skillComparison.current, data.skillComparison.compared);
   compareCharts.skill = new Chart(canvas, {
     type: 'radar',
     data: {
@@ -490,29 +515,59 @@ function drawSkillChart(data) {
       datasets: [
         {
           label: data.users.current.displayName,
-          data: data.skillComparison.current.map((item) => item.score),
-          backgroundColor: 'rgba(16,185,129,0.18)',
+          data: radarValues.current,
+          backgroundColor: 'rgba(16,185,129,0.12)',
           borderColor: COLORS.current,
-          pointBackgroundColor: COLORS.current
+          pointBackgroundColor: COLORS.current,
+          pointBorderColor: '#04111f',
+          pointHoverBackgroundColor: '#6ee7b7',
+          borderWidth: 2.5,
+          pointRadius: 3,
+          pointHoverRadius: 5
         },
         {
           label: data.users.compared.displayName,
-          data: data.skillComparison.compared.map((item) => item.score),
-          backgroundColor: 'rgba(244,63,94,0.16)',
+          data: radarValues.compared,
+          backgroundColor: 'rgba(244,63,94,0.08)',
           borderColor: COLORS.compared,
-          pointBackgroundColor: COLORS.compared
+          pointBackgroundColor: COLORS.compared,
+          pointBorderColor: '#04111f',
+          pointHoverBackgroundColor: '#fb7185',
+          borderWidth: 2.5,
+          pointRadius: 3,
+          pointHoverRadius: 5
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: { duration: 1200 },
-      scales: { r: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.08)' }, angleLines: { color: 'rgba(255,255,255,0.08)' }, ticks: { display: false }, pointLabels: { color: '#d1d5db' } } },
+      animation: { duration: 1200, easing: 'easeOutQuart' },
+      layout: { padding: { top: 2, right: 18, bottom: 2, left: 18 } },
+      elements: {
+        line: { tension: 0.22 },
+        point: { hitRadius: 10 }
+      },
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          grid: { color: 'rgba(148,163,184,0.10)', circular: true },
+          angleLines: { color: 'rgba(148,163,184,0.10)' },
+          ticks: { display: false, stepSize: 20 },
+          pointLabels: { color: '#d1d5db', font: { size: 12, weight: 600 } }
+        }
+      },
       plugins: {
-        legend: { labels: { color: '#d1d5db' } },
+        legend: { labels: { color: '#d1d5db', boxWidth: 34, padding: 18 } },
         tooltip: {
+          backgroundColor: 'rgba(2,6,23,0.96)',
+          borderColor: 'rgba(52,211,153,0.18)',
+          borderWidth: 1,
           callbacks: {
+            label(context) {
+              return `${context.dataset.label}: ${context.formattedValue} skill index`;
+            },
             afterLabel(context) {
               const source = context.datasetIndex === 0 ? data.skillComparison.current : data.skillComparison.compared;
               const item = source[context.dataIndex];
