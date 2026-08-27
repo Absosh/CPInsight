@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Articles | CPInsight</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../Assets/favicon_32.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/shared.css?v=8" />
+  <script src="../script/auth.js?v=2"></script>
+  <script src="../script/shared.js?v=8"></script>
+  <style>
+    .article-chip {
+      border: 1px solid rgba(56, 189, 248, 0.14);
+      border-radius: 999px;
+      background: rgba(2, 6, 23, 0.36);
+      color: #cbd5e1;
+      padding: 0.6rem 0.95rem;
+      transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+    .article-chip:hover,
+    .article-chip.active {
+      border-color: rgba(16, 185, 129, 0.42);
+      background: rgba(16, 185, 129, 0.14);
+      color: #6ee7b7;
+      transform: translateY(-1px);
+    }
+    .article-card {
+      min-height: 100%;
+      border-radius: 1.25rem;
+    }
+    .article-image {
+      aspect-ratio: 16 / 9;
+      background:
+        radial-gradient(circle at 24% 24%, rgba(16, 185, 129, 0.32), transparent 34%),
+        radial-gradient(circle at 76% 34%, rgba(14, 165, 233, 0.30), transparent 36%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.98));
+    }
+    .article-meta-pill {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 999px;
+      background: rgba(0,0,0,0.24);
+    }
+    .articles-search {
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.30);
+    }
+  </style>
+</head>
+
+<body>
+  <script src="../script/services/httpClient.js?v=5"></script>
+  <script src="../script/services/authService.js?v=5"></script>
+  <script src="../script/services/userService.js?v=5"></script>
+  <script src="../script/services/platformService.js?v=5"></script>
+  <script src="../script/services/stateManager.js?v=5"></script>
+  <script src="../script/components/notification.js?v=5"></script>
+  <script src="../script/components/userMenu.js?v=5"></script>
+  <script src="../script/utils/routeProtection.js?v=5"></script>
+  <script>RouteProtection.protectPage();</script>
+
+  <canvas id="particleCanvas" class="fixed inset-0 w-full h-full z-[-1] pointer-events-none"></canvas>
+
+  <div id="mainApp" class="flex min-h-screen overflow-x-hidden transition-[filter] duration-700 ease-in-out">
+    <div id="mobileBackdrop" aria-hidden="true"></div>
+    <aside id="appSidebar" class="w-[320px] min-w-[320px] glass border-r border-white/10 p-6 overflow-hidden !rounded-none flex flex-col">
+      <a href="landing_page.html" class="flex items-center gap-1 mb-10 group" aria-label="Return to CPInsight home">
+        <img src="../Assets/logo.png" alt="CPInsight Logo" class="w-10 h-10 object-contain mt-0.5" onerror="this.style.display='none'">
+        <h1 class="text-3xl font-black tracking-tight leading-none group-hover:text-emerald-300 transition">CPInsight</h1>
+      </a>
+
+      <div id="sidebarProfileCard" class="glass sidebar-profile-card" aria-label="User profile"></div>
+
+      <div class="space-y-3">
+        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='dashboard.html'">&#128202; Dashboard</button>
+        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='analytics.html'">&#129504; Analytics</button>
+        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='contests.html'">&#127942; Contests</button>
+        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='compare.html'">&#128101; Compare</button>
+        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='ai-coach.html'">&#128161; AI Assistant</button>
+        <button class="w-full min-w-0 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl p-4 text-left font-semibold truncate shadow-[0_0_10px_rgba(16,185,129,0.1)] transition" onclick="window.location.href='articles.html'">&#128240; Articles</button>
+        <button class="w-full min-w-0 hover:bg-white/5 border border-transparent rounded-2xl p-4 text-left transition truncate text-white" onclick="window.location.href='calendar.html'">&#128197; Calendar</button>
+      </div>
+
+      <button onclick="window.location.href='platforms.html'" class="w-full min-w-0 hover:bg-white/5 border border-transparent border-t-white/10 rounded-none p-4 text-left transition truncate text-gray-400 hover:text-white mt-4 flex items-center gap-3">
+        <span>&#9881;</span> Manage Platforms
+      </button>
+    </aside>
+
+    <main class="flex-1 min-w-0 p-6 md:p-10 z-10 relative">
+      <button id="mobileMenuBtn" aria-label="Open navigation menu" aria-expanded="false" class="lg:hidden text-gray-400 hover:text-white mb-6 focus:outline-none transition-colors">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+
+      <section class="mb-8 reveal visible">
+        <p class="text-emerald-400 text-xs uppercase tracking-[0.25em] font-black mb-3">Tech reading hub</p>
+        <div class="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-5">
+          <div>
+            <h1 class="text-4xl md:text-5xl font-black tracking-tight">Articles</h1>
+            <p id="articlesStatus" class="text-gray-400 mt-2 max-w-2xl">Fresh public tech articles, summarized as cards with source attribution.</p>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+            <input id="articleSearch" class="articles-search rounded-2xl px-5 py-4 outline-none min-w-0 sm:w-80 focus:border-emerald-500 transition shadow-inner" type="search" placeholder="Search articles" autocomplete="off">
+            <select id="articleSort" class="articles-search rounded-2xl px-5 py-4 outline-none focus:border-emerald-500 transition cursor-pointer">
+              <option value="relevance">Relevance</option>
+              <option value="recent">Newest</option>
+              <option value="popular">Popular</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section id="categoryRail" class="flex flex-wrap gap-3 mb-8 reveal visible" aria-label="Article categories"></section>
+
+      <section id="articlesGrid" class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 reveal visible"></section>
+    </main>
+  </div>
+
+  <div id="notificationContainer"></div>
+  <script src="../script/articles.js?v=1"></script>
+</body>
+
+</html>

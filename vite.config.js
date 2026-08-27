@@ -18,7 +18,8 @@ export default defineConfig({
         landing: 'pages/landing_page.html',
         aiCoach: 'pages/ai-coach.html',
         dashboard: 'pages/dashboard.html',
-        analytics: 'pages/analytics.html'
+        analytics: 'pages/analytics.html',
+        articles: 'pages/articles.html'
       }
     }
   }
