@@ -27,6 +27,10 @@ body:has(#mainApp) {
     scrollbar-width: thin;
 }
 
+#appSidebar > a:first-of-type {
+    padding-right: 3.25rem;
+}
+
 #appSidebar::-webkit-scrollbar {
     width: 6px;
 }
@@ -43,15 +47,111 @@ body:has(#mainApp) {
     overscroll-behavior: contain;
 }
 
+#mobileMenuBtn {
+    position: fixed;
+    top: 18px;
+    left: 258px;
+    z-index: 90;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin: 0 !important;
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    border-radius: 14px;
+    background:
+        radial-gradient(circle at 26% 20%, rgba(56, 189, 248, 0.16), transparent 36%),
+        linear-gradient(180deg, rgba(10, 16, 32, 0.92), rgba(4, 8, 18, 0.96));
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255,255,255,0.05);
+    color: #d1fae5;
+}
+
+#mobileMenuBtn:hover {
+    border-color: rgba(16, 185, 129, 0.38);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+#mobileMenuBtn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.28), 0 16px 40px rgba(0, 0, 0, 0.28);
+}
+
+@media (max-width: 1023px) {
+    #mainApp > main {
+        padding-top: 5.5rem !important;
+    }
+
+    #mobileMenuBtn {
+        left: 18px;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    #mainApp:has(#appSidebar.open) #mobileMenuBtn {
+        left: min(258px, calc(100vw - 62px));
+    }
+}
+
+@media (min-width: 1024px) {
+    #mobileMenuBtn {
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    #mainApp.sidebar-collapsed > main {
+        padding-left: 5.5rem !important;
+    }
+
+    #mainApp.sidebar-collapsed #appSidebar {
+        width: 0 !important;
+        min-width: 0 !important;
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+        border-right-width: 0 !important;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateX(-100%);
+    }
+
+    #mainApp.sidebar-collapsed #mobileMenuBtn {
+        left: 18px;
+    }
+}
+
 /* Unified minimal sidebar identity card. */
 #appSidebar .sidebar-profile-card {
     display: flex !important;
     align-items: center !important;
     gap: 12px !important;
     min-height: 72px;
-    margin-bottom: 28px !important;
+    margin: 0 !important;
     padding: 12px !important;
     border-radius: 18px !important;
+    cursor: pointer;
+}
+
+#appSidebar .sidebar-profile-card:hover {
+    border-color: rgba(16, 185, 129, 0.36);
+    transform: translateY(-1px);
+}
+
+#appSidebar .sidebar-profile-card:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.26), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+#appSidebar .sidebar-account-area {
+    display: grid;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.10);
+}
+
+#appSidebar .sidebar-account-area > button {
+    margin-top: 0 !important;
+    border-top-color: transparent !important;
+    border-radius: 16px !important;
 }
 
 #appSidebar .sidebar-profile-copy {
@@ -295,7 +395,7 @@ body:has(#mainApp) {
 }
 
 #appSidebar {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @media (max-width: 1023px) {

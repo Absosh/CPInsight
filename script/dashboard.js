@@ -213,6 +213,7 @@ function resetVisualState() {
         const el = document.getElementById(id);
         return el;
     };
+    applyKpiLayout(resolveDashboardLayout());
     
     el('contestTable')?.innerHTML && (el('contestTable').innerHTML = '');
     el('chartLoader')?.classList.remove('hidden');
@@ -837,6 +838,7 @@ function renderDeepStats(analytics, layout) {
 
 function renderNoPlatforms() {
     setDashboardLoading(false);
+    applyKpiLayout(resolveDashboardLayout());
     setText('dashboardStatus', 'No platforms connected yet. Connect at least one account to unlock your dashboard.');
     document.getElementById('chartLoader')?.classList.add('hidden');
     document.getElementById('heatmapLoader')?.classList.add('hidden');
