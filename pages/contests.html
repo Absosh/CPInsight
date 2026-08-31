@@ -24,11 +24,11 @@
 
     .contest-list-panel {
       border-right: 1px solid rgba(255, 255, 255, 0.08);
-      min-height: 560px;
+      min-height: 0;
     }
 
     .contest-detail-panel {
-      min-height: 520px;
+      min-height: 0;
     }
 
     .contest-list-header {
@@ -43,6 +43,15 @@
 
     .contest-detail-summary .ai-meta-grid {
       padding-inline: 0;
+    }
+
+    .contest-review-panel {
+      margin-top: 1.25rem;
+    }
+
+    .contest-review-empty {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 1.25rem;
     }
 
     .contest-list-row[aria-selected="true"] {
@@ -439,12 +448,12 @@
               <option value="all">All platforms</option>
             </select>
           </div>
-          <div id="contestList" class="space-y-3 max-h-[720px] overflow-y-auto scrollbar pr-2"></div>
+          <div id="contestList" class="space-y-3 max-h-[560px] overflow-y-auto scrollbar pr-2"></div>
         </aside>
 
         <section class="contest-detail-panel p-6 ai-theme-root" aria-live="polite">
           <div id="contestDetail"></div>
-          <div id="contestReviewPanel" class="mt-8"></div>
+          <div id="contestReviewPanel" class="contest-review-panel"></div>
         </section>
       </section>
     </main>

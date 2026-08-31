@@ -631,7 +631,7 @@ function renderLoadingReview() {
   const panel = document.getElementById('contestReviewPanel');
   if (!panel) return;
   panel.innerHTML = `
-    <section class="ai-card p-8">
+    <section class="contest-review-empty">
       <div class="ai-skeleton h-5 w-48 mb-4"></div>
       <div class="ai-skeleton h-4 w-full mb-2"></div>
       <div class="ai-skeleton h-4 w-2/3"></div>
@@ -645,11 +645,11 @@ function renderPendingReview() {
   const status = contestsState.reviewStatus?.status || 'No Review';
   const progress = contestsState.reviewStatus?.progress_percent || 0;
   panel.innerHTML = `
-    <section class="ai-card p-8" id="aiContestReview">
+    <section class="contest-review-empty" id="aiContestReview">
       <p class="text-emerald-400 text-sm font-bold uppercase tracking-[0.3em]">AI Contest Review</p>
       <h2 class="text-2xl font-bold text-white mt-2">Review pending...</h2>
-      <p class="text-gray-400 mt-2">No completed AI review is available for this contest yet. This viewer only retrieves stored reviews and does not trigger generation.</p>
-      <dl class="ai-meta-grid mt-6 p-0">
+      <p class="text-gray-400 mt-2 max-w-2xl">No completed AI review is available for this contest yet. This viewer only retrieves stored reviews and does not trigger generation.</p>
+      <dl class="ai-meta-grid mt-5 p-0 max-w-xl">
         <dt>Status</dt><dd>${escapeHtml(capitalizeContest(status))}</dd>
         <dt>Progress</dt><dd>${escapeHtml(progress)}%</dd>
       </dl>
