@@ -346,7 +346,7 @@ function renderContestDetail() {
   const contest = contestsState.selectedContest;
   if (!contest) {
     detail.innerHTML = `
-      <div class="ai-card p-8">
+      <div class="contest-detail-summary">
         <h2 class="text-2xl font-bold text-white">Select a contest</h2>
         <p class="text-gray-400 mt-2">Choose a completed contest to view details and retrieve its existing AI review.</p>
       </div>
@@ -358,7 +358,7 @@ function renderContestDetail() {
   const listStatus = reviewStatusForContest(contest);
   const statusLabel = listStatus.state === 'not_generated' ? status : listStatus.label;
   detail.innerHTML = `
-    <header class="ai-card overflow-hidden">
+    <header class="contest-detail-summary">
       <div class="ai-card-header">
         <span class="ai-icon ai-icon-md" aria-label="Contest">CT</span>
         <div class="min-w-0">
@@ -376,7 +376,7 @@ function renderContestDetail() {
         <dt>Solved</dt><dd>${escapeHtml(contest.solved ?? '--')}</dd>
         <dt>Review generated</dt><dd>${escapeHtml(formatDateTime(contestsState.review?.created_at || contestsState.review?.createdAt))}</dd>
       </dl>
-      <div class="ai-card-actions">
+      <div class="ai-card-actions px-0">
         <button id="viewAiReviewBtn" class="ai-button ai-focusable" type="button">View AI Review</button>
       </div>
     </header>

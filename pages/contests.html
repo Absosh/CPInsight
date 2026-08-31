@@ -18,13 +18,31 @@
     .contest-shell {
       display: grid;
       grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
-      gap: 1.5rem;
-      align-items: start;
+      align-items: stretch;
+      overflow: hidden;
     }
 
-    .contest-list-panel,
+    .contest-list-panel {
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      min-height: 560px;
+    }
+
     .contest-detail-panel {
       min-height: 520px;
+    }
+
+    .contest-list-header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 1rem;
+    }
+
+    .contest-detail-summary {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 1.25rem;
+    }
+
+    .contest-detail-summary .ai-meta-grid {
+      padding-inline: 0;
     }
 
     .contest-list-row[aria-selected="true"] {
@@ -337,6 +355,12 @@
       .replay-sidebar {
         position: static;
       }
+
+      .contest-list-panel {
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        min-height: auto;
+      }
     }
 
     @media (max-width: 520px) {
@@ -404,9 +428,9 @@
         </div>
       </div>
 
-      <section class="contest-shell">
-        <aside class="contest-list-panel glass rounded-3xl p-6">
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+      <section class="contest-shell glass rounded-3xl">
+        <aside class="contest-list-panel p-6">
+          <div class="contest-list-header flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
             <div>
               <h2 class="text-2xl font-bold tracking-tight">Contest List</h2>
               <p class="text-gray-400 text-sm mt-1">Select a completed contest to inspect details and its AI review.</p>
@@ -418,7 +442,7 @@
           <div id="contestList" class="space-y-3 max-h-[720px] overflow-y-auto scrollbar pr-2"></div>
         </aside>
 
-        <section class="contest-detail-panel glass rounded-3xl p-6 ai-theme-root" aria-live="polite">
+        <section class="contest-detail-panel p-6 ai-theme-root" aria-live="polite">
           <div id="contestDetail"></div>
           <div id="contestReviewPanel" class="mt-8"></div>
         </section>
