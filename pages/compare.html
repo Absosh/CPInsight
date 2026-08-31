@@ -86,6 +86,23 @@
       text-transform: uppercase;
       padding: 0 1rem 0.7rem;
     }
+    @media (min-width: 1280px) {
+      .college-leaderboard-grid {
+        display: grid;
+        grid-template-columns: 3.25rem minmax(15rem, 1fr) 6.25rem 6.25rem 6.25rem 6.25rem 7.25rem;
+        align-items: center;
+        column-gap: 1rem;
+      }
+      .college-leaderboard-metric {
+        text-align: right;
+        justify-self: stretch;
+      }
+      .college-leaderboard-action {
+        justify-self: end;
+        width: 7.25rem;
+        text-align: center;
+      }
+    }
     .college-rank-medal {
       display: inline-grid;
       place-items: center;
