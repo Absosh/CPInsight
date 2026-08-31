@@ -156,51 +156,44 @@ function renderCollegeLeaderboard(payload) {
   }
 
   body.innerHTML = `
-    <div class="college-leaderboard-table">
-      <div class="college-leaderboard-head college-leaderboard-grid hidden xl:grid">
-        <span>Rank</span>
-        <span>User</span>
-        <span class="text-right">Score</span>
-        <span class="text-right">Max</span>
-        <span class="text-right">Solved</span>
-        <span class="text-right">Contests</span>
-        <span class="text-right">Action</span>
-      </div>
-      <div class="grid gap-3">
-      ${entries.map((entry) => `
-        <article class="college-leaderboard-row college-leaderboard-grid rounded-2xl px-4 py-4 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4" data-self="${entry.isCurrentUser ? 'true' : 'false'}">
-          <span class="college-rank-medal" data-rank="${entry.rank <= 3 ? entry.rank : ''}">${entry.rank}</span>
-          <div class="min-w-0">
-            <h3 class="font-black text-white truncate">${escapeHtml(entry.displayName || entry.username)}</h3>
-            <p class="text-gray-400 text-sm truncate">@${escapeHtml(entry.username)}${entry.isCurrentUser ? ' · You' : ''}</p>
-          </div>
-          <div class="college-leaderboard-metric hidden xl:block">
-            <p class="text-gray-500 text-xs uppercase font-bold">Score</p>
-            <p class="text-emerald-300 font-black">${fmt(entry.score)}</p>
-          </div>
-          <div class="college-leaderboard-metric hidden xl:block">
-            <p class="text-gray-500 text-xs uppercase font-bold">Max</p>
-            <p class="font-bold">${fmt(entry.maxRating)}</p>
-          </div>
-          <div class="college-leaderboard-metric hidden xl:block">
-            <p class="text-gray-500 text-xs uppercase font-bold">Solved</p>
-            <p class="font-bold">${fmt(entry.solved)}</p>
-          </div>
-          <div class="college-leaderboard-metric hidden xl:block">
-            <p class="text-gray-500 text-xs uppercase font-bold">Contests</p>
-            <p class="font-bold">${fmt(entry.contests)}</p>
-          </div>
-          <button type="button" class="college-leaderboard-action metric-pill px-4 py-2 text-xs font-bold text-sky-200 hover:bg-white/10 transition justify-self-start col-span-2 xl:col-span-1" data-compare-username="${escapeHtml(entry.username)}"${entry.isCurrentUser ? ' disabled' : ''}>
-            ${entry.isCurrentUser ? 'Current User' : 'Compare'}
-          </button>
-          <div class="xl:hidden col-span-2 grid grid-cols-3 gap-3 text-sm text-gray-300 border-t border-white/5 pt-3">
-            <span><strong class="text-emerald-300">${fmt(entry.score)}</strong><br><small class="text-gray-500">Score</small></span>
-            <span><strong>${fmt(entry.maxRating)}</strong><br><small class="text-gray-500">Max</small></span>
-            <span><strong>${fmt(entry.solved)}</strong><br><small class="text-gray-500">Solved</small></span>
-          </div>
-        </article>
-      `).join('')}
-      </div>
+    <div class="college-leaderboard-table overflow-x-auto scrollbar">
+      <table class="w-full min-w-[760px]">
+        <thead>
+          <tr>
+            <th class="text-left w-20">Rank</th>
+            <th class="text-left">User</th>
+            <th class="text-right w-24">Score</th>
+            <th class="text-right w-24">Max</th>
+            <th class="text-right w-24">Solved</th>
+            <th class="text-right w-28">Contests</th>
+            <th class="text-right w-32">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${entries.map((entry) => `
+            <tr class="college-leaderboard-row" data-self="${entry.isCurrentUser ? 'true' : 'false'}">
+              <td>
+                <span class="college-rank-medal" data-rank="${entry.rank <= 3 ? entry.rank : ''}">${entry.rank}</span>
+              </td>
+              <td>
+                <div class="min-w-0">
+                  <h3 class="font-black text-white truncate">${escapeHtml(entry.displayName || entry.username)}</h3>
+                  <p class="text-gray-400 text-sm truncate">@${escapeHtml(entry.username)}${entry.isCurrentUser ? ' · You' : ''}</p>
+                </div>
+              </td>
+              <td class="text-right text-emerald-300 font-black">${fmt(entry.score)}</td>
+              <td class="text-right font-bold">${fmt(entry.maxRating)}</td>
+              <td class="text-right font-bold">${fmt(entry.solved)}</td>
+              <td class="text-right font-bold">${fmt(entry.contests)}</td>
+              <td class="text-right">
+                <button type="button" class="metric-pill px-4 py-2 text-xs font-bold text-sky-200 hover:bg-white/10 transition" data-compare-username="${escapeHtml(entry.username)}"${entry.isCurrentUser ? ' disabled' : ''}>
+                  ${entry.isCurrentUser ? 'Current User' : 'Compare'}
+                </button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
     </div>
   `;
 
