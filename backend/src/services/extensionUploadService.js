@@ -199,6 +199,11 @@ async function persistLeetCodeCollection(userId, payload, headers = {}) {
         collectedAt: payload.collectionTimestamps.mergedAt,
         verified: true
       },
+      leetcodeProfile: {
+        ranking: Number.isFinite(Number(profile.ranking)) ? Number(profile.ranking) : null,
+        realName: profile.realName || null,
+        userAvatar: profile.userAvatar || null
+      },
       leetcodeStats: statsByDifficulty(payload.profile, solvedAnalytics),
       leetcodeCalendar: {
         activeYears: payload.profile?.activity?.activeYears || [],
@@ -216,17 +221,16 @@ async function persistLeetCodeCollection(userId, payload, headers = {}) {
        SET handle = $1,
            handle_normalized = $2,
            profile_url = $3,
-           rating = $4,
+           rating = NULL,
            max_rating = NULL,
-           metadata = COALESCE(metadata, '{}'::jsonb) || $5::jsonb,
+           metadata = COALESCE(metadata, '{}'::jsonb) || $4::jsonb,
            last_synced_at = NOW(),
            sync_status = 'synced'
-       WHERE id = $6 AND user_id = $7`,
+       WHERE id = $5 AND user_id = $6`,
       [
         uploadedHandle,
         normalizedUploadHandle,
         `https://leetcode.com/u/${encodeURIComponent(uploadedHandle)}/`,
-        profile.ranking || null,
         JSON.stringify(metadataPatch),
         account.id,
         userId

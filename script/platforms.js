@@ -129,6 +129,7 @@ const PlatformsPage = {
     const isSyncing = this.syncing.has(platform);
     const status = account.sync_status || account.status || 'connected';
     const syncLabel = isSyncing ? 'Syncing' : 'Resync';
+    const accountMetric = this.accountMetric(account);
 
     return `
       <div class="glass rounded-3xl p-5 border border-white/10 hover:-translate-y-1 transition content-fade">
@@ -152,13 +153,26 @@ const PlatformsPage = {
           </button>
         </div>
         <p class="text-gray-400 text-sm truncate">Handle: <span class="text-emerald-400 font-mono">${this.escapeHtml(account.handle || '--')}</span></p>
-        <p class="text-gray-500 text-xs">Rating: ${this.escapeHtml(account.rating || 'N/A')}</p>
+        <p class="text-gray-500 text-xs">${this.escapeHtml(accountMetric.label)}: ${this.escapeHtml(accountMetric.value)}</p>
         <p class="text-gray-600 text-xs mt-2">Last synced: ${account.last_synced_at ? new Date(account.last_synced_at).toLocaleDateString() : 'Never'}</p>
         <button onclick="PlatformsPage.disconnectAccount('${encodeURIComponent(platform)}')" class="mt-4 w-full bg-red-600/20 text-red-400 border border-red-500/30 py-3 rounded-2xl text-xs font-semibold hover:bg-red-600/30 transition">
           Disconnect
         </button>
       </div>
     `;
+  },
+
+  accountMetric(account) {
+    if (account.platform === 'leetcode') {
+      return {
+        label: 'Rank',
+        value: account.metadata?.leetcodeProfile?.ranking || 'N/A'
+      };
+    }
+    return {
+      label: 'Rating',
+      value: account.rating || 'N/A'
+    };
   },
 
   async resyncPlatform(encodedPlatform) {
