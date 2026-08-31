@@ -156,9 +156,19 @@ function renderCollegeLeaderboard(payload) {
   }
 
   body.innerHTML = `
-    <div class="grid gap-3">
+    <div class="college-leaderboard-table">
+      <div class="college-leaderboard-head hidden xl:grid grid-cols-[auto_minmax(0,1fr)_repeat(4,minmax(88px,auto))_auto] items-center gap-4">
+        <span>Rank</span>
+        <span>User</span>
+        <span class="text-right">Score</span>
+        <span class="text-right">Max</span>
+        <span class="text-right">Solved</span>
+        <span class="text-right">Contests</span>
+        <span class="text-right">Action</span>
+      </div>
+      <div class="grid gap-3">
       ${entries.map((entry) => `
-        <article class="college-leaderboard-row rounded-2xl p-4 grid grid-cols-[auto_minmax(0,1fr)] xl:grid-cols-[auto_minmax(0,1fr)_repeat(4,minmax(88px,auto))_auto] items-center gap-4" data-self="${entry.isCurrentUser ? 'true' : 'false'}">
+        <article class="college-leaderboard-row rounded-2xl px-4 py-4 grid grid-cols-[auto_minmax(0,1fr)] xl:grid-cols-[auto_minmax(0,1fr)_repeat(4,minmax(88px,auto))_auto] items-center gap-4" data-self="${entry.isCurrentUser ? 'true' : 'false'}">
           <span class="college-rank-medal" data-rank="${entry.rank <= 3 ? entry.rank : ''}">${entry.rank}</span>
           <div class="min-w-0">
             <h3 class="font-black text-white truncate">${escapeHtml(entry.displayName || entry.username)}</h3>
@@ -190,6 +200,7 @@ function renderCollegeLeaderboard(payload) {
           </div>
         </article>
       `).join('')}
+      </div>
     </div>
   `;
 
