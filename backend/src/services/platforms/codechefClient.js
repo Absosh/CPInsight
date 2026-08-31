@@ -4,12 +4,15 @@ const env = require('../../config/env');
 const { getJson, setJson } = require('../../redis/client');
 
 const CACHE_TTL_SECONDS = 12 * 60;
-const RECENT_PAGE_DELAY_MS = 450;
+const RECENT_PAGE_DELAY_MS = 300;
 const RECENT_PAGE_MAX_ATTEMPTS = 3;
+const RECENT_PAGE_LIMIT = 25;
+const RECENT_FETCH_BUDGET_MS = 35000;
+const CODECHEF_TIMEOUT_MS = 15000;
 
 const client = axios.create({
   baseURL: env.platforms.codechefBaseUrl,
-  timeout: 10000,
+  timeout: CODECHEF_TIMEOUT_MS,
   headers: {
     'user-agent': 'CPInsight/1.0 (+https://cpinsight.local)',
     accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
@@ -89,6 +92,19 @@ function wait(milliseconds) {
 
 function isChallengePage(html) {
   return /(?:cf-chl|challenge-platform|Just a moment\.\.\.|Enable JavaScript and cookies to continue)/i.test(String(html || ''));
+}
+
+function shouldRetryRecentPage(error) {
+  const status = error.response?.status;
+  return status === 429 || status === 408 || status >= 500 || error.code === 'ECONNABORTED' || /timeout|network|socket/i.test(error.message || '');
+}
+
+function retryDelayFor(error, attempt) {
+  const retryAfterSeconds = Number(error.response?.headers?.['retry-after']);
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+    return Math.min(15000, retryAfterSeconds * 1000);
+  }
+  return Math.min(6000, 700 * (2 ** (attempt - 1)));
 }
 
 function dateKeyFromValue(value) {
@@ -494,12 +510,8 @@ async function cachedRecentPage(handle, page) {
       } catch (error) {
         lastError = error;
         const status = error.response?.status;
-        if (status !== 429 || attempt === RECENT_PAGE_MAX_ATTEMPTS) throw error;
-        const retryAfterSeconds = Number(error.response?.headers?.['retry-after']);
-        const retryDelay = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
-          ? Math.min(15000, retryAfterSeconds * 1000)
-          : 1000 * (2 ** (attempt - 1));
-        await wait(retryDelay);
+        if (!shouldRetryRecentPage(error) || attempt === RECENT_PAGE_MAX_ATTEMPTS) throw error;
+        await wait(retryDelayFor(error, attempt));
       }
     }
     if (!response) throw lastError || new Error('CodeChef recent activity request failed');
@@ -527,11 +539,12 @@ async function getAllRecentSubmissions(handle) {
   const pages = [];
   let maxPage = 1;
   let warning = null;
+  const startedAt = Date.now();
 
   try {
     const firstPage = await cachedRecentPage(handle, 1);
     pages.push(firstPage.html);
-    maxPage = Math.max(1, Math.min(firstPage.maxPage || 1, 100));
+    maxPage = Math.max(1, Math.min(firstPage.maxPage || 1, RECENT_PAGE_LIMIT));
   } catch (error) {
     return {
       submissions: [],
@@ -541,6 +554,10 @@ async function getAllRecentSubmissions(handle) {
   }
 
   for (let page = 2; page <= maxPage; page += 1) {
+    if (Date.now() - startedAt > RECENT_FETCH_BUDGET_MS) {
+      warning = `CodeChef recent activity sync reached the ${Math.round(RECENT_FETCH_BUDGET_MS / 1000)}s budget after ${page - 1} pages`;
+      break;
+    }
     await wait(RECENT_PAGE_DELAY_MS);
     try {
       const pageData = await cachedRecentPage(handle, page);

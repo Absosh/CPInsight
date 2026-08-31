@@ -65,6 +65,16 @@ function titleCase(value) {
   return (value || '').replace(/(^|\s)\S/g, (text) => text.toUpperCase());
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+}
+
 function showShell() {
   const modal = document.getElementById('welcomeModal');
   if (modal) modal.classList.add('hidden');
@@ -95,6 +105,130 @@ function renderSidebar(state) {
     name: displayName,
     avatarUrl: profile.user_profile?.avatar_thumbnail || profile.user_profile?.avatar_url || ''
   });
+}
+
+function renderLeaderboardStats(payload) {
+  const stats = [
+    ['Your Rank', payload.currentUserRank ? `#${payload.currentUserRank}` : '--'],
+    ['Participants', payload.stats?.participants || 0],
+    ['Top Score', payload.stats?.topScore || 0]
+  ];
+  const container = document.getElementById('collegeLeaderboardStats');
+  if (!container) return;
+  container.innerHTML = stats.map(([label, value]) => `
+    <div class="bg-black/20 border border-white/5 rounded-2xl p-4">
+      <p class="text-gray-400 text-xs uppercase font-bold tracking-wider">${escapeHtml(label)}</p>
+      <p class="text-2xl font-black mt-1">${escapeHtml(value)}</p>
+    </div>
+  `).join('');
+}
+
+function renderCollegeLeaderboard(payload) {
+  const title = document.getElementById('collegeLeaderboardTitle');
+  const status = document.getElementById('collegeLeaderboardStatus');
+  const body = document.getElementById('collegeLeaderboardBody');
+  if (!title || !status || !body) return;
+
+  const college = payload.college;
+  title.textContent = college?.shortName || 'College Leaderboard';
+  status.textContent = payload.message || 'Leaderboard loaded from synced CPInsight records.';
+  renderLeaderboardStats(payload);
+
+  if (!college) {
+    body.innerHTML = `
+      <div class="border border-dashed border-emerald-400/30 rounded-2xl p-6 text-gray-300 bg-emerald-500/5">
+        <h3 class="text-xl font-black text-white mb-2">Choose your college to join the board.</h3>
+        <p class="text-gray-400">Set your college once in profile settings, then CPInsight can rank classmates using synced performance data.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const entries = payload.entries || [];
+  if (!entries.length) {
+    body.innerHTML = `
+      <div class="border border-white/10 rounded-2xl p-6 text-gray-300 bg-black/20">
+        <h3 class="text-xl font-black text-white mb-2">No synced classmates yet.</h3>
+        <p class="text-gray-400">The leaderboard will populate when users from ${escapeHtml(college.shortName || college.officialName)} connect and sync platforms.</p>
+      </div>
+    `;
+    return;
+  }
+
+  body.innerHTML = `
+    <div class="grid gap-3">
+      ${entries.map((entry) => `
+        <article class="college-leaderboard-row rounded-2xl p-4 grid grid-cols-[auto_minmax(0,1fr)] xl:grid-cols-[auto_minmax(0,1fr)_repeat(4,minmax(88px,auto))_auto] items-center gap-4" data-self="${entry.isCurrentUser ? 'true' : 'false'}">
+          <span class="college-rank-medal" data-rank="${entry.rank <= 3 ? entry.rank : ''}">${entry.rank}</span>
+          <div class="min-w-0">
+            <h3 class="font-black text-white truncate">${escapeHtml(entry.displayName || entry.username)}</h3>
+            <p class="text-gray-400 text-sm truncate">@${escapeHtml(entry.username)}${entry.isCurrentUser ? ' · You' : ''}</p>
+          </div>
+          <div class="hidden xl:block text-right">
+            <p class="text-gray-500 text-xs uppercase font-bold">Score</p>
+            <p class="text-emerald-300 font-black">${fmt(entry.score)}</p>
+          </div>
+          <div class="hidden xl:block text-right">
+            <p class="text-gray-500 text-xs uppercase font-bold">Max</p>
+            <p class="font-bold">${fmt(entry.maxRating)}</p>
+          </div>
+          <div class="hidden xl:block text-right">
+            <p class="text-gray-500 text-xs uppercase font-bold">Solved</p>
+            <p class="font-bold">${fmt(entry.solved)}</p>
+          </div>
+          <div class="hidden xl:block text-right">
+            <p class="text-gray-500 text-xs uppercase font-bold">Contests</p>
+            <p class="font-bold">${fmt(entry.contests)}</p>
+          </div>
+          <button type="button" class="metric-pill px-4 py-2 text-xs font-bold text-sky-200 hover:bg-white/10 transition justify-self-start xl:justify-self-end col-span-2 xl:col-span-1" data-compare-username="${escapeHtml(entry.username)}"${entry.isCurrentUser ? ' disabled' : ''}>
+            ${entry.isCurrentUser ? 'Current User' : 'Compare'}
+          </button>
+          <div class="xl:hidden col-span-2 grid grid-cols-3 gap-3 text-sm text-gray-300 border-t border-white/5 pt-3">
+            <span><strong class="text-emerald-300">${fmt(entry.score)}</strong><br><small class="text-gray-500">Score</small></span>
+            <span><strong>${fmt(entry.maxRating)}</strong><br><small class="text-gray-500">Max</small></span>
+            <span><strong>${fmt(entry.solved)}</strong><br><small class="text-gray-500">Solved</small></span>
+          </div>
+        </article>
+      `).join('')}
+    </div>
+  `;
+
+  body.querySelectorAll('[data-compare-username]:not(:disabled)').forEach((button) => {
+    button.addEventListener('click', () => {
+      const username = button.dataset.compareUsername;
+      const input = document.getElementById('compareUsername');
+      if (input) input.value = username;
+      loadComparison(username);
+    });
+  });
+}
+
+function renderCollegeLeaderboardError(error) {
+  setText('collegeLeaderboardTitle', 'College Leaderboard');
+  setText('collegeLeaderboardStatus', error.message || 'Unable to load college leaderboard.');
+  renderLeaderboardStats({ currentUserRank: null, stats: { participants: 0, topScore: 0 } });
+  const body = document.getElementById('collegeLeaderboardBody');
+  if (body) {
+    body.innerHTML = `
+      <div class="border border-rose-400/20 rounded-2xl p-6 text-gray-300 bg-rose-500/5">
+        <h3 class="text-xl font-black text-white mb-2">Leaderboard unavailable.</h3>
+        <p class="text-gray-400">${escapeHtml(error.message || 'Please try refreshing the page.')}</p>
+      </div>
+    `;
+  }
+}
+
+async function loadCollegeLeaderboard() {
+  setText('collegeLeaderboardStatus', 'Loading synced college standings...');
+  const body = document.getElementById('collegeLeaderboardBody');
+  if (body) body.innerHTML = '<div class="skeleton h-20 rounded-3xl"></div>';
+
+  try {
+    const payload = await httpClient.get('/analytics/college-leaderboard');
+    renderCollegeLeaderboard(payload);
+  } catch (error) {
+    renderCollegeLeaderboardError(error);
+  }
 }
 
 async function loadComparison(username) {
@@ -827,6 +961,9 @@ document.addEventListener('DOMContentLoaded', () => {
     clearRememberedCompareHandle();
     return;
   }
+
+  loadCollegeLeaderboard();
+  document.getElementById('collegeLeaderboardRefresh')?.addEventListener('click', loadCollegeLeaderboard);
 
   const rememberedHandle = getRememberedCompareHandle();
   if (rememberedHandle) {

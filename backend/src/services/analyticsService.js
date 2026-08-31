@@ -6,7 +6,7 @@ const HttpError = require('../utils/httpError');
 
 const PLATFORM_TTL_MINUTES = 30;
 const COMBINED_TTL_MINUTES = 15;
-const ANALYTICS_PAYLOAD_VERSION = 5;
+const ANALYTICS_PAYLOAD_VERSION = 6;
 const SKIPPABLE_COMBINED_ANALYTICS_CODES = new Set([
   'SYNC_FAILED',
   'PLATFORM_UNAVAILABLE',
@@ -205,6 +205,14 @@ function buildDifficultyIntelligenceFromRatings(values) {
   };
 }
 
+function codechefProfileSolvedCount(account) {
+  if (!account || account.platform !== 'codechef') return 0;
+  const rawValue = account.metadata?.codechefProfile?.totalProblemsSolved
+    ?? account.metadata?.codechefStats?.totalProblemsSolved;
+  const count = Number(rawValue);
+  return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
+}
+
 function combineTopicStrength(platformResults) {
   const combined = new Map();
   for (const result of platformResults) {
@@ -394,7 +402,9 @@ function platformAnalytics(platform, facts) {
     const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     const solved = new Set(accepted.map(solvedProblemKey).filter(Boolean));
 
-    solvedProblems = solved.size;
+    solvedProblems = platform === 'codechef'
+      ? Math.max(solved.size, codechefProfileSolvedCount(facts.account))
+      : solved.size;
     solvedLastYear = new Set(
         accepted
             .filter(
@@ -426,8 +436,10 @@ function platformAnalytics(platform, facts) {
     durationSeconds: contest.metadata?.durationSeconds ?? null
   }));
 
-  let acceptedSubmissions = accepted.length;
-  let totalSubmissions = facts.submissions.length;
+  let acceptedSubmissions = platform === 'codechef'
+    ? Math.max(accepted.length, solvedProblems)
+    : accepted.length;
+  let totalSubmissions = Math.max(facts.submissions.length, acceptedSubmissions);
   let activityHeatmap = buildActivityHeatmap(accepted);
   const recentSubmissions = accepted
     .slice()

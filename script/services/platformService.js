@@ -43,6 +43,8 @@ class PlatformService {
       const data = await httpClient.post('/platforms/connect', {
         platform,
         handle
+      }, {
+        timeoutMs: platform === 'codechef' ? 90000 : undefined
       });
       this.clearCache();
       return data;
@@ -63,7 +65,9 @@ class PlatformService {
   }
 
   async syncPlatform(platform) {
-    const data = await httpClient.post(`/platforms/sync/${encodeURIComponent(platform)}`, {});
+    const data = await httpClient.post(`/platforms/sync/${encodeURIComponent(platform)}`, {}, {
+      timeoutMs: platform === 'codechef' ? 90000 : undefined
+    });
     this.clearCache();
     return data;
   }

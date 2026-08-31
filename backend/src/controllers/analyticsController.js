@@ -13,4 +13,8 @@ async function compare(req, res) {
   res.json(await compareService.compareUsers(req.user.id, req.params.username));
 }
 
-module.exports = { platform, combined, compare };
+async function collegeLeaderboard(req, res) {
+  res.json(await compareService.collegeLeaderboard(req.user.id));
+}
+
+module.exports = { platform, combined, compare, collegeLeaderboard };

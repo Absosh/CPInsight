@@ -19,9 +19,10 @@ class HttpClient {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    const { timeoutMs, ...fetchOptions } = options;
     const headers = {
       'Content-Type': 'application/json',
-      ...options.headers
+      ...fetchOptions.headers
     };
 
     const token = localStorage.getItem('accessToken');
@@ -32,11 +33,11 @@ class HttpClient {
     try {
       const response = await Promise.race([
         fetch(url, {
-          ...options,
+          ...fetchOptions,
           headers
         }),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Request timeout')), this.timeout)
+          setTimeout(() => reject(new Error('Request timeout')), timeoutMs || this.timeout)
         )
       ]);
 
@@ -96,8 +97,9 @@ class HttpClient {
     return this.request(endpoint, { method: 'GET' });
   }
 
-  post(endpoint, data) {
+  post(endpoint, data, options = {}) {
     return this.request(endpoint, {
+      ...options,
       method: 'POST',
       body: JSON.stringify(data)
     });

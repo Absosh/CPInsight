@@ -1,7 +1,9 @@
 const pool = require('../database/pool');
 const HttpError = require('../utils/httpError');
+const { findCollege } = require('../data/colleges');
 
 const PLATFORMS = ['codeforces', 'codechef', 'leetcode'];
+const MIN_COMBINED_CACHE_VERSION = 6;
 const SKILL_AXES = [
   { label: 'DP', tags: ['dp'] },
   { label: 'Graphs', tags: ['graphs', 'dfs and similar', 'shortest paths'] },
@@ -46,6 +48,11 @@ function standardDeviation(values) {
   const avg = average(values);
   if (avg === null) return null;
   return Math.sqrt(values.reduce((sum, value) => sum + (value - avg) ** 2, 0) / values.length);
+}
+
+function isContestRating(value) {
+  const rating = Number(value);
+  return Number.isFinite(rating) && rating > 0 && rating <= 5000;
 }
 
 function normalizeDayCountMap(dayCounts) {
@@ -119,6 +126,14 @@ function solvedProblemKey(submission) {
   return `${submission.platform}:${submission.problem_key}`;
 }
 
+function codechefProfileSolvedCount(user) {
+  const account = (user.accounts || []).find((item) => item.platform === 'codechef');
+  const rawValue = account?.metadata?.codechefProfile?.totalProblemsSolved
+    ?? account?.metadata?.codechefStats?.totalProblemsSolved;
+  const count = Number(rawValue);
+  return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
+}
+
 function cpInsightScore(metrics) {
   const ratingScore = Math.min(100, Math.round((metrics.combinedMaxRating / 2400) * 100));
   const solveScore = Math.min(100, Math.round((metrics.combinedProblemsSolved / 500) * 100));
@@ -129,15 +144,26 @@ function cpInsightScore(metrics) {
 
 function summarizeUser(user) {
   const accepted = user.submissions.filter((submission) => submission.verdict === acceptedVerdict(submission.platform));
-  const solved = new Set(accepted.map(solvedProblemKey).filter(Boolean));
+  const solvedByPlatform = PLATFORMS.reduce((map, platform) => {
+    map[platform] = new Set();
+    return map;
+  }, {});
+  accepted.forEach((submission) => {
+    const key = solvedProblemKey(submission);
+    if (key && solvedByPlatform[submission.platform]) solvedByPlatform[submission.platform].add(key);
+  });
   const heatmap = buildActivityHeatmap(user);
   const days = activeDaySet(heatmap);
-  const ratings = user.accounts.map((account) => account.max_rating || account.rating || 0).filter(Boolean);
+  const ratings = user.accounts
+    .flatMap((account) => [account.max_rating, account.rating])
+    .filter(isContestRating);
   const deltas = user.contests.map((contest) => contest.rating_delta).filter((value) => typeof value === 'number');
+  const codechefSolved = Math.max(solvedByPlatform.codechef.size, codechefProfileSolvedCount(user));
+  const combinedProblemsSolved = solvedByPlatform.codeforces.size + codechefSolved + solvedByPlatform.leetcode.size;
   const metrics = {
     combinedMaxRating: ratings.length ? Math.max(...ratings) : 0,
     combinedContestCount: user.contests.length,
-    combinedProblemsSolved: solved.size,
+    combinedProblemsSolved,
     longestActiveStreak: maxStreak(days),
     mostActiveDays: days.size,
     averageRatingGain: average(deltas) ?? 0
@@ -148,7 +174,9 @@ function summarizeUser(user) {
     displayName: user.display_name || user.username,
     connectedPlatforms: user.accounts.map((account) => account.platform),
     heatmap,
-    cpInsightScore: user.combinedCache?.cpInsightScore ?? cpInsightScore(metrics),
+    cpInsightScore: user.combinedCache?.analyticsVersion >= MIN_COMBINED_CACHE_VERSION
+      ? user.combinedCache.cpInsightScore
+      : cpInsightScore(metrics),
     ...metrics
   };
 }
@@ -345,20 +373,10 @@ function platformDistribution(user) {
   }));
 }
 
-async function loadUsers(currentUserId, comparedUsername) {
-  const users = await pool.query(
-    `SELECT u.id, u.username, p.display_name
-     FROM users u
-     LEFT JOIN user_profiles p ON p.user_id = u.id
-     WHERE u.id = $1 OR LOWER(u.username) = LOWER($2)`,
-    [currentUserId, comparedUsername]
-  );
+async function hydrateUsers(rows) {
+  const ids = rows.map((row) => row.id);
+  if (!ids.length) return [];
 
-  const current = users.rows.find((row) => row.id === currentUserId);
-  const compared = users.rows.find((row) => row.id !== currentUserId && row.username.toLowerCase() === comparedUsername.toLowerCase());
-  if (!compared) throw new HttpError(404, 'Compared username not found');
-
-  const ids = [current.id, compared.id];
   const [accounts, contests, submissions, caches] = await Promise.all([
     pool.query('SELECT * FROM platform_accounts WHERE user_id = ANY($1) ORDER BY platform', [ids]),
     pool.query(
@@ -385,17 +403,101 @@ async function loadUsers(currentUserId, comparedUsername) {
     )
   ]);
 
-  function hydrate(row) {
+  return rows.map((row) => ({
+    ...row,
+    accounts: accounts.rows.filter((item) => item.user_id === row.id),
+    contests: contests.rows.filter((item) => item.user_id === row.id),
+    submissions: submissions.rows.filter((item) => item.user_id === row.id),
+    combinedCache: caches.rows.find((item) => item.user_id === row.id)?.payload || null
+  }));
+}
+
+async function loadUsers(currentUserId, comparedUsername) {
+  const users = await pool.query(
+    `SELECT u.id, u.username, p.display_name
+     FROM users u
+     LEFT JOIN user_profiles p ON p.user_id = u.id
+     WHERE u.id = $1 OR LOWER(u.username) = LOWER($2)`,
+    [currentUserId, comparedUsername]
+  );
+
+  const current = users.rows.find((row) => row.id === currentUserId);
+  const compared = users.rows.find((row) => row.id !== currentUserId && row.username.toLowerCase() === comparedUsername.toLowerCase());
+  if (!compared) throw new HttpError(404, 'Compared username not found');
+
+  const hydrated = await hydrateUsers([current, compared]);
+  return {
+    current: hydrated.find((row) => row.id === current.id),
+    compared: hydrated.find((row) => row.id === compared.id)
+  };
+}
+
+async function collegeLeaderboard(currentUserId) {
+  const currentProfile = await pool.query(
+    `SELECT p.college_id
+     FROM user_profiles p
+     WHERE p.user_id = $1`,
+    [currentUserId]
+  );
+  const collegeId = currentProfile.rows[0]?.college_id || null;
+  if (!collegeId) {
     return {
-      ...row,
-      accounts: accounts.rows.filter((item) => item.user_id === row.id),
-      contests: contests.rows.filter((item) => item.user_id === row.id),
-      submissions: submissions.rows.filter((item) => item.user_id === row.id),
-      combinedCache: caches.rows.find((item) => item.user_id === row.id)?.payload || null
+      college: null,
+      entries: [],
+      currentUserRank: null,
+      stats: { participants: 0, averageScore: 0, topScore: 0 },
+      message: 'Add your college in profile settings to unlock the college leaderboard.'
     };
   }
 
-  return { current: hydrate(current), compared: hydrate(compared) };
+  const users = await pool.query(
+    `SELECT u.id, u.username, p.display_name, p.college_id
+     FROM users u
+     JOIN user_profiles p ON p.user_id = u.id
+     WHERE p.college_id = $1`,
+    [collegeId]
+  );
+  const hydrated = await hydrateUsers(users.rows);
+  const entries = hydrated
+    .filter((user) => user.accounts.length)
+    .map((user) => {
+      const summary = summarizeUser(user);
+      return {
+        userId: user.id,
+        username: summary.username,
+        displayName: summary.displayName,
+        isCurrentUser: user.id === currentUserId,
+        score: summary.cpInsightScore,
+        maxRating: summary.combinedMaxRating,
+        solved: summary.combinedProblemsSolved,
+        contests: summary.combinedContestCount,
+        activeDays: summary.mostActiveDays,
+        streak: summary.longestActiveStreak,
+        connectedPlatforms: summary.connectedPlatforms
+      };
+    })
+    .sort((left, right) =>
+      right.score - left.score ||
+      right.maxRating - left.maxRating ||
+      right.solved - left.solved ||
+      left.displayName.localeCompare(right.displayName)
+    )
+    .map((entry, index) => ({ ...entry, rank: index + 1 }));
+
+  const currentUserRank = entries.find((entry) => entry.isCurrentUser)?.rank || null;
+  const totalScore = entries.reduce((sum, entry) => sum + entry.score, 0);
+
+  return {
+    college: findCollege(collegeId) || { id: collegeId, shortName: collegeId, officialName: collegeId },
+    entries: entries.slice(0, 50),
+    currentUserRank,
+    stats: {
+      participants: entries.length,
+      averageScore: entries.length ? Math.round(totalScore / entries.length) : 0,
+      topScore: entries[0]?.score || 0
+    },
+    message: entries.length ? 'College leaderboard loaded from synced CPInsight records.' : 'No synced classmates found for this college yet.'
+  };
 }
 
 async function compareUsers(currentUserId, comparedUsername) {
@@ -454,4 +556,4 @@ async function compareUsers(currentUserId, comparedUsername) {
   };
 }
 
-module.exports = { compareUsers };
+module.exports = { compareUsers, collegeLeaderboard };

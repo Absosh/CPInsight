@@ -98,30 +98,32 @@ async function fetchPlatformSnapshot(platform, handle) {
     throw stageError('profile', new HttpError(400, `CodeChef handle not found: ${handle}`, null, 'INVALID_HANDLE'));
   }
   const submissionsAvailable = !data.partial;
+  const hasRecentSubmissions = Array.isArray(data.submissions) && data.submissions.length > 0;
   const warnings = Array.isArray(data.warnings) ? data.warnings.filter(Boolean) : [];
   const availability = {
     profile: true,
     contests: true,
     submissions: submissionsAvailable,
-    activity: Object.keys(data.heatmap || {}).length > 0 || submissionsAvailable
+    activity: Object.keys(data.heatmap || {}).length > 0 || submissionsAvailable || hasRecentSubmissions
   };
   const successfulStages = ['profile', 'contests'];
-  if (submissionsAvailable) successfulStages.push('submissions');
+  if (submissionsAvailable || hasRecentSubmissions) successfulStages.push('submissions');
   if (availability.activity) successfulStages.push('activity');
 
   return {
     profile: data.profile,
     submissions: Array.isArray(data.submissions) ? data.submissions : [],
     contests: Array.isArray(data.contests) ? data.contests : [],
-    status: data.partial ? 'partial' : 'synced',
+    status: 'synced',
     warnings,
     availability,
     successfulStages,
-    failedStage: data.partial ? 'submissions' : null,
+    failedStage: null,
     metadata: {
       codechefStats: data.stats || {},
       codechefHeatmap: data.heatmap || {},
-      codechefPartialSync: Boolean(data.partial),
+      codechefPartialSync: false,
+      codechefRecentActivityPartial: Boolean(data.partial),
       codechefSyncWarnings: warnings,
       codechefProfile: {
         stars: data.profile.stars || null,
@@ -330,6 +332,16 @@ async function syncPlatformAccount(userId, account, options = {}) {
   if (!platformClients[platform]) throw new Error(`No client for platform: ${platform}`);
 
   const startedAt = new Date().toISOString();
+  const existingStartedAt = account.metadata?.syncState?.startedAt ? Date.parse(account.metadata.syncState.startedAt) : 0;
+  const syncAgeMs = Number.isFinite(existingStartedAt) ? Date.now() - existingStartedAt : Infinity;
+  if (!options.db && account.sync_status === 'syncing' && syncAgeMs < 120000) {
+    return {
+      platform,
+      handle,
+      status: 'syncing',
+      message: 'A sync for this account is already running. Please wait for it to finish.'
+    };
+  }
   await updateSyncState(db, accountId, 'syncing', syncState({ status: 'syncing', startedAt }));
 
   try {
